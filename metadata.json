@@ -1,0 +1,6 @@
+{
+  "name": "Test 測驗評量平台",
+  "description": "專業線上測驗、題庫管理、成績與錯題深度分析及智慧組題匯入評量平台",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

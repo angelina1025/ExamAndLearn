@@ -1,0 +1,33 @@
+{
+  "id": "/",
+  "name": "Test 測驗評量平台",
+  "short_name": "Test評量",
+  "description": "專業線上測驗、題庫管理、成績與錯題深度分析及智慧組題匯入評量平台，支援離線下載題庫隨時隨地考試評分。",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#2563eb",
+  "background_color": "#f4f7fb",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
