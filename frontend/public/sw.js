@@ -28,6 +28,20 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // Bypass service worker entirely for dev environments, Vite modules, and non-GET requests
+  if (
+    url.hostname === 'localhost' ||
+    url.hostname === '127.0.0.1' ||
+    url.pathname.startsWith('/@') ||
+    url.pathname.startsWith('/src/') ||
+    url.pathname.includes('hot-update') ||
+    event.request.method !== 'GET'
+  ) {
+    return;
+  }
+
   // Navigation requests: Network-first falling back to cache
   if (event.request.mode === 'navigate') {
     event.respondWith(
@@ -58,10 +72,13 @@ self.addEventListener('fetch', (event) => {
         });
         return response;
       }).catch(() => {
-        // Fallback for API or image requests
-        return new Response(JSON.stringify({ offline: true }), {
-          headers: { 'Content-Type': 'application/json' },
-        });
+        // Fallback for API requests only
+        if (url.pathname.startsWith('/api/')) {
+          return new Response(JSON.stringify({ offline: true }), {
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+        return new Response('Network unavailable', { status: 503, statusText: 'Offline' });
       });
     })
   );

@@ -16,7 +16,11 @@ async function startServer() {
   app.use(backendApp);
 
   if (isDev) {
-    // Development mode: Mount Vite dev server middlewares
+    // Development mode: Serve dist/assets as fallback if older cached browser clients request hashed assets
+    const distPath = path.resolve(__dirname, 'dist');
+    app.use('/assets', express.static(path.resolve(distPath, 'assets')));
+
+    // Mount Vite dev server middlewares
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },

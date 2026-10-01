@@ -16,6 +16,7 @@ import {
   getOfflineBankMeta,
 } from './services/offlineStorage';
 import { submitAndGradeExam } from './services/examEngine';
+import { shuffleArray } from './utils/shuffle';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<NavTab>('analysis'); // Default to analysis as in Image 1
@@ -31,7 +32,7 @@ export default function App() {
     }
   }, []);
 
-  // Retest the wrong questions
+  // Retest the wrong questions (shuffled order)
   const handleRetestWrong = (customWrongQuestions?: ExamQuestion[]) => {
     let wrongOnly = customWrongQuestions || questions.filter((q) => q.status === 'wrong');
     if (wrongOnly.length === 0) {
@@ -40,8 +41,8 @@ export default function App() {
     if (wrongOnly.length === 0) {
       wrongOnly = mockQuestions.filter((q) => q.status === 'wrong');
     }
-    // Reset answers for retest
-    const resetQuestions = wrongOnly.map((q) => ({
+    // Reset answers and randomize question order for retest
+    const resetQuestions = shuffleArray(wrongOnly).map((q) => ({
       ...q,
       userAnswer: undefined,
       status: 'unanswered' as const,
@@ -62,20 +63,25 @@ export default function App() {
     setCurrentTab('analysis');
   };
 
-  // Start exam from smart import cards
+  // Start exam from smart import cards (shuffled order)
   const handleStartExamWithQuestions = (importedQuestions: ExamQuestion[]) => {
-    setQuestions(importedQuestions);
+    const shuffled = shuffleArray(importedQuestions).map((q) => ({
+      ...q,
+      userAnswer: undefined,
+      status: 'unanswered' as const,
+    }));
+    setQuestions(shuffled);
     setExamTitle('智慧組題練習測驗卷');
     setCurrentTab('exam');
   };
 
-  // Start exam from offline manager
+  // Start exam from offline manager (shuffled order)
   const handleStartOfflineExam = (customQs: ExamQuestion[], title: string = '離線自主模擬測驗') => {
     let targetQs = customQs;
     if (!targetQs || targetQs.length === 0) {
       targetQs = getOfflineQuestions();
     }
-    const prepared = targetQs.map((q) => ({
+    const prepared = shuffleArray(targetQs).map((q) => ({
       ...q,
       userAnswer: undefined,
       status: 'unanswered' as const,
@@ -108,6 +114,8 @@ export default function App() {
           <ExamView
             questions={questions}
             onFinishExam={handleFinishExam}
+            examTitle={examTitle}
+            autoStart={examTitle === '錯題重考弱點突破卷' || examTitle === '智慧組題練習測驗卷'}
           />
         )}
 

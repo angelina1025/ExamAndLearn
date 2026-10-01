@@ -207,7 +207,7 @@ export const mockQuestions: ExamQuestion[] = Array.from({ length: 50 }, (_, i) =
   return {
     id: num,
     code: `#QS-0${800 + num}`,
-    prompt: `[題號 #${num}] 關於 ${questionTopic} 的時間複雜度與空間複雜度特性分析，下列各項敘述何者最符合計算理論之標準定義？`,
+    prompt: `關於 ${questionTopic} 的時間複雜度與空間複雜度特性分析，下列各項敘述何者最符合計算理論之標準定義？`,
     type: 'single',
     typeLabel: '單選題',
     difficulty: num % 5 === 0 ? 'hard' : num % 2 === 0 ? 'medium' : 'basic',
@@ -215,7 +215,15 @@ export const mockQuestions: ExamQuestion[] = Array.from({ length: 50 }, (_, i) =
     difficultyLabel: num % 5 === 0 ? '困難' : num % 2 === 0 ? '中等' : '基礎',
     points: 2.0,
     topic: questionTopic,
-    category: num % 3 === 0 ? '樹狀結構與平衡樹' : '排序與搜尋演算法',
+    category: [
+      '資料結構與演算法',
+      '排序與搜尋演算法',
+      '樹狀結構與平衡樹',
+      '作業系統原理',
+      '計算機網路',
+      '軟體工程與系統設計',
+      '高等微積分與線性代數',
+    ][num % 7],
     tags: [questionTopic.split(' ')[0], '演算法', '期中考'],
     options: [
       { id: 'A', text: '最佳情況下執行時間為 O(1)，最壞情況為 O(n)', subtext: '常見線性搜尋範式' },

@@ -57,11 +57,11 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onSelectTab, onOpenO
             <ShieldCheck className="w-5 h-5 stroke-[2.2]" />
           </div>
           <div className="flex flex-col">
-            <span className="text-xl font-bold tracking-tight text-slate-900 flex items-center leading-none">
-              Test
+            <span className="text-xl font-bold tracking-tight text-blue-600 flex items-center leading-none">
+              ExamAndLearn
             </span>
-            <span className="text-[11px] font-medium text-slate-400 leading-tight tracking-wider mt-0.5">
-              測驗評量平台
+            <span className="text-[11px] font-medium text-slate-500 leading-tight tracking-wider mt-0.5">
+              線上學習與測驗評量平台
             </span>
           </div>
         </div>

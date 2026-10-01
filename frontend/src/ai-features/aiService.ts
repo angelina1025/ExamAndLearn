@@ -7,7 +7,7 @@
  */
 
 // Reads from .env (Vite client-side env vars must start with VITE_)
-const envEnableAi = import.meta.env.VITE_ENABLE_AI_API;
+const envEnableAi = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env.VITE_ENABLE_AI_API : undefined;
 
 export const AI_CONFIG = {
   // Enabled if VITE_ENABLE_AI_API is explicitly set to "true"
