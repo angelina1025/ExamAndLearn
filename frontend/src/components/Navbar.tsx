@@ -3,31 +3,39 @@ import {
   FileText,
   BarChart2,
   Database,
-  Sparkles,
-  Globe,
+  UploadCloud,
   Bell,
   User,
   ChevronDown,
-  Check,
   LogOut,
   Settings,
   ShieldCheck,
+  BookOpen,
+  Shield,
+  RefreshCw,
 } from 'lucide-react';
 
-export type NavTab = 'exam' | 'analysis' | 'bank' | 'import';
+export type UserRole = 'admin' | 'user';
+export type NavTab = 'exam' | 'analysis' | 'bank' | 'import' | 'permissions';
 
 interface NavbarProps {
   currentTab: NavTab;
   onSelectTab: (tab: NavTab) => void;
+  currentRole: UserRole;
+  onChangeRole: (role: UserRole) => void;
   examProgress?: number;
   onOpenOfflineManager?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ currentTab, onSelectTab, onOpenOfflineManager }) => {
-  const [showLangMenu, setShowLangMenu] = useState(false);
+export const Navbar: React.FC<NavbarProps> = ({
+  currentTab,
+  onSelectTab,
+  currentRole,
+  onChangeRole,
+  onOpenOfflineManager,
+}) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNoticeMenu, setShowNoticeMenu] = useState(false);
-  const [lang, setLang] = useState('繁體中文');
   const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
 
   React.useEffect(() => {
@@ -41,12 +49,17 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onSelectTab, onOpenO
     };
   }, []);
 
-  const navItems: { id: NavTab; label: string; icon: React.ReactNode }[] = [
-    { id: 'exam', label: '線上測驗', icon: <FileText className="w-4 h-4" /> },
-    { id: 'analysis', label: '成績與錯題分析', icon: <BarChart2 className="w-4 h-4" /> },
-    { id: 'bank', label: '題庫管理系統', icon: <Database className="w-4 h-4" /> },
-    { id: 'import', label: '智慧組題匯入', icon: <Sparkles className="w-4 h-4" /> },
+  // 管理員: 題庫管理系統、題目匯入、平台權限設定
+  // 使用者: 線上測驗、成績與錯題分析、題庫管理系統、題目匯入
+  const allNavItems: { id: NavTab; label: string; icon: React.ReactNode; roles: UserRole[] }[] = [
+    { id: 'exam', label: '線上測驗', icon: <FileText className="w-4 h-4" />, roles: ['user'] },
+    { id: 'analysis', label: '成績與錯題分析', icon: <BarChart2 className="w-4 h-4" />, roles: ['user'] },
+    { id: 'bank', label: '題庫管理系統', icon: <Database className="w-4 h-4" />, roles: ['admin', 'user'] },
+    { id: 'import', label: '題目匯入', icon: <UploadCloud className="w-4 h-4" />, roles: ['admin', 'user'] },
+    { id: 'permissions', label: '平台權限設定', icon: <Settings className="w-4 h-4" />, roles: ['admin'] },
   ];
+
+  const navItems = allNavItems.filter((item) => item.roles.includes(currentRole));
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-slate-200/90 shadow-xs">
@@ -111,34 +124,14 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onSelectTab, onOpenO
             </span>
           </button>
 
-          {/* Language Switcher */}
-          <div className="relative">
-            <button
-              onClick={() => setShowLangMenu(!showLangMenu)}
-              className="flex items-center space-x-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition"
-            >
-              <Globe className="w-3.5 h-3.5 text-slate-500" />
-              <span>文A {lang}</span>
-              <ChevronDown className="w-3 h-3 text-slate-400" />
-            </button>
-
-            {showLangMenu && (
-              <div className="absolute right-0 mt-2 w-36 bg-white rounded-xl shadow-xl border border-slate-200 py-1 z-50 text-xs">
-                {['繁體中文', 'English', '日本語'].map((l) => (
-                  <button
-                    key={l}
-                    onClick={() => {
-                      setLang(l);
-                      setShowLangMenu(false);
-                    }}
-                    className="w-full text-left px-3 py-2 flex items-center justify-between hover:bg-slate-50 text-slate-700"
-                  >
-                    <span>{l}</span>
-                    {lang === l && <Check className="w-3.5 h-3.5 text-blue-600" />}
-                  </button>
-                ))}
-              </div>
-            )}
+          {/* Cloud Database Sync Status (Replacing Language Switcher) */}
+          <div
+            className="flex items-center space-x-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200/80 rounded-xl"
+            title="雲端資料庫同步正常"
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="hidden sm:inline">雲端同步正常 (0.18s)</span>
+            <span className="sm:hidden">同步正常</span>
           </div>
 
           {/* Notifications Bell */}
@@ -174,42 +167,100 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onSelectTab, onOpenO
             )}
           </div>
 
-          {/* Admin User Badge */}
+          {/* User Profile Badge */}
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center space-x-2 pl-1.5 pr-2.5 py-1 bg-slate-100/90 hover:bg-slate-200/80 rounded-full transition"
+              className="flex items-center space-x-2 pl-1.5 pr-2.5 py-1 bg-slate-100/90 hover:bg-slate-200/80 rounded-full transition cursor-pointer"
             >
-              <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-semibold shadow-xs">
+              <div
+                className={`w-7 h-7 rounded-full text-white flex items-center justify-center text-xs font-semibold shadow-xs ${
+                  currentRole === 'admin' ? 'bg-blue-600' : 'bg-emerald-600'
+                }`}
+              >
                 <User className="w-3.5 h-3.5" />
               </div>
               <div className="text-left text-xs leading-none hidden sm:block">
-                <div className="text-[10px] text-slate-400 font-medium">管理員</div>
+                <div className="text-[10px] text-slate-400 font-medium">
+                  {currentRole === 'admin' ? '管理員' : '使用者'}
+                </div>
                 <div className="text-slate-800 font-semibold mt-0.5">AAA</div>
               </div>
               <ChevronDown className="w-3 h-3 text-slate-500 hidden sm:block" />
             </button>
 
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-200 py-1 z-50 text-xs">
-                <div className="px-3 py-2 border-b border-slate-100">
-                  <p className="font-semibold text-slate-800">管理員 AAA</p>
-                  <p className="text-[11px] text-slate-400">admin@test-eval.edu.tw</p>
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-1.5 z-50 text-xs animate-in fade-in zoom-in-95">
+                <div className="px-3.5 py-2.5 border-b border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <p className="font-bold text-slate-800 text-sm">
+                      {currentRole === 'admin' ? '管理員 AAA' : '使用者 AAA'}
+                    </p>
+                    <span
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        currentRole === 'admin'
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'bg-emerald-100 text-emerald-700'
+                      }`}
+                    >
+                      {currentRole === 'admin' ? '管理員' : '一般使用者'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    {currentRole === 'admin' ? 'admin@test-eval.edu.tw' : 'user@test-eval.edu.tw'}
+                  </p>
                 </div>
-                <button
-                  onClick={() => setShowUserMenu(false)}
-                  className="w-full text-left px-3 py-2 flex items-center space-x-2 text-slate-700 hover:bg-slate-50"
-                >
-                  <Settings className="w-3.5 h-3.5 text-slate-400" />
-                  <span>平台權限與設定</span>
-                </button>
-                <button
-                  onClick={() => setShowUserMenu(false)}
-                  className="w-full text-left px-3 py-2 flex items-center space-x-2 text-rose-600 hover:bg-rose-50"
-                >
-                  <LogOut className="w-3.5 h-3.5 text-rose-500" />
-                  <span>登出帳號</span>
-                </button>
+
+                {/* Quick Role Switcher */}
+                <div className="p-2 border-b border-slate-100 bg-slate-50/60">
+                  <button
+                    onClick={() => {
+                      const newRole = currentRole === 'admin' ? 'user' : 'admin';
+                      onChangeRole(newRole);
+                      setShowUserMenu(false);
+                    }}
+                    className="w-full text-left px-2.5 py-1.5 rounded-xl bg-white hover:bg-blue-50 border border-slate-200 text-slate-700 hover:text-blue-700 flex items-center justify-between font-semibold transition cursor-pointer shadow-2xs"
+                  >
+                    <div className="flex items-center space-x-1.5">
+                      <RefreshCw className="w-3 h-3 text-blue-500" />
+                      <span>切換為「{currentRole === 'admin' ? '使用者' : '管理員'}」</span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {currentRole === 'admin' ? 'USER' : 'ADMIN'}
+                    </span>
+                  </button>
+                </div>
+
+                <div className="py-1">
+                  {currentRole === 'admin' && (
+                    <button
+                      onClick={() => {
+                        onSelectTab('permissions');
+                        setShowUserMenu(false);
+                      }}
+                      className="w-full text-left px-3.5 py-2 flex items-center space-x-2 text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                    >
+                      <Settings className="w-3.5 h-3.5 text-slate-400" />
+                      <span>平台權限與設定</span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => setShowUserMenu(false)}
+                    className="w-full text-left px-3.5 py-2 flex items-center space-x-2 text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                  >
+                    <BookOpen className="w-3.5 h-3.5 text-slate-400" />
+                    <span>說明</span>
+                  </button>
+
+                  <button
+                    onClick={() => setShowUserMenu(false)}
+                    className="w-full text-left px-3.5 py-2 flex items-center space-x-2 text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5 text-rose-500" />
+                    <span>登出帳號</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>

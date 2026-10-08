@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   FileText,
   Clock,
-  Sparkles,
   Layers,
   ChevronDown,
   Play,
@@ -184,25 +183,6 @@ export const ExamLandingView: React.FC<ExamLandingViewProps> = ({
 
   return (
     <div className="max-w-[1580px] mx-auto px-4 sm:px-6 py-4 space-y-6">
-      {/* Hero Welcome Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-900 text-white p-6 sm:p-10 shadow-xl shadow-blue-900/10">
-        <div className="relative z-10 max-w-3xl space-y-3">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-semibold text-blue-200">
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>智慧測驗評量中心・Online Examination Portal</span>
-          </div>
-          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">
-            線上測驗首頁與試題類科選擇
-          </h1>
-          <p className="text-sm sm:text-base text-blue-100/90 leading-relaxed font-normal">
-            請在下方下拉式選單選擇欲測驗之「試題類科」，系統將動態加載題庫試題、配置作答時限與評分標準，隨時即可一鍵開始測驗。
-          </p>
-        </div>
-
-        {/* Decorative background shapes */}
-        <div className="absolute right-0 top-0 -mt-10 -mr-10 w-96 h-96 rounded-full bg-blue-500/20 blur-3xl pointer-events-none" />
-        <div className="absolute right-40 bottom-0 -mb-20 w-80 h-80 rounded-full bg-indigo-500/20 blur-2xl pointer-events-none" />
-      </div>
 
       {/* Main Configuration Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

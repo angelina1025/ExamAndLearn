@@ -43,7 +43,7 @@ export const NewQuestionModal: React.FC<NewQuestionModalProps> = ({
       difficultyColor: 'bg-amber-100 text-amber-800 border-amber-200',
       points: points,
       lastModified: '剛剛',
-      author: '管理員 AAA',
+      author: '使用者 AAA',
       isSelected: false,
     });
     onClose();
@@ -86,7 +86,6 @@ export const NewQuestionModal: React.FC<NewQuestionModalProps> = ({
                 <option value="single">單選題</option>
                 <option value="multiple">多選題</option>
                 <option value="boolean">是非題</option>
-                <option value="code">簡答 / 程式手寫題</option>
               </select>
             </div>
 

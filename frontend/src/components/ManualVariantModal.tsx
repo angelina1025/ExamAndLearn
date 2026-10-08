@@ -90,7 +90,7 @@ export const ManualVariantModal: React.FC<ManualVariantModalProps> = ({
         difficultyColor: 'bg-amber-100 text-amber-800 border-amber-200',
         points: 2,
         lastModified: '剛剛',
-        author: '管理員 AAA',
+        author: '使用者 AAA',
         isSelected: false,
       });
     }

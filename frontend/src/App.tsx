@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Navbar, NavTab } from './components/Navbar';
+import { Navbar, NavTab, UserRole } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { ExamView } from './components/ExamView';
 import { AnalysisView } from './components/AnalysisView';
 import { ImportView } from './components/ImportView';
 import { BankView } from './components/BankView';
+import { PermissionsView } from './components/PermissionsView';
 import { OfflineManagerModal } from './components/OfflineManagerModal';
-import { mockQuestions } from './data/mockData';
+import { mockQuestions, mockBankQuestions } from './data/mockData';
 import { ExamQuestion } from './types';
 import {
   getOfflineQuestions,
@@ -19,10 +20,32 @@ import { submitAndGradeExam } from './services/examEngine';
 import { shuffleArray } from './utils/shuffle';
 
 export default function App() {
+  const [currentRole, setCurrentRole] = useState<UserRole>('user'); // 'admin' 或 'user'
   const [currentTab, setCurrentTab] = useState<NavTab>('analysis'); // Default to analysis as in Image 1
   const [questions, setQuestions] = useState<ExamQuestion[]>(mockQuestions);
+  const [bankQuestions, setBankQuestions] = useState<any[]>(mockBankQuestions);
   const [showOfflineModal, setShowOfflineModal] = useState<boolean>(false);
   const [examTitle, setExamTitle] = useState<string>('演算法期末測驗 A 卷');
+
+  const handleSaveToBank = (newQuestions: any[]) => {
+    setBankQuestions((prev) => [...newQuestions, ...prev]);
+    setCurrentTab('bank');
+  };
+
+  const handleChangeRole = (newRole: UserRole) => {
+    setCurrentRole(newRole);
+    if (newRole === 'admin') {
+      // 管理員呈現: 題庫管理系統、題目匯入、平台權限設定
+      if (currentTab === 'exam' || currentTab === 'analysis') {
+        setCurrentTab('bank');
+      }
+    } else {
+      // 使用者呈現: 線上測驗、成績與錯題分析、題庫管理系統、題目匯入
+      if (currentTab === 'permissions') {
+        setCurrentTab('analysis');
+      }
+    }
+  };
 
   // Pre-seed offline cache in background on first launch
   useEffect(() => {
@@ -97,6 +120,8 @@ export default function App() {
       <Navbar
         currentTab={currentTab}
         onSelectTab={setCurrentTab}
+        currentRole={currentRole}
+        onChangeRole={handleChangeRole}
         onOpenOfflineManager={() => setShowOfflineModal(true)}
       />
 
@@ -121,16 +146,28 @@ export default function App() {
 
         {currentTab === 'import' && (
           <ImportView
+            currentRole={currentRole}
             onStartExamWithQuestions={handleStartExamWithQuestions}
-            onSaveToBank={() => setCurrentTab('bank')}
+            onSaveToBank={handleSaveToBank}
           />
         )}
 
         {currentTab === 'bank' && (
           <BankView
+            currentRole={currentRole}
+            questions={bankQuestions}
+            onUpdateQuestions={setBankQuestions}
             onStartExam={() => handleStartOfflineExam([], '題庫抽題自測卷')}
             onNavigateToImport={() => setCurrentTab('import')}
             onOpenOfflineManager={() => setShowOfflineModal(true)}
+          />
+        )}
+
+        {currentTab === 'permissions' && (
+          <PermissionsView
+            currentRole={currentRole}
+            onChangeRole={handleChangeRole}
+            onNavigateTab={setCurrentTab}
           />
         )}
       </main>

@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Search,
   Filter,
   Plus,
-  Sparkles,
-  Download,
   Upload,
   ChevronRight,
   ChevronDown,
@@ -15,31 +13,47 @@ import {
   Edit,
   Eye,
   Trash2,
-  BookOpen,
-  Clock,
-  CheckCircle,
   Database,
   ArrowUpDown,
+  ArrowDown,
+  ArrowUp,
   Tag,
   Share2,
   Layers,
   Sliders,
+  Lock,
+  ShieldCheck,
+  ShieldAlert,
+  UserCheck,
+  Check,
+  AlertCircle,
+  X,
 } from 'lucide-react';
 import { mockBankQuestions, initialCategories } from '../data/mockData';
 import { CategoryNode, ExamQuestion } from '../types';
+import { UserRole } from './Navbar';
 import { AssemblyModal } from './AssemblyModal';
 import { NewQuestionModal } from './NewQuestionModal';
 import { ManualVariantModal } from './ManualVariantModal';
 // Isolated AI feature module (can be toggled with AI_CONFIG.ENABLE_AI_API)
 import { AiDeriveModal, AI_CONFIG } from '../ai-features';
 
+type SortField = 'id' | 'prompt' | 'tags' | 'type' | 'difficulty' | 'points' | 'lastModified';
+type SortDirection = 'default' | 'inverted';
+
 interface BankViewProps {
+  currentRole?: UserRole;
+  questions?: any[];
+  onUpdateQuestions?: (qs: any[]) => void;
   onStartExam: () => void;
   onNavigateToImport: () => void;
   onOpenOfflineManager?: () => void;
 }
 
 export const BankView: React.FC<BankViewProps> = ({
+  currentRole = 'user',
+  questions: externalQuestions,
+  onUpdateQuestions,
   onStartExam,
   onNavigateToImport,
   onOpenOfflineManager,
@@ -48,10 +62,134 @@ export const BankView: React.FC<BankViewProps> = ({
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('sorting-searching');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeTypeFilter, setActiveTypeFilter] = useState<string>('全部');
-  const [questions, setQuestions] = useState(mockBankQuestions);
+  const [difficultyFilter, setDifficultyFilter] = useState<string>('全部難度');
+  const [localQuestions, setLocalQuestions] = useState<any[]>(mockBankQuestions);
+
+  const questions = externalQuestions || localQuestions;
+  const setQuestions = (updater: any) => {
+    if (onUpdateQuestions) {
+      if (typeof updater === 'function') {
+        onUpdateQuestions(updater(questions));
+      } else {
+        onUpdateQuestions(updater);
+      }
+    } else {
+      setLocalQuestions(updater);
+    }
+  };
+
+  // 4. 使用者上傳的題目不會同步呈現到其他使用者題庫，只有管理員上傳的題目才會同步呈現到所有使用者的題庫
+  const roleVisibleQuestions = questions.filter((q) => {
+    if (currentRole === 'admin') {
+      return true; // 管理員可檢視所有題目以進行題目審核
+    }
+    // 使用者模式 (使用者 AAA)
+    if (q.importedBy === 'admin') {
+      return true; // 管理員上傳的題目同步呈現到所有使用者的題庫
+    }
+    // 只有使用者自己 (使用者 AAA) 上傳的題目才會呈現給自己，不會呈現其他使用者的私有題目
+    return q.author === '使用者 AAA' || (q.importedBy === 'user' && !q.author?.includes('王小明'));
+  });
+
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({
     'QS-0842': true,
   });
+
+  // Sorting state: field and per-column direction
+  const [sortField, setSortField] = useState<SortField>('lastModified');
+  const [sortDirections, setSortDirections] = useState<Record<SortField, SortDirection>>({
+    id: 'default',
+    prompt: 'default',
+    tags: 'default',
+    type: 'default',
+    difficulty: 'default',
+    points: 'default',
+    lastModified: 'default',
+  });
+
+  const handleHeaderSort = (field: SortField) => {
+    setSortField(field);
+    setSortDirections((prev) => ({
+      ...prev,
+      [field]: prev[field] === 'default' ? 'inverted' : 'default',
+    }));
+  };
+
+  // Column visibility state (multi-select)
+  const [showColumnDropdown, setShowColumnDropdown] = useState<boolean>(false);
+  const columnDropdownRef = useRef<HTMLDivElement>(null);
+
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
+    id: true,
+    prompt: true,
+    tags: true,
+    type: true,
+    difficulty: true,
+    points: true,
+    lastModified: true,
+    actions: true,
+  });
+
+  const columnOptions = [
+    { key: 'id', label: '題號' },
+    { key: 'prompt', label: '題幹' },
+    { key: 'tags', label: '知識點標籤' },
+    { key: 'type', label: '題型' },
+    { key: 'difficulty', label: '難度係數' },
+    { key: 'points', label: '配分' },
+    { key: 'lastModified', label: '最後修訂紀錄' },
+    { key: 'actions', label: '操作' },
+  ];
+
+  const activeColumnCount = Object.values(visibleColumns).filter(Boolean).length;
+
+  const handleToggleColumn = (key: string) => {
+    // 至少要保留一個欄位
+    if (visibleColumns[key] && activeColumnCount <= 1) {
+      return;
+    }
+    setVisibleColumns((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  const handleSelectAllColumns = () => {
+    setVisibleColumns({
+      id: true,
+      prompt: true,
+      tags: true,
+      type: true,
+      difficulty: true,
+      points: true,
+      lastModified: true,
+      actions: true,
+    });
+  };
+
+  const handleClearColumns = () => {
+    // 清空時預設勾選題號
+    setVisibleColumns({
+      id: true,
+      prompt: false,
+      tags: false,
+      type: false,
+      difficulty: false,
+      points: false,
+      lastModified: false,
+      actions: false,
+    });
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (columnDropdownRef.current && !columnDropdownRef.current.contains(event.target as Node)) {
+        setShowColumnDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Modals state
   const [showAssemblyModal, setShowAssemblyModal] = useState<boolean>(false);
@@ -59,6 +197,73 @@ export const BankView: React.FC<BankViewProps> = ({
   const [showManualVariantModal, setShowManualVariantModal] = useState<boolean>(false);
   const [showNewModal, setShowNewModal] = useState<boolean>(false);
   const [showPreviewModal, setShowPreviewModal] = useState<any | null>(null);
+  const [editingQuestion, setEditingQuestion] = useState<any | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  // 判斷是否為使用者自行匯入的題目
+  const isUserQuestion = (q: any) => {
+    return q.importedBy === 'user' || q.author?.includes('使用者 AAA') || q.author?.includes('使用者');
+  };
+
+  // 管理員匯入的題目只有管理員能編輯或刪除，使用者只能檢視
+  // 使用者能編輯或刪除的只有自己匯入的題目
+  const canEditOrDelete = (q: any) => {
+    if (currentRole === 'admin') {
+      return true;
+    }
+    return isUserQuestion(q);
+  };
+
+  const handleEditQuestion = (q: any) => {
+    if (!canEditOrDelete(q)) {
+      showToast('此題目為管理員匯入之試題，您目前僅具備檢視完整題幹權限，無法進行編輯。');
+      return;
+    }
+    const defaultOpts = [
+      { id: 'A', text: '', isCorrect: true },
+      { id: 'B', text: '', isCorrect: false },
+      { id: 'C', text: '', isCorrect: false },
+      { id: 'D', text: '', isCorrect: false },
+    ];
+    setEditingQuestion({
+      ...q,
+      options: q.options && q.options.length > 0 ? JSON.parse(JSON.stringify(q.options)) : defaultOpts,
+    });
+  };
+
+  const handleSaveEditedQuestion = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingQuestion) return;
+    setQuestions((prev: any[]) =>
+      prev.map((item) => (item.id === editingQuestion.id ? editingQuestion : item))
+    );
+    if (showPreviewModal?.id === editingQuestion.id) {
+      setShowPreviewModal(editingQuestion);
+    }
+    showToast(`試題 #${editingQuestion.id} 已成功更新修訂（含題幹與選項）`);
+    setEditingQuestion(null);
+  };
+
+  const handleDeleteQuestion = (id: string) => {
+    const target = questions.find((q: any) => q.id === id);
+    if (!target) return;
+    if (!canEditOrDelete(target)) {
+      showToast('此題目為管理員匯入之試題，您無權限刪除。');
+      return;
+    }
+    if (window.confirm(`確定要刪除試題 #${id} 嗎？此操作無法復原。`)) {
+      setQuestions((prev: any[]) => prev.filter((item) => item.id !== id));
+      if (showPreviewModal?.id === id) {
+        setShowPreviewModal(null);
+      }
+      showToast(`試題 #${id} 已自題庫中刪除`);
+    }
+  };
 
   // Toggle category tree nodes
   const toggleCategory = (id: string) => {
@@ -79,7 +284,7 @@ export const BankView: React.FC<BankViewProps> = ({
   const handleSelectAll = (checked: boolean) => {
     const updated: Record<string, boolean> = {};
     if (checked) {
-      questions.forEach((q) => {
+      roleVisibleQuestions.forEach((q: any) => {
         updated[q.id] = true;
       });
     }
@@ -94,59 +299,90 @@ export const BankView: React.FC<BankViewProps> = ({
   };
 
   const handleAddNewQuestion = (newQ: any) => {
-    setQuestions([newQ, ...questions]);
+    const enriched = {
+      ...newQ,
+      author: currentRole === 'admin' ? '管理員 AAA' : '使用者 AAA',
+      importedBy: currentRole === 'admin' ? 'admin' : 'user',
+    };
+    setQuestions([enriched, ...questions]);
   };
 
   const selectedCount = Object.values(selectedRows).filter(Boolean).length;
-  const isAllSelected = selectedCount > 0 && selectedCount === questions.length;
+  const isAllSelected = selectedCount > 0 && selectedCount === roleVisibleQuestions.length;
 
-  // Filter questions based on type and search query
-  const filteredQuestions = questions.filter((q) => {
-    if (activeTypeFilter !== '全部' && !q.type.includes(activeTypeFilter.replace('題', ''))) {
-      if (activeTypeFilter === '簡答題 / 程式題' && !q.type.includes('簡答') && !q.type.includes('實作')) {
+  // Filter questions based on type, difficulty, search query, and sorting
+  const filteredQuestions = roleVisibleQuestions
+    .filter((q: any) => {
+      if (difficultyFilter !== '全部難度' && q.difficulty !== difficultyFilter) {
         return false;
       }
-    }
-    if (searchQuery.trim() && !q.prompt.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
-    }
-    return true;
-  });
+      if (activeTypeFilter !== '全部' && !q.type.includes(activeTypeFilter.replace('題', ''))) {
+        return false;
+      }
+      if (searchQuery.trim() && !q.prompt.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      const dir = sortDirections[sortField] || 'default';
+      const isDefault = dir === 'default';
+
+      switch (sortField) {
+        case 'id': {
+          const idA = parseInt(a.id.replace(/\D/g, '') || '0', 10);
+          const idB = parseInt(b.id.replace(/\D/g, '') || '0', 10);
+          return isDefault ? idA - idB : idB - idA;
+        }
+        case 'prompt': {
+          return isDefault ? a.prompt.localeCompare(b.prompt) : b.prompt.localeCompare(a.prompt);
+        }
+        case 'tags': {
+          const tagA = (a.tags || []).join(',');
+          const tagB = (b.tags || []).join(',');
+          return isDefault ? tagA.localeCompare(tagB) : tagB.localeCompare(tagA);
+        }
+        case 'type': {
+          return isDefault ? a.type.localeCompare(b.type) : b.type.localeCompare(a.type);
+        }
+        case 'difficulty': {
+          // 預設由低到高: 基礎 (1) -> 中等 (2) -> 困難 (3)
+          // 向上: 由高到低: 困難 (3) -> 中等 (2) -> 基礎 (1)
+          const diffWeight: Record<string, number> = { '基礎': 1, '中等': 2, '困難': 3 };
+          const wA = diffWeight[a.difficulty] || 2;
+          const wB = diffWeight[b.difficulty] || 2;
+          return isDefault ? wA - wB : wB - wA;
+        }
+        case 'points': {
+          // 預設由低到高: 1分 -> 2分 -> 3分
+          // 向上: 由高到低: 3分 -> 2分 -> 1分
+          const pA = a.points || 0;
+          const pB = b.points || 0;
+          return isDefault ? pA - pB : pB - pA;
+        }
+        case 'lastModified': {
+          // 預設由近到遠: 最新在前 (2 小時前 < 昨天 < 3 天前)
+          // 向上: 由遠至近
+          const getTimeRank = (t: string) => {
+            if (t.includes('分鐘') || t.includes('小時')) return 1;
+            if (t.includes('昨天')) return 2;
+            if (t.includes('天前')) {
+              const days = parseInt(t.match(/\d+/)?.[0] || '1', 10);
+              return 2 + days;
+            }
+            return 99;
+          };
+          const rankA = getTimeRank(a.lastModified || '');
+          const rankB = getTimeRank(b.lastModified || '');
+          return isDefault ? rankA - rankB : rankB - rankA;
+        }
+        default:
+          return 0;
+      }
+    });
 
   return (
     <div className="max-w-[1580px] mx-auto px-4 sm:px-6 py-4 space-y-4">
-      {/* Top Status Bar matching Image 7 */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs px-5 py-3 flex flex-wrap items-center justify-between gap-4 text-xs">
-        <div className="flex flex-wrap items-center gap-6 text-slate-600">
-          <div className="flex items-center space-x-1.5">
-            <Database className="w-4 h-4 text-blue-600" />
-            <span className="font-semibold text-slate-800">題庫總量：12,480 題</span>
-          </div>
-
-          <div className="flex items-center space-x-1.5">
-            <CheckCircle className="w-4 h-4 text-emerald-600" />
-            <span>已通過同儕審核率：<strong className="text-slate-800">94.2%</strong></span>
-          </div>
-
-          <div className="flex items-center space-x-1.5">
-            <Clock className="w-4 h-4 text-slate-400" />
-            <span>最近修訂週期：2025 年春季第 2 梯次</span>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-1.5 text-slate-500">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>雲端資料庫同步正常 (0.18s)</span>
-          </div>
-
-          <button className="flex items-center space-x-1 text-slate-600 hover:text-blue-600 transition">
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>指引手冊</span>
-          </button>
-        </div>
-      </div>
-
       {/* Main Two-Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left Column (3.5 cols): Category Tree (7 層級) */}
@@ -157,9 +393,10 @@ export const BankView: React.FC<BankViewProps> = ({
                 <Folder className="w-4 h-4 text-blue-600" />
                 <span className="font-bold text-slate-800 text-xs sm:text-sm">題庫分類層</span>
               </div>
-              <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
-                7 層級
-              </span>
+              <div className="flex items-center space-x-1.5 text-xs text-slate-600 font-semibold bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200/80">
+                <Database className="w-3.5 h-3.5 text-blue-600" />
+                <span>題庫總量：12,480 題</span>
+              </div>
             </div>
 
             {/* Tree Search Box */}
@@ -322,7 +559,7 @@ export const BankView: React.FC<BankViewProps> = ({
         <div className="lg:col-span-9 space-y-4">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 space-y-4">
             {/* Breadcrumb & Main Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-100">
+            <div className="pb-2 border-b border-slate-100">
               <div>
                 <div className="flex items-center space-x-2 text-xs text-slate-400">
                   <span>電腦科學與資訊工程</span>
@@ -343,44 +580,6 @@ export const BankView: React.FC<BankViewProps> = ({
                   檢視、編修與管理此分類下的測驗題目，支援多維度搜尋、題庫品質審查與即時考卷編排。
                 </p>
               </div>
-
-              {/* Action Buttons matching Image 7 */}
-              <div className="flex flex-wrap items-center gap-2">
-                {onOpenOfflineManager && (
-                  <button
-                    onClick={onOpenOfflineManager}
-                    className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition cursor-pointer"
-                    title="下載本題庫至本機電腦或手機，離線即可隨時考試"
-                  >
-                    <Download className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>預載離線題庫</span>
-                  </button>
-                )}
-
-                <button
-                  onClick={onNavigateToImport}
-                  className="px-3.5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition cursor-pointer"
-                >
-                  <Upload className="w-3.5 h-3.5 text-slate-500" />
-                  <span>批次匯入 (Excel/CSV)</span>
-                </button>
-
-                <button
-                  onClick={() => setShowAssemblyModal(true)}
-                  className="px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 hover:opacity-95 text-white rounded-xl text-xs font-bold shadow-xs flex items-center space-x-1.5 transition cursor-pointer"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>智慧組卷</span>
-                </button>
-
-                <button
-                  onClick={() => setShowNewModal(true)}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white rounded-xl text-xs font-bold shadow-xs shadow-blue-500/25 flex items-center space-x-1.5 transition cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>新增考題</span>
-                </button>
-              </div>
             </div>
 
             {/* Filter and Search Bar matching Image 7 */}
@@ -397,53 +596,102 @@ export const BankView: React.FC<BankViewProps> = ({
               </div>
 
               <div className="flex items-center space-x-2">
-                <select className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 focus:outline-none">
-                  <option>全部難度</option>
-                  <option>基礎</option>
-                  <option>中等</option>
-                  <option>困難</option>
-                </select>
-
-                <select className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 focus:outline-none">
-                  <option>已發布 (已審查)</option>
-                  <option>待同儕審查</option>
-                  <option>草稿箱</option>
-                </select>
-
-                <select className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 focus:outline-none">
-                  <option>最後修改 (最新)</option>
-                  <option>難度由高到低</option>
-                  <option>配分由高到低</option>
-                </select>
-
-                <button className="p-2 border border-slate-200 hover:bg-slate-50 rounded-xl text-slate-500 transition">
-                  <Filter className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Question Type Fast-Filter Pills matching Image 7 */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-semibold text-slate-500 mr-1">題型快篩：</span>
-              {[
-                { label: '全部 (248)', value: '全部' },
-                { label: '單選題 (140)', value: '單選題' },
-                { label: '多選題 (68)', value: '多選題' },
-                { label: '是非題 (28)', value: '是非題' },
-                { label: '簡答題 / 程式題 (12)', value: '簡答題 / 程式題' },
-              ].map((pill) => (
-                <button
-                  key={pill.value}
-                  onClick={() => setActiveTypeFilter(pill.value)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer ${
-                    activeTypeFilter === pill.value
-                      ? 'bg-blue-600 text-white shadow-xs font-semibold'
-                      : 'bg-slate-100 hover:bg-slate-200/80 text-slate-600'
-                  }`}
+                <select
+                  value={difficultyFilter}
+                  onChange={(e) => setDifficultyFilter(e.target.value)}
+                  className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 focus:outline-none text-xs"
                 >
-                  {pill.label}
-                </button>
-              ))}
+                  <option value="全部難度">全部難度</option>
+                  <option value="基礎">基礎</option>
+                  <option value="中等">中等</option>
+                  <option value="困難">困難</option>
+                </select>
+
+                <select
+                  value={activeTypeFilter}
+                  onChange={(e) => setActiveTypeFilter(e.target.value)}
+                  className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 focus:outline-none text-xs"
+                >
+                  <option value="全部">全部題型</option>
+                  <option value="單選題">單選題</option>
+                  <option value="多選題">多選題</option>
+                  <option value="是非題">是非題</option>
+                </select>
+
+                {/* 欄位呈現 (下拉複選) */}
+                <div className="relative" ref={columnDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setShowColumnDropdown((prev) => !prev)}
+                    className={`flex items-center px-3 py-2 bg-white border rounded-xl text-slate-700 hover:bg-slate-50 transition text-xs font-medium cursor-pointer ${
+                      showColumnDropdown ? 'border-blue-500 ring-1 ring-blue-500/20' : 'border-slate-200'
+                    }`}
+                    title="自訂題目清單欄位呈現"
+                  >
+                    <Filter className="w-3.5 h-3.5 text-slate-500 mr-1.5 shrink-0" />
+                    <span>欄位</span>
+                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 ml-1.5 shrink-0 transition-transform ${showColumnDropdown ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {showColumnDropdown && (
+                    <div className="absolute right-0 mt-1.5 w-52 bg-white border border-slate-200 rounded-xl shadow-xl p-2.5 z-40 space-y-1 animate-in fade-in zoom-in-95">
+                      <div className="px-2 py-1 text-[11px] font-semibold text-slate-400 border-b border-slate-100 flex items-center justify-between">
+                        <span>顯示欄位 (複選)</span>
+                        <div className="flex items-center space-x-1.5 text-[10px]">
+                          <button
+                            type="button"
+                            onClick={handleSelectAllColumns}
+                            className="text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+                          >
+                            全選
+                          </button>
+                          <span className="text-slate-300">|</span>
+                          <button
+                            type="button"
+                            onClick={handleClearColumns}
+                            className="text-slate-500 hover:text-slate-700 hover:underline cursor-pointer"
+                            title="清空並保留預設題號"
+                          >
+                            清空
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="py-1 space-y-0.5">
+                        {columnOptions.map((col) => {
+                          const isOnlyActive = visibleColumns[col.key] && activeColumnCount <= 1;
+
+                          return (
+                            <label
+                              key={col.key}
+                              className={`flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-xs select-none ${
+                                isOnlyActive
+                                  ? 'text-slate-400 cursor-not-allowed bg-slate-50/50'
+                                  : 'text-slate-700 hover:bg-slate-50 cursor-pointer'
+                              }`}
+                              title={isOnlyActive ? '至少需保留一個顯示欄位' : undefined}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={visibleColumns[col.key]}
+                                disabled={isOnlyActive}
+                                onChange={() => handleToggleColumn(col.key)}
+                                className={`rounded text-blue-600 border-slate-300 focus:ring-blue-500 w-3.5 h-3.5 ${
+                                  isOnlyActive ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
+                                }`}
+                              />
+                              <span className="font-medium">{col.label}</span>
+                              {isOnlyActive && (
+                                <span className="text-[10px] text-slate-400 ml-auto">(最少1項)</span>
+                              )}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Data Table matching Image 7 */}
@@ -456,16 +704,132 @@ export const BankView: React.FC<BankViewProps> = ({
                         type="checkbox"
                         checked={isAllSelected}
                         onChange={(e) => handleSelectAll(e.target.checked)}
-                        className="rounded text-blue-600 border-slate-300 focus:ring-blue-500 w-3.5 h-3.5"
+                        className="rounded text-blue-600 border-slate-300 focus:ring-blue-500 w-3.5 h-3.5 cursor-pointer"
                       />
                     </th>
-                    <th className="p-3 min-w-[280px]">題號 / 題幹預覽 (QUESTION PROMPT)</th>
-                    <th className="p-3 min-w-[130px]">知識點標籤</th>
-                    <th className="p-3 w-20">題型</th>
-                    <th className="p-3 w-24">難度係數</th>
-                    <th className="p-3 w-16 text-center">配分</th>
-                    <th className="p-3 min-w-[140px]">最後修訂紀錄</th>
-                    <th className="p-3 w-16 text-right">操作</th>
+
+                    {visibleColumns.id && (
+                      <th
+                        onClick={() => handleHeaderSort('id')}
+                        className="p-3 w-28 cursor-pointer hover:bg-slate-100/70 transition select-none group"
+                        title={sortDirections.id === 'default' ? '目前排序：題號由低到高 (點擊切換為由高到低)' : '目前排序：題號由高到低 (點擊切換為由低到高)'}
+                      >
+                        <div className="flex items-center space-x-1.5">
+                          <span>題號</span>
+                          {sortDirections.id === 'inverted' ? (
+                            <ArrowUp className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                          ) : (
+                            <ArrowDown className={`w-3.5 h-3.5 shrink-0 ${sortField === 'id' ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                          )}
+                        </div>
+                      </th>
+                    )}
+
+                    {visibleColumns.prompt && (
+                      <th
+                        onClick={() => handleHeaderSort('prompt')}
+                        className="p-3 min-w-[280px] cursor-pointer hover:bg-slate-100/70 transition select-none group"
+                        title={sortDirections.prompt === 'default' ? '目前排序：題幹由低到高 (點擊切換為由高到低)' : '目前排序：題幹由高到低 (點擊切換為由低到高)'}
+                      >
+                        <div className="flex items-center space-x-1.5">
+                          <span>題幹</span>
+                          {sortDirections.prompt === 'inverted' ? (
+                            <ArrowUp className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                          ) : (
+                            <ArrowDown className={`w-3.5 h-3.5 shrink-0 ${sortField === 'prompt' ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                          )}
+                        </div>
+                      </th>
+                    )}
+
+                    {visibleColumns.tags && (
+                      <th
+                        onClick={() => handleHeaderSort('tags')}
+                        className="p-3 min-w-[130px] cursor-pointer hover:bg-slate-100/70 transition select-none group"
+                        title={sortDirections.tags === 'default' ? '目前排序：由低到高 (點擊切換為由高到低)' : '目前排序：由高到低 (點擊切換為由低到高)'}
+                      >
+                        <div className="flex items-center space-x-1.5">
+                          <span>知識點標籤</span>
+                          {sortDirections.tags === 'inverted' ? (
+                            <ArrowUp className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                          ) : (
+                            <ArrowDown className={`w-3.5 h-3.5 shrink-0 ${sortField === 'tags' ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                          )}
+                        </div>
+                      </th>
+                    )}
+
+                    {visibleColumns.type && (
+                      <th
+                        onClick={() => handleHeaderSort('type')}
+                        className="p-3 w-20 cursor-pointer hover:bg-slate-100/70 transition select-none group"
+                        title={sortDirections.type === 'default' ? '目前排序：由低到高 (點擊切換為由高到低)' : '目前排序：由高到低 (點擊切換為由低到高)'}
+                      >
+                        <div className="flex items-center space-x-1.5">
+                          <span>題型</span>
+                          {sortDirections.type === 'inverted' ? (
+                            <ArrowUp className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                          ) : (
+                            <ArrowDown className={`w-3.5 h-3.5 shrink-0 ${sortField === 'type' ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                          )}
+                        </div>
+                      </th>
+                    )}
+
+                    {visibleColumns.difficulty && (
+                      <th
+                        onClick={() => handleHeaderSort('difficulty')}
+                        className="p-3 w-24 cursor-pointer hover:bg-slate-100/70 transition select-none group"
+                        title={sortDirections.difficulty === 'default' ? '目前排序：由低到高 (基礎→困難，點擊切換為由高到低)' : '目前排序：由高到低 (困難→基礎，點擊切換為由低到高)'}
+                      >
+                        <div className="flex items-center space-x-1.5">
+                          <span>難度係數</span>
+                          {sortDirections.difficulty === 'inverted' ? (
+                            <ArrowUp className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                          ) : (
+                            <ArrowDown className={`w-3.5 h-3.5 shrink-0 ${sortField === 'difficulty' ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                          )}
+                        </div>
+                      </th>
+                    )}
+
+                    {visibleColumns.points && (
+                      <th
+                        onClick={() => handleHeaderSort('points')}
+                        className="p-3 w-16 text-center cursor-pointer hover:bg-slate-100/70 transition select-none group"
+                        title={sortDirections.points === 'default' ? '目前排序：由低到高 (點擊切換為由高到低)' : '目前排序：由高到低 (點擊切換為由低到高)'}
+                      >
+                        <div className="flex items-center justify-center space-x-1">
+                          <span>配分</span>
+                          {sortDirections.points === 'inverted' ? (
+                            <ArrowUp className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                          ) : (
+                            <ArrowDown className={`w-3.5 h-3.5 shrink-0 ${sortField === 'points' ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                          )}
+                        </div>
+                      </th>
+                    )}
+
+                    {visibleColumns.lastModified && (
+                      <th
+                        onClick={() => handleHeaderSort('lastModified')}
+                        className="p-3 min-w-[140px] cursor-pointer hover:bg-slate-100/70 transition select-none group"
+                        title={sortDirections.lastModified === 'default' ? '目前排序：由近到遠 (點擊切換為由遠至近)' : '目前排序：由遠至近 (點擊切換為由近到遠)'}
+                      >
+                        <div className="flex items-center space-x-1.5">
+                          <span>最後修訂紀錄</span>
+                          {sortDirections.lastModified === 'inverted' ? (
+                            <ArrowUp className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                          ) : (
+                            <ArrowDown className={`w-3.5 h-3.5 shrink-0 ${sortField === 'lastModified' ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                          )}
+                        </div>
+                      </th>
+                    )}
+
+                    {visibleColumns.actions && (
+                      <th className="p-3 w-16 text-right">操作</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -489,83 +853,128 @@ export const BankView: React.FC<BankViewProps> = ({
                           />
                         </td>
 
-                        {/* Prompt & Code */}
-                        <td className="p-3 space-y-1">
-                          <div className="flex items-center space-x-2">
+                        {/* Question ID */}
+                        {visibleColumns.id && (
+                          <td className="p-3 whitespace-nowrap">
                             <span className="font-mono font-bold text-blue-700">
                               #{row.id}
                             </span>
-                            <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-semibold rounded border border-blue-200/60">
-                              {row.badge}
-                            </span>
-                          </div>
-                          <div className="font-medium text-slate-800 line-clamp-2 leading-relaxed">
-                            {row.prompt}
-                          </div>
-                        </td>
+                          </td>
+                        )}
+
+                        {/* Prompt */}
+                        {visibleColumns.prompt && (
+                          <td className="p-3">
+                            <div className="font-medium text-slate-800 line-clamp-2 leading-relaxed">
+                              {row.prompt}
+                            </div>
+                          </td>
+                        )}
 
                         {/* Tags */}
-                        <td className="p-3">
-                          <div className="flex flex-wrap gap-1">
-                            {row.tags.map((t, idx) => (
-                              <span
-                                key={idx}
-                                className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[11px] rounded"
-                              >
-                                {t}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
+                        {visibleColumns.tags && (
+                          <td className="p-3">
+                            <div className="flex flex-wrap gap-1">
+                              {row.tags.map((t, idx) => (
+                                <span
+                                  key={idx}
+                                  className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[11px] rounded"
+                                >
+                                  {t}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                        )}
 
                         {/* Question Type */}
-                        <td className="p-3">
-                          <span
-                            className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${row.typeBadgeColor}`}
-                          >
-                            {row.type}
-                          </span>
-                        </td>
+                        {visibleColumns.type && (
+                          <td className="p-3">
+                            <span
+                              className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${row.typeBadgeColor}`}
+                            >
+                              {row.type}
+                            </span>
+                          </td>
+                        )}
 
                         {/* Difficulty */}
-                        <td className="p-3">
-                          <span
-                            className={`px-2 py-0.5 rounded text-[11px] font-medium border font-mono ${row.difficultyColor}`}
-                          >
-                            {row.difficulty} ({row.difficultyScore})
-                          </span>
-                        </td>
+                        {visibleColumns.difficulty && (
+                          <td className="p-3">
+                            <span
+                              className={`px-2 py-0.5 rounded text-[11px] font-medium border font-mono ${row.difficultyColor}`}
+                            >
+                              {row.difficulty} ({row.difficultyScore})
+                            </span>
+                          </td>
+                        )}
 
                         {/* Points */}
-                        <td className="p-3 text-center font-bold text-blue-700 font-mono">
-                          {row.points} 分
-                        </td>
+                        {visibleColumns.points && (
+                          <td className="p-3 text-center font-bold text-blue-700 font-mono">
+                            {row.points} 分
+                          </td>
+                        )}
 
                         {/* Revision */}
-                        <td className="p-3 text-slate-500 text-[11px] leading-snug">
-                          <div className="font-medium text-slate-700">{row.lastModified}</div>
-                          <div className="text-slate-400">{row.author}</div>
-                        </td>
+                        {visibleColumns.lastModified && (
+                          <td className="p-3 text-slate-500 text-[11px] leading-snug">
+                            <div className="font-medium text-slate-700">{row.lastModified}</div>
+                            <div className="flex items-center space-x-1.5 mt-0.5">
+                              <span className="text-slate-400">{row.author}</span>
+                              {isUserQuestion(row) ? (
+                                <span className="px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 text-[10px] font-semibold border border-emerald-200/60">
+                                  自訂匯入
+                                </span>
+                              ) : (
+                                <span className="px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 text-[10px] font-semibold border border-blue-200/60">
+                                  管理員匯入
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                        )}
 
                         {/* Action buttons */}
-                        <td className="p-3 text-right">
-                          <div className="flex items-center justify-end space-x-1.5 text-slate-400">
-                            <button
-                              onClick={() => setShowPreviewModal(row)}
-                              className="p-1 hover:text-slate-700 rounded transition"
-                              title="預覽試題"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => {}}
-                              className="p-1 hover:text-blue-600 rounded transition"
-                              title="編輯"
-                            >
-                              <Edit className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
+                        {visibleColumns.actions && (
+                          <td className="p-3 text-right">
+                            <div className="flex items-center justify-end space-x-1.5 text-slate-400">
+                              <button
+                                onClick={() => setShowPreviewModal(row)}
+                                className="p-1 hover:text-blue-600 hover:bg-blue-50 rounded transition cursor-pointer"
+                                title="檢視試題完整題幹"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                              </button>
+
+                              {canEditOrDelete(row) ? (
+                                <>
+                                  <button
+                                    onClick={() => handleEditQuestion(row)}
+                                    className="p-1 hover:text-blue-600 hover:bg-blue-50 rounded transition cursor-pointer"
+                                    title="編輯試題"
+                                  >
+                                    <Edit className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteQuestion(row.id)}
+                                    className="p-1 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer"
+                                    title="刪除試題"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </>
+                              ) : (
+                                <span
+                                  className="p-1 text-slate-300 flex items-center"
+                                  title="管理員匯入之題目僅供檢視，無編輯或刪除權限"
+                                >
+                                  <Lock className="w-3.5 h-3.5" />
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                        )}
                       </tr>
                     );
                   })}
@@ -759,43 +1168,387 @@ export const BankView: React.FC<BankViewProps> = ({
         onSave={handleAddNewQuestion}
       />
 
-      {/* Question Preview Modal */}
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center space-x-2 text-xs font-semibold animate-in fade-in slide-in-from-bottom-3">
+          <Check className="w-4 h-4 text-emerald-400" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Question Preview Modal (檢視完整題幹與權限資訊) */}
       {showPreviewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 border border-slate-200 space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <span className="font-mono font-bold text-blue-700 text-sm">
-                #{showPreviewModal.id} {showPreviewModal.badge}
-              </span>
+          <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full p-6 border border-slate-200 space-y-4 animate-in fade-in zoom-in-95">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center space-x-2.5">
+                <span className="font-mono font-bold text-blue-700 text-base">
+                  #{showPreviewModal.id}
+                </span>
+                {isUserQuestion(showPreviewModal) ? (
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200 flex items-center space-x-1">
+                    <UserCheck className="w-3 h-3 text-emerald-600" />
+                    <span>使用者自行匯入</span>
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200 flex items-center space-x-1">
+                    <ShieldCheck className="w-3 h-3 text-blue-600" />
+                    <span>管理員匯入試題</span>
+                  </span>
+                )}
+              </div>
               <button
                 onClick={() => setShowPreviewModal(null)}
-                className="text-slate-400 hover:text-slate-600 text-xs"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="font-medium text-slate-800 text-sm leading-relaxed">
-              {showPreviewModal.prompt}
+
+            {/* Complete Question Prompt Display (完整題幹) */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 flex items-center space-x-1">
+                <span>完整題幹敘述 (Question Prompt)：</span>
+              </label>
+              <div className="p-4 bg-slate-50/90 rounded-2xl border border-slate-200/90 text-slate-800 text-sm leading-relaxed whitespace-pre-wrap select-text font-medium">
+                {showPreviewModal.prompt}
+              </div>
             </div>
-            <div className="flex items-center space-x-2 text-xs">
-              <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-semibold">
-                {showPreviewModal.type}
-              </span>
-              <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-mono">
-                難度: {showPreviewModal.difficulty} ({showPreviewModal.difficultyScore})
-              </span>
-              <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold">
-                {showPreviewModal.points} 分
-              </span>
+
+            {/* Metadata Pills */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="text-[10px] text-slate-400 font-medium">試題類型</div>
+                <div className="font-semibold text-slate-800 mt-0.5">{showPreviewModal.type}</div>
+              </div>
+              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="text-[10px] text-slate-400 font-medium">難度係數</div>
+                <div className="font-semibold text-slate-800 mt-0.5">
+                  {showPreviewModal.difficulty} ({showPreviewModal.difficultyScore})
+                </div>
+              </div>
+              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="text-[10px] text-slate-400 font-medium">預設配分</div>
+                <div className="font-bold text-blue-700 font-mono mt-0.5">
+                  {showPreviewModal.points} 分
+                </div>
+              </div>
+              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="text-[10px] text-slate-400 font-medium">匯入作者</div>
+                <div className="font-semibold text-slate-800 truncate mt-0.5">
+                  {showPreviewModal.author}
+                </div>
+              </div>
             </div>
-            <div className="pt-2 text-right">
+
+            {/* Tags */}
+            {showPreviewModal.tags && showPreviewModal.tags.length > 0 && (
+              <div className="space-y-1">
+                <div className="text-[11px] font-semibold text-slate-500">知識點標籤：</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {showPreviewModal.tags.map((t: string, idx: number) => (
+                    <span
+                      key={idx}
+                      className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded-lg border border-blue-200/60 font-medium"
+                    >
+                      #{t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Options Display (選項內容與正解) */}
+            {showPreviewModal.options && showPreviewModal.options.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="text-xs font-semibold text-slate-700">試題選項與正解標示：</div>
+                <div className="space-y-1.5">
+                  {showPreviewModal.options.map((opt: any, idx: number) => (
+                    <div
+                      key={opt.id || idx}
+                      className={`p-2.5 rounded-xl border text-xs flex items-center justify-between transition ${
+                        opt.isCorrect
+                          ? 'bg-emerald-50/80 border-emerald-300 text-emerald-950 font-medium'
+                          : 'bg-slate-50 border-slate-200/70 text-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2.5">
+                        <span
+                          className={`w-5 h-5 rounded-md flex items-center justify-center font-bold text-[11px] ${
+                            opt.isCorrect ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'
+                          }`}
+                        >
+                          {opt.id || String.fromCharCode(65 + idx)}
+                        </span>
+                        <span className="leading-relaxed">{opt.text}</span>
+                      </div>
+                      {opt.isCorrect && (
+                        <span className="px-2 py-0.5 rounded-md bg-emerald-200/80 text-emerald-900 text-[10px] font-bold shrink-0 ml-2">
+                          ✓ 正解
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Permission Notice Banner */}
+            <div className="pt-1">
+              {canEditOrDelete(showPreviewModal) ? (
+                <div className="p-3 bg-emerald-50/80 border border-emerald-200 rounded-xl text-emerald-800 text-xs flex items-center space-x-2">
+                  <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>您具備此題之編輯與刪除權限（可點擊下方按鈕進行編修）。</span>
+                </div>
+              ) : (
+                <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl text-amber-800 text-xs flex items-center space-x-2">
+                  <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>此題為管理員／官方匯入之題庫，您目前僅能檢視完整題幹內容，無法進行編輯或刪除。</span>
+                </div>
+              )}
+            </div>
+
+            {/* Footer Actions */}
+            <div className="pt-2 flex items-center justify-between border-t border-slate-100">
+              <div>
+                {canEditOrDelete(showPreviewModal) && (
+                  <button
+                    onClick={() => handleDeleteQuestion(showPreviewModal.id)}
+                    className="px-3 py-2 text-rose-600 hover:bg-rose-50 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center space-x-1"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>刪除此題</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setShowPreviewModal(null)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition cursor-pointer"
+                >
+                  關閉
+                </button>
+                {canEditOrDelete(showPreviewModal) && (
+                  <button
+                    onClick={() => {
+                      const target = { ...showPreviewModal };
+                      setShowPreviewModal(null);
+                      handleEditQuestion(target);
+                    }}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition cursor-pointer shadow-xs flex items-center space-x-1"
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                    <span>編輯此題</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Question Modal (編輯題目，含選項編輯) */}
+      {editingQuestion && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/80 shrink-0">
+              <div className="flex items-center space-x-2">
+                <Edit className="w-4 h-4 text-blue-600" />
+                <h3 className="font-bold text-slate-800 text-base">
+                  編輯試題內容 #{editingQuestion.id}
+                </h3>
+              </div>
               <button
-                onClick={() => setShowPreviewModal(null)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold"
+                onClick={() => setEditingQuestion(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
               >
-                關閉
+                <X className="w-5 h-5" />
               </button>
             </div>
+
+            <form onSubmit={handleSaveEditedQuestion} className="p-6 space-y-4 text-xs overflow-y-auto flex-1">
+              <div className="space-y-1">
+                <label className="font-semibold text-slate-700">完整題幹敘述 (Prompt) *</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={editingQuestion.prompt}
+                  onChange={(e) =>
+                    setEditingQuestion({ ...editingQuestion, prompt: e.target.value })
+                  }
+                  className="w-full p-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs leading-relaxed"
+                />
+              </div>
+
+              {/* 1. 題庫題目編輯要能編輯選項 */}
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <div className="flex items-center justify-between">
+                  <label className="font-semibold text-slate-700 flex items-center space-x-1.5">
+                    <span>試題選項內容與正解設定 *</span>
+                    <span className="text-[10px] text-slate-400 font-normal">（點擊標籤可設為正解）</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cur = editingQuestion.options || [];
+                      const nextChar = String.fromCharCode(65 + cur.length);
+                      setEditingQuestion({
+                        ...editingQuestion,
+                        options: [
+                          ...cur,
+                          { id: nextChar, text: '', isCorrect: false },
+                        ],
+                      });
+                    }}
+                    className="text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center space-x-1 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>新增選項</span>
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  {(editingQuestion.options || []).map((opt: any, idx: number) => (
+                    <div key={idx} className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = (editingQuestion.options || []).map((o: any, i: number) => {
+                            if (editingQuestion.type === '多選題') {
+                              return i === idx ? { ...o, isCorrect: !o.isCorrect } : o;
+                            }
+                            return { ...o, isCorrect: i === idx };
+                          });
+                          setEditingQuestion({ ...editingQuestion, options: updated });
+                        }}
+                        className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer shrink-0 ${
+                          opt.isCorrect
+                            ? 'bg-emerald-500 text-white border-emerald-600 shadow-xs'
+                            : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+                        }`}
+                        title="點擊設定為正解"
+                      >
+                        {opt.isCorrect ? '✓ 正解' : '選項'} {opt.id || String.fromCharCode(65 + idx)}
+                      </button>
+
+                      <input
+                        type="text"
+                        required
+                        value={opt.text}
+                        onChange={(e) => {
+                          const updated = [...(editingQuestion.options || [])];
+                          updated[idx] = { ...updated[idx], text: e.target.value };
+                          setEditingQuestion({ ...editingQuestion, options: updated });
+                        }}
+                        placeholder={`請輸入選項 ${opt.id || String.fromCharCode(65 + idx)} 的文字敘述...`}
+                        className="flex-1 p-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+
+                      {(editingQuestion.options || []).length > 2 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = (editingQuestion.options || []).filter((_: any, i: number) => i !== idx);
+                            setEditingQuestion({ ...editingQuestion, options: updated });
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-rose-500 rounded transition cursor-pointer"
+                          title="刪除此選項"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-100">
+                <div className="space-y-1">
+                  <label className="font-semibold text-slate-700">試題類型</label>
+                  <select
+                    value={editingQuestion.type}
+                    onChange={(e) =>
+                      setEditingQuestion({ ...editingQuestion, type: e.target.value })
+                    }
+                    className="w-full p-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
+                  >
+                    <option value="單選題">單選題</option>
+                    <option value="多選題">多選題</option>
+                    <option value="是非題">是非題</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-slate-700">難度評等</label>
+                  <select
+                    value={editingQuestion.difficulty}
+                    onChange={(e) =>
+                      setEditingQuestion({ ...editingQuestion, difficulty: e.target.value })
+                    }
+                    className="w-full p-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
+                  >
+                    <option value="基礎">基礎</option>
+                    <option value="中等">中等</option>
+                    <option value="困難">困難</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-slate-700">預設配分 (分)</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="1"
+                    max="20"
+                    value={editingQuestion.points}
+                    onChange={(e) =>
+                      setEditingQuestion({
+                        ...editingQuestion,
+                        points: parseFloat(e.target.value) || 2,
+                      })
+                    }
+                    className="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-semibold text-slate-700">知識點標籤 (以逗號分隔)</label>
+                <input
+                  type="text"
+                  value={editingQuestion.tags ? editingQuestion.tags.join(', ') : ''}
+                  onChange={(e) =>
+                    setEditingQuestion({
+                      ...editingQuestion,
+                      tags: e.target.value
+                        .split(',')
+                        .map((s) => s.trim())
+                        .filter(Boolean),
+                    })
+                  }
+                  placeholder="例如：排序演算法, 堆積建構"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end space-x-2 border-t border-slate-100 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setEditingQuestion(null)}
+                  className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 font-semibold cursor-pointer"
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-xs cursor-pointer"
+                >
+                  儲存修改
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
