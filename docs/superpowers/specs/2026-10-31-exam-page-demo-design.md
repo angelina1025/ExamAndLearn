@@ -57,6 +57,7 @@ src/
     globals.css                 設計變數與共用樣式
     exam/[examId]/page.tsx      考試頁（Server Component 包裝）
   components/exam/
+    ExamList.tsx               試卷清單與已完成狀態
     ExamClient.tsx              考試頁 Client Component
     ExamHeader.tsx              標題、倒數、進度、暫停、交卷、返回
     QuestionCard.tsx            題目、選項、標註
@@ -64,7 +65,6 @@ src/
     PauseOverlay.tsx            暫停遮罩與重新測試
     SubmitDialog.tsx            交卷確認
     SuccessView.tsx             交卷成功
-    MobileMapButton.tsx         手機版題目地圖按鈕
   features/exam/
     examReducer.ts              純函式狀態轉移
     useExamSession.ts           reducer、actions、localStorage 同步
