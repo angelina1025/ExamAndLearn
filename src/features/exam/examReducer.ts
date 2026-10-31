@@ -65,14 +65,19 @@ export function examReducer(state: ExamSessionState, action: ExamAction): ExamSe
       return { ...state, remainingSec };
     }
 
-    case "PAUSE":
+    case "PAUSE": {
       if (state.status !== "running") return state;
+      const remainingSec = Math.max(0, action.remainingSec);
+      if (remainingSec === 0) {
+        return { ...state, remainingSec: 0, status: "submitted", deadline: null };
+      }
       return {
         ...state,
         status: "paused",
-        remainingSec: Math.max(0, action.remainingSec),
+        remainingSec,
         deadline: null,
       };
+    }
 
     case "RESUME":
       if (state.status !== "paused") return state;

@@ -92,6 +92,16 @@ describe("examReducer", () => {
     expect(next.deadline).toBeNull();
   });
 
+  it("submits when pausing at zero remaining time", () => {
+    const next = examReducer(baseState({ remainingSec: 1 }), {
+      type: "PAUSE",
+      remainingSec: 0,
+    });
+    expect(next.status).toBe("submitted");
+    expect(next.remainingSec).toBe(0);
+    expect(next.deadline).toBeNull();
+  });
+
   it("resumes with a new deadline", () => {
     const paused = baseState({ status: "paused", remainingSec: 300, deadline: null });
     const next = examReducer(paused, { type: "RESUME", deadline: 2_000_000 });

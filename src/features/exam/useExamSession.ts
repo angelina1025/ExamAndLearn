@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { Answer, Exam, ExamSessionState } from "@/types/exam";
 import { createInitialState, examReducer } from "./examReducer";
 import { isStorageAvailable, loadSession, saveSession } from "./storage";
@@ -13,13 +13,18 @@ export function useExamSession(exam: Exam) {
   const [ready, setReady] = useState(false);
   const [storageWarning, setStorageWarning] = useState(false);
   const stateRef = useRef(state);
+  const readyRef = useRef(false);
   const previousRef = useRef<ExamSessionState | null>(null);
   const hydratedRef = useRef(false);
   const storageFailedRef = useRef(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     stateRef.current = state;
   }, [state]);
+
+  useEffect(() => {
+    readyRef.current = ready;
+  }, [ready]);
 
   useEffect(() => {
     if (hydratedRef.current) return;
@@ -61,7 +66,10 @@ export function useExamSession(exam: Exam) {
   }, [ready, state.deadline, state.status]);
 
   useEffect(() => {
-    const handler = () => saveSession(stateRef.current);
+    const handler = () => {
+      if (!readyRef.current) return;
+      saveSession(stateRef.current);
+    };
     window.addEventListener("pagehide", handler);
     return () => window.removeEventListener("pagehide", handler);
   }, []);
