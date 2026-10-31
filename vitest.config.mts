@@ -12,6 +12,7 @@ export default defineConfig({
     include: ["src/**/*.test.{ts,tsx}"],
   },
   resolve: {
+    // 必須與 tsconfig.json 的 paths 保持一致
     alias: { "@": srcDir },
   },
 });
