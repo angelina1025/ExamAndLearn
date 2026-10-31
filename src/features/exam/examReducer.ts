@@ -58,10 +58,10 @@ export function examReducer(state: ExamSessionState, action: ExamAction): ExamSe
     case "TICK": {
       if (state.status !== "running") return state;
       const remainingSec = Math.max(0, action.remainingSec);
-      if (remainingSec === state.remainingSec) return state;
       if (remainingSec === 0) {
         return { ...state, remainingSec: 0, status: "submitted", deadline: null };
       }
+      if (remainingSec === state.remainingSec) return state;
       return { ...state, remainingSec };
     }
 

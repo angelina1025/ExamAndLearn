@@ -71,6 +71,14 @@ describe("examReducer", () => {
     expect(next.status).toBe("running");
   });
 
+  it("auto-submits when ticking zero while already at zero", () => {
+    const state = baseState({ remainingSec: 0, status: "running", deadline: 1_000_000 });
+    const next = examReducer(state, { type: "TICK", remainingSec: 0 });
+    expect(next.status).toBe("submitted");
+    expect(next.remainingSec).toBe(0);
+    expect(next.deadline).toBeNull();
+  });
+
   it("auto-submits when the timer reaches zero", () => {
     const next = examReducer(baseState(), { type: "TICK", remainingSec: 0 });
     expect(next.status).toBe("submitted");
