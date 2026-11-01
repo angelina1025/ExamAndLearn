@@ -20,7 +20,7 @@ export function ExamHeader({ exam, remainingSec, answered, total, running, onPau
   const danger = remainingSec <= 60;
 
   function handleBack(event: MouseEvent<HTMLAnchorElement>) {
-    if (!window.confirm("返回試卷選擇頁？作答進度會保留。")) {
+    if (!window.confirm("返回首頁？作答進度會保留。")) {
       event.preventDefault();
     }
   }

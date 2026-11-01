@@ -29,7 +29,7 @@ export function SuccessView({ exam, answered, total, autoSubmitted }: Props) {
             作答題數：{answered} / {total} 題
           </p>
           <Link href="/" className="exam-btn exam-btn-primary mt-8 inline-block px-6 py-2">
-            返回試卷選擇
+            返回首頁
           </Link>
         </div>
       </div>
