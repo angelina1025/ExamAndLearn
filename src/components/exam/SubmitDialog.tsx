@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 interface Props {
   open: boolean;
   answered: number;
@@ -19,12 +21,35 @@ export function SubmitDialog({
   onCancel,
   onConfirm,
 }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    containerRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onCancel();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, onCancel]);
+
   if (!open) return null;
 
   return (
-    <div className="exam-overlay" role="dialog" aria-modal="true" aria-label="交卷確認">
-      <div className="exam-card w-full max-w-lg p-6">
-        <h2 className="text-xl font-bold">確認交卷？</h2>
+    <div
+      className="exam-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="submit-dialog-title"
+    >
+      <div
+        ref={containerRef}
+        tabIndex={-1}
+        className="exam-card w-full max-w-lg p-6 focus:outline-none"
+      >
+        <h2 id="submit-dialog-title" className="text-xl font-bold">
+          確認交卷？
+        </h2>
         <dl className="mt-4 grid grid-cols-2 gap-3 border-y border-[#d5dce4] py-4 text-sm">
           <div>
             <dt className="text-xs text-[#5b6673]">已作答</dt>

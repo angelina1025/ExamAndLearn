@@ -54,9 +54,15 @@ export function QuestionCard({ question, number, answer, flagged, onAnswer, onTo
         </button>
       </div>
 
-      <p className="mb-3 text-[15px] leading-7">{question.prompt}</p>
+      <p id={`question-${question.id}-prompt`} className="mb-3 text-[15px] leading-7">
+        {question.prompt}
+      </p>
 
-      <div className={question.type === "boolean" ? "grid gap-2 sm:grid-cols-2" : "space-y-2"}>
+      <div
+        role="group"
+        aria-labelledby={`question-${question.id}-prompt`}
+        className={question.type === "boolean" ? "grid gap-2 sm:grid-cols-2" : "space-y-2"}
+      >
         {question.options.map((option) => {
           const isSelected = selected.includes(option.id);
           return (
@@ -64,11 +70,14 @@ export function QuestionCard({ question, number, answer, flagged, onAnswer, onTo
               key={option.id}
               type="button"
               onClick={() => select(option.id)}
+              aria-pressed={isSelected}
               data-selected={isSelected}
               data-multiple={multiple}
               className="exam-option"
             >
-              <span className="exam-mark">{isSelected ? "✓" : ""}</span>
+              <span aria-hidden="true" className="exam-mark">
+                {isSelected ? "✓" : ""}
+              </span>
               <span className="font-bold text-[#5b6673]">{option.id}</span>
               <span>{option.text}</span>
             </button>

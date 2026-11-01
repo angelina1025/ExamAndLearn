@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { formatTime } from "@/features/exam/timer";
 
 interface Props {
@@ -9,10 +10,27 @@ interface Props {
 }
 
 export function PauseOverlay({ remainingSec, onResume, onReset }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    containerRef.current?.focus();
+  }, []);
+
   return (
-    <div className="exam-overlay" role="dialog" aria-modal="true" aria-label="考試暫停">
-      <div className="exam-card w-full max-w-md p-6">
-        <h2 className="text-xl font-bold">考試已暫停</h2>
+    <div
+      className="exam-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pause-overlay-title"
+    >
+      <div
+        ref={containerRef}
+        tabIndex={-1}
+        className="exam-card w-full max-w-md p-6 focus:outline-none"
+      >
+        <h2 id="pause-overlay-title" className="text-xl font-bold">
+          考試已暫停
+        </h2>
         <p className="mt-2 text-sm text-[#5b6673]">
           題目與倒數計時已停止。準備好後請繼續考試。
         </p>

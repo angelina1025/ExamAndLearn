@@ -15,6 +15,7 @@ export function ExamClient({ exam }: { exam: Exam }) {
   const { state, ready, storageWarning, ...actions } = useExamSession(exam);
   const [mapOpen, setMapOpen] = useState(false);
   const [submitOpen, setSubmitOpen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(true);
   const refs = useRef<Array<HTMLElement | null>>([]);
   const userScrolledRef = useRef(false);
   const restoredRef = useRef(false);
@@ -102,90 +103,110 @@ export function ExamClient({ exam }: { exam: Exam }) {
 
   const total = exam.questions.length;
   const current = state.currentIndex;
+  const overlayOpen = mapOpen || submitOpen || state.status === "paused";
 
   return (
     <div className="min-h-screen pb-20 lg:pb-0">
-      <ExamHeader
-        exam={exam}
-        remainingSec={state.remainingSec}
-        answered={answered}
-        total={total}
-        running={state.status === "running"}
-        onPause={actions.pause}
-        onSubmit={() => setSubmitOpen(true)}
-      />
+      <div inert={overlayOpen || undefined}>
+        <ExamHeader
+          exam={exam}
+          remainingSec={state.remainingSec}
+          answered={answered}
+          total={total}
+          running={state.status === "running"}
+          onPause={actions.pause}
+          onSubmit={() => setSubmitOpen(true)}
+        />
 
-      {storageWarning ? (
-        <div className="exam-shell mt-3">
-          <p className="border border-[#d8b55a] bg-[#fff4d1] px-3 py-2 text-xs text-[#7a5400]">
-            瀏覽器無法使用本機儲存，重新整理後作答進度可能遺失。
-          </p>
-        </div>
-      ) : null}
+        {storageWarning ? (
+          <div className="exam-shell mt-3">
+            <p className="border border-[#d8b55a] bg-[#fff4d1] px-3 py-2 text-xs text-[#7a5400]">
+              瀏覽器無法使用本機儲存，重新整理後作答進度可能遺失。
+            </p>
+          </div>
+        ) : null}
 
-      <div className="exam-shell mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_264px]">
-        <main className="space-y-3">
-          {exam.questions.map((question, index) => (
-            <div
-              key={question.id}
-              ref={(element) => {
-                refs.current[index] = element;
-              }}
-            >
-              <QuestionCard
-                question={question}
-                number={index + 1}
-                answer={state.answers[question.id]}
-                flagged={state.flags.includes(question.id)}
-                onAnswer={(answer) => actions.answer(question.id, answer)}
-                onToggleFlag={() => actions.toggleFlag(question.id)}
-              />
+        <div className="exam-shell mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_220px] lg:grid-cols-[minmax(0,1fr)_264px]">
+          <main className="space-y-3">
+            {exam.questions.map((question, index) => (
+              <div
+                key={question.id}
+                ref={(element) => {
+                  refs.current[index] = element;
+                }}
+              >
+                <QuestionCard
+                  question={question}
+                  number={index + 1}
+                  answer={state.answers[question.id]}
+                  flagged={state.flags.includes(question.id)}
+                  onAnswer={(answer) => actions.answer(question.id, answer)}
+                  onToggleFlag={() => actions.toggleFlag(question.id)}
+                />
+              </div>
+            ))}
+
+            <div className="flex gap-2 pb-6">
+              <button
+                type="button"
+                onClick={() => navigate(current - 1)}
+                disabled={current <= 0}
+                className="exam-btn flex-1 py-2"
+              >
+                上一題
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(current + 1)}
+                disabled={current >= total - 1}
+                className="exam-btn flex-1 py-2"
+              >
+                下一題
+              </button>
             </div>
-          ))}
+          </main>
 
-          <div className="flex gap-2 pb-6">
-            <button
-              type="button"
-              onClick={() => navigate(current - 1)}
-              disabled={current <= 0}
-              className="exam-btn flex-1 py-2"
-            >
-              上一題
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate(current + 1)}
-              disabled={current >= total - 1}
-              className="exam-btn flex-1 py-2"
-            >
-              下一題
-            </button>
-          </div>
-        </main>
+          <aside className="hidden md:block">
+            <div className="sticky top-24">
+              {panelOpen ? (
+                <>
+                  <div className="mb-1 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setPanelOpen(false)}
+                      className="text-[11px] text-[#5b6673] underline"
+                    >
+                      收合題目地圖
+                    </button>
+                  </div>
+                  <QuestionMap
+                    questions={exam.questions}
+                    answers={state.answers}
+                    flags={state.flags}
+                    currentIndex={state.currentIndex}
+                    onNavigate={navigate}
+                  />
+                </>
+              ) : (
+                <button type="button" onClick={() => setPanelOpen(true)} className="exam-btn w-full py-2">
+                  題目地圖
+                </button>
+              )}
+            </div>
+          </aside>
+        </div>
 
-        <aside className="hidden lg:block">
-          <div className="sticky top-24">
-            <QuestionMap
-              questions={exam.questions}
-              answers={state.answers}
-              flags={state.flags}
-              currentIndex={state.currentIndex}
-              onNavigate={navigate}
-            />
-          </div>
-        </aside>
+        <button
+          type="button"
+          onClick={() => setMapOpen(true)}
+          className="exam-btn exam-btn-primary fixed bottom-4 right-4 z-30 px-4 py-3 md:hidden"
+        >
+          題目地圖
+        </button>
       </div>
 
-      <button
-        type="button"
-        onClick={() => setMapOpen(true)}
-        className="exam-btn exam-btn-primary fixed bottom-4 right-4 z-30 px-4 py-3 lg:hidden"
-      >
-        題目地圖
-      </button>
-
       {mapOpen ? (
-        <div className="fixed inset-0 z-40 lg:hidden">
+        <div className="fixed inset-0 z-40 md:hidden">
           <button
             type="button"
             aria-label="關閉題目地圖"
