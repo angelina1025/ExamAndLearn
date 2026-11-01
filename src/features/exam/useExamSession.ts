@@ -7,8 +7,10 @@ import { isStorageAvailable, loadSession, saveSession } from "./storage";
 import { remainingFromDeadline } from "./timer";
 
 export function useExamSession(exam: Exam) {
+  // 初始狀態刻意不含「現在時間」：Next.js 的 Cache Components 會在 prerender 期間
+  // 阻擋 Client Component 讀取 Date.now()。真正的 deadline 於掛載後的 effect 計算。
   const [state, dispatch] = useReducer(examReducer, undefined, () =>
-    createInitialState(exam.id, exam.durationSec, Date.now() + exam.durationSec * 1000)
+    createInitialState(exam.id, exam.durationSec, null)
   );
   const [ready, setReady] = useState(false);
   const [storageWarning, setStorageWarning] = useState(false);
@@ -29,8 +31,17 @@ export function useExamSession(exam: Exam) {
   useEffect(() => {
     if (hydratedRef.current) return;
     hydratedRef.current = true;
-    const saved = loadSession(exam);
-    if (saved) dispatch({ type: "HYDRATE", state: saved });
+    const now = Date.now();
+    const saved = loadSession(exam, now);
+    if (saved) {
+      dispatch({ type: "HYDRATE", state: saved });
+    } else {
+      dispatch({
+        type: "RESET",
+        durationSec: exam.durationSec,
+        deadline: now + exam.durationSec * 1000,
+      });
+    }
     setStorageWarning(!isStorageAvailable());
     setReady(true);
   }, [exam]);

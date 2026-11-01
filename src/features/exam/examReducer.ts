@@ -14,7 +14,7 @@ export type ExamAction =
 export function createInitialState(
   examId: string,
   durationSec: number,
-  deadline: number
+  deadline: number | null
 ): ExamSessionState {
   return {
     examId,

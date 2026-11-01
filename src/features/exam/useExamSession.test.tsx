@@ -80,6 +80,9 @@ describe("useExamSession", () => {
     const saved = loadSession(exam);
     expect(saved).not.toBeNull();
     expect(saved?.answers).toEqual({});
+    expect(saved?.status).toBe("running");
+    expect(saved?.remainingSec).toBe(600);
+    expect(saved?.deadline).toBe(NOW + 600_000);
   });
 
   it("auto-submits when the deadline passes", () => {
