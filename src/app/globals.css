@@ -1,26 +1,214 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --exam-navy: #2f5597;
+  --exam-navy-dark: #24437a;
+  --exam-ink: #1f2937;
+  --exam-muted: #5b6673;
+  --exam-line: #9aa8b8;
+  --exam-soft-line: #d5dce4;
+  --exam-bg: #eef1f5;
+  --exam-gold: #e0b64a;
+  --exam-red: #c0392b;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--exam-bg);
+  color: var(--exam-ink);
+  font-family: "Microsoft JhengHei", "Noto Sans TC", system-ui, sans-serif;
+}
+
+.exam-shell {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.exam-topbar {
+  background: var(--exam-navy);
+  color: #fff;
+  border-bottom: 1px solid var(--exam-navy-dark);
+}
+
+.exam-card {
+  background: #fff;
+  border: 1px solid var(--exam-line);
+  border-radius: 0;
+}
+
+.exam-btn {
+  border: 1px solid #8b9aab;
+  background: #f7f9fb;
+  color: var(--exam-ink);
+  padding: 6px 12px;
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.exam-btn:hover:not(:disabled) {
+  background: #eef2f7;
+}
+
+.exam-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.exam-btn-primary {
+  background: var(--exam-red);
+  border-color: #a93226;
+  color: #fff;
+}
+
+.exam-btn-primary:hover:not(:disabled) {
+  background: #a93226;
+}
+
+.exam-btn-onnavy {
+  background: #3f6bb5;
+  border-color: #6f8fc4;
+  color: #fff;
+}
+
+.exam-btn-onnavy:hover:not(:disabled) {
+  background: #4a78c4;
+}
+
+.exam-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #b8c3d1;
+  background: #f4f6f9;
+  color: #35465c;
+  padding: 2px 8px;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.exam-chip-done {
+  border-color: #b8c9e0;
+  background: #e8eef7;
+  color: var(--exam-navy);
+}
+
+.exam-chip-flag {
+  border-color: #b8942f;
+  background: var(--exam-gold);
+  color: #3d2b00;
+}
+
+.exam-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  border: 1px solid #c3ccd7;
+  background: #fbfcfd;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.6;
+  cursor: pointer;
+}
+
+.exam-option:hover {
+  background: #f1f5fa;
+}
+
+.exam-option[data-selected="true"] {
+  border-color: var(--exam-navy);
+  background: #e8eef7;
+}
+
+.exam-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  border: 1.5px solid #8fa0b4;
+  border-radius: 9999px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.exam-option[data-multiple="true"] .exam-mark {
+  border-radius: 2px;
+}
+
+.exam-option[data-selected="true"] .exam-mark {
+  background: var(--exam-navy);
+  border-color: var(--exam-navy);
+}
+
+.exam-question {
+  scroll-margin-top: 104px;
+}
+
+@media (max-width: 767px) {
+  .exam-question {
+    scroll-margin-top: 132px;
+  }
+}
+
+.exam-num {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border: 1px solid #aeb9c6;
+  background: #fbfcfd;
+  color: #2d3b4c;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.exam-num[data-done="true"] {
+  background: var(--exam-navy);
+  border-color: var(--exam-navy-dark);
+  color: #fff;
+}
+
+.exam-num[data-flagged="true"] {
+  background: var(--exam-gold);
+  border-color: #b8942f;
+  color: #3d2b00;
+}
+
+.exam-num[data-current="true"] {
+  outline: 2px solid var(--exam-navy);
+  outline-offset: 1px;
+}
+
+.exam-progress-track {
+  height: 8px;
+  background: #d7dee8;
+  overflow: hidden;
+}
+
+.exam-progress-fill {
+  height: 100%;
+  background: var(--exam-gold);
+  transition: width 150ms ease;
+}
+
+.timer-danger {
+  color: #ff8080;
+}
+
+.exam-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(6px);
 }
