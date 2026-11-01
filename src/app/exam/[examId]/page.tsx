@@ -1,11 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { ExamClient } from "@/components/exam/ExamClient";
-import { exams, getExam } from "@/data/exams";
-
-export function generateStaticParams() {
-  return exams.map((exam) => ({ examId: exam.id }));
-}
+import { getAssignedExam } from "@/data/assignedExam";
 
 async function ExamContent({
   params,
@@ -13,7 +9,7 @@ async function ExamContent({
   params: Promise<{ examId: string }>;
 }) {
   const { examId } = await params;
-  const exam = getExam(examId);
+  const exam = await getAssignedExam(examId);
   if (!exam) notFound();
   return <ExamClient exam={exam} />;
 }
