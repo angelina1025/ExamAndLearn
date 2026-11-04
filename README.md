@@ -1,83 +1,118 @@
-# Test 測驗評量與題庫平台 (my-exam-system)
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
+</div>
 
-專業線上測驗、題庫管理、成績與錯題深度分析、智慧組題評量平台。支援**雙模式架構**：離線預載題庫隨時隨地無網作答與算分，連線時自動無縫同步雲端後端。
+# 線上測驗管理系統 (QuizCMS - Admin Portal)
+
+本專案採用 **React + TypeScript (.tsx) + Vite + Tailwind CSS** 建置，支援 6 人團隊協同開發與雙層 Google Sheet 資料庫架構。
 
 ---
 
-## 專案目錄結構 (Architecture)
+## 專案架構與資料流設計
+
+1. **技術棧與多人協作**：
+   - 採用 React + TypeScript (`.tsx`)，為支援 6 人團隊協同開發，各功能頁面高度解耦獨立，將專屬子元件收斂在各自頁面目錄 (`src/pages/<PageName>/components/`) 內，避免 Git 合併衝突。
+   - 統一使用 `@/` 路徑別名（指向 `src/`）進行跨模組引用。
+2. **雙層 Google Sheet 資料庫架構**：
+   - **公用 Sheet**：由 `.env.local`（或 `.env`）中的 `VITE_PUBLIC_GOOGLE_SHEET_URL`（相容 `VITE_GOOGLE_SHEET_URL`）綁定，存放公用題庫 (`test_bank`)、公用試卷 (`quiz_bank_publish` / `quiz_bank_unpublish`)、學科分類 (`categories`)、角色 (`roles`) 與使用者帳號列表 (`users`)。
+   - **私人 Sheet**：登入後從公用 `users` 表中的 `google_sheet_URL` 欄位動態讀取，存放個人自訂題庫、個人考卷與作答紀錄。
+   - **資料格式特性**：題目選項欄位 (`option`) 為 JSON 字串（如 `{"A": "...", "B": "..."}`），答案欄位 (`answer`) 支援單選或逗號分隔之多選（如 `"A, C"`）。
+
+---
+
+## 目標目錄結構規範
 
 ```text
-my-exam-system/
-├── frontend/                     # 前端客戶端 (TypeScript + PWA 離線支援)
-│   ├── public/                   # 離線 PWA Web App Manifest、Service Worker、向量圖示
-│   │   ├── manifest.json         # PWA 應用設定 (獨立全螢幕 standalone)
-│   │   ├── sw.js                 # 核心 Service Worker 離線快取通道
-│   │   └── icons/                # 跨端 App 圖示
-│   ├── src/
-│   │   ├── components/           # 視圖組件 (ExamView, AnalysisView, BankView, ImportView)
-│   │   │   └── OfflineManagerModal.tsx # 離線題庫預載中心與錯題管理
-│   │   ├── services/
-│   │   │   ├── offlineStorage.ts # 離線本機快取、錯題本儲存、離線歷史紀錄
-│   │   │   └── examEngine.ts     # 雙重評分閘道 (連線後端 / 離線客戶端引擎)
-│   │   ├── data/                 # 內建模擬與已發布完整題庫
-│   │   ├── types/                # 前端介面與資料型別
-│   │   └── App.tsx               # 前端核心狀態調度
-│   └── index.html                # 前端主入口與 Service Worker 註冊
-│
-├── backend/                      # 獨立後端服務 (Express / Node.js API)
-│   ├── app/
-│   │   ├── api/
-│   │   │   └── questionController.ts # 題庫下載、同步與即時評分控制器
-│   │   ├── models/
-│   │   │   └── schema.ts             # 資料庫模型與資料合約
-│   │   └── main.ts                   # 後端 API 服務核心
-│   └── tests/
-│       └── grading.test.ts           # 評分與業務邏輯測試
-│
-├── server.ts                     # 全端伺服器整合入口 (整合 Backend API 與 Frontend)
-├── metadata.json                 # 平台屬性與能力定義
-└── README.md                     # 專案架構與使用說明手冊
+QuizCMS/                                     # 專案根目錄
+├── public/                                  # 靜態資源 (範本檔 template.xlsx/csv 等)
+├── src/
+│   ├── assets/                              # 樣式與圖標 (styles/ 全域 CSS, icons/ SVG)
+│   ├── types/                               # TypeScript 型別定義
+│   │   ├── question.ts                      # 題庫資料型別 (id, test_id, question, option, answer, explanation)
+│   │   ├── exam.ts                          # 試卷資料型別 (試卷 ID、題號清單、考試時限、合格分數)
+│   │   ├── session.ts                       # 作答狀態型別 (userAnswers, flags, timer, isPaused)
+│   │   ├── result.ts                        # 考試成果與錯題型別 (score, correctCount, wrongCount, analysis)
+│   │   ├── user.ts                          # 個人資料型別 (uuid, nickname, role, google_sheet_URL)
+│   │   └── sheet.ts                         # Google Sheet 欄位 mapping 介面
+│   │
+│   ├── services/                            # 資料存取層 (Google Sheet / GAS API)
+│   │   ├── client.ts                        # Fetch / Axios 基礎連線器
+│   │   ├── publicSheet.ts                   # 公用 Sheet 存取服務
+│   │   ├── userSheet.ts                     # 私人 Sheet 存取服務 (動態依使用者的 google_sheet_URL 讀寫)
+│   │   └── fileExport.ts                    # 錯題下載 (匯出 Excel / 寫回 Google Sheet)
+│   │
+│   ├── contexts/ (或 stores/)               # React 全域狀態
+│   │   ├── AuthContext.tsx                  # 登入身分、角色與個人 google_sheet_URL
+│   │   └── ExamSessionContext.tsx           # 考試進行中核心狀態 (作答暫存、計時倒數、暫停狀態)
+│   │
+│   ├── hooks/                               # 共用 Custom Hooks
+│   │   ├── useCountdown.ts                  # 倒數計時與強制交卷
+│   │   ├── useQuestionFilter.ts             # 題目與試卷搜尋、排序、篩選
+│   │   └── useSheetSync.ts                  # Google Sheet 連線與同步狀態
+│   │
+│   ├── utils/                               # 共用純輔助函式
+│   │   ├── sheetParser.ts                   # 解析 option JSON 字串與答案切割
+│   │   ├── fileParsers.ts                   # 題目上傳解析器 (解析 Excel, CSV, TXT)
+│   │   ├── scoreCalculator.ts               # 計算答對/錯題數與學科分析
+│   │   └── formatters.ts                    # 時間轉 mm:ss、日期字串格式化
+│   │
+│   ├── components/                          # 通用共用 UI 元件 (無特定業務邏輯)
+│   │   ├── common/                          # Button.tsx, Modal.tsx, Input.tsx, Table.tsx
+│   │   └── layout/                          # Header.tsx, Sidebar.tsx, MainLayout.tsx
+│   │
+│   ├── pages/                               # 核心 9 大功能頁面 (專屬元件放在各頁的 components/)
+│   │   ├── QuestionManage/                  # 1. 題庫管理 (CRUD)
+│   │   │   ├── index.tsx
+│   │   │   ├── QuestionModal.tsx
+│   │   │   └── components/ (FilterBar.tsx)
+│   │   ├── ExamManage/                      # 2. 試卷管理 (CRUD)
+│   │   │   ├── index.tsx
+│   │   │   ├── ExamFormModal.tsx
+│   │   │   └── components/ (ExamTable.tsx)
+│   │   ├── QuestionSelector/                # 3. 題目選擇頁面 (組卷頁)
+│   │   │   ├── index.tsx
+│   │   │   └── components/ (SourceTab.tsx, QuestionPickerList.tsx, AssemblySummaryBar.tsx)
+│   │   ├── QuestionUpload/                  # 4. 題目上傳頁面
+│   │   │   ├── index.tsx
+│   │   │   └── components/ (FileDropzone.tsx, SingleQuestionForm.tsx, PreviewTable.tsx, TargetSelector.tsx)
+│   │   ├── ExamLobby/                       # 5. 試卷選擇頁面 (測驗大廳)
+│   │   │   ├── index.tsx
+│   │   │   └── components/ (ScopeFilter.tsx, ExamCard.tsx)
+│   │   ├── ExamSession/                     # 6. 考試介面 (核心作答)
+│   │   │   ├── index.tsx
+│   │   │   └── components/ (ExamHeader.tsx, QuestionDisplay.tsx, QuestionMap.tsx, ProgressBar.tsx, NavigationButtons.tsx)
+│   │   ├── ExamResult/                      # 7. 考試結果頁面
+│   │   │   ├── index.tsx
+│   │   │   └── components/ (ScoreBanner.tsx, QuestionReviewList.tsx, WrongFilterTab.tsx, ExportActions.tsx, SubjectAnalysisChart.tsx)
+│   │   ├── WrongQuestionHub/                # 8. 錯題匯入首頁
+│   │   │   ├── index.tsx
+│   │   │   └── components/ (ImportUploader.tsx, TrendStatsChart.tsx, RetestActionCard.tsx)
+│   │   └── Profile/                         # 9. 個人資料頁面
+│   │       ├── index.tsx
+│   │       └── components/ (ProfileForm.tsx, SheetUrlBinding.tsx)
+│   │
+│   ├── routes/                              # 路由設定 (index.tsx, ProtectedRoute.tsx)
+│   ├── App.tsx
+│   ├── main.tsx
+│   └── index.css
 ```
 
 ---
 
-## 核心功能說明
+## 本地端開發與執行 (Run Locally)
 
-### 1. 預先下載題庫 (Offline Question Bank Preload)
-- 點選頂部導覽列綠色的**「離線題庫預載」**或題庫管理頁的「預載離線題庫」按鈕。
-- 系統自動透過後端 `GET /api/questions` 將題庫打包快取至瀏覽器本機儲存空間（LocalStorage / IndexedDB / Service Worker）。
-- 下載完成後即具備「完全離線使用」標記，拔掉網路或開啟飛航模式題目依然完整。
+**環境需求：** Node.js (v18+)
 
-### 2. 離線隨時考試與即時評分 (Offline Exam & Dual Grading Engine)
-- 無論連線或斷線，測驗計時、選項答題、進度條、交卷評分均零延遲響應。
-- **雙重評分引擎**：
-  - **連線時**：優先經由後端 `POST /api/exam/grade` 評分並回傳診斷分析。
-  - **離線時**：自動無縫降級至前端本機秒速評分引擎，算出總分、正確率與錯題診斷。
-
-### 3. 離線錯題本與針對性重考 (Wrong Question Notebook & Retest)
-- 考試交卷後，所有錯誤題目會自動收錄至**「本機錯題筆記本」**。
-- 隨時點擊**「重測錯題」**或從離線中心選擇**「離線重考錯題本」**，系統將自動抽出錯題並清空作答紀錄，讓學生隨時隨地突破弱點。
-
-### 4. 手機及電腦跨裝置支援 (PWA & Multi-Device Support)
-- **手機端 (iOS Safari / Android Chrome)**：
-  - 支援「加入主畫面 (Add to Home Screen)」，安裝為全螢幕 App，通勤通學無網路照常刷題。
-- **電腦端 (Mac / Windows / Linux)**：
-  - 網址列支援一鍵安裝獨立應用，支援 50 題矩陣診斷板與大螢幕分割檢視。
-
----
-
-## 啟動與建置指令
-
-```bash
-# 安裝相依套件
-npm install
-
-# 啟動開發伺服器 (包含後端 API 與前端 Vite 中間件，連接於 port 3000)
-npm run dev
-
-# 專案程式碼型別檢查
-npm run lint
-
-# 前端專案生產環境建置
-npm run build
-```
+1. 安裝套件：
+   ```bash
+   npm install
+   ```
+2. 設定環境變數：
+   於 `.env.local` 或 `.env` 設定公用試算表網址：
+   ```env
+   VITE_PUBLIC_GOOGLE_SHEET_URL="https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit"
+   ```
+3. 啟動開發伺服器：
+   ```bash
+   npm run dev
+   ```
