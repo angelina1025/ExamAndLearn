@@ -13,6 +13,7 @@ interface SidebarProps {
   questions: Question[];
   categories?: CategoryItem[];
   isSheetsConnected?: boolean;
+  spreadsheetUrl?: string | null;
   onSync?: () => void;
   isSyncing?: boolean;
 }
@@ -50,11 +51,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   questions,
   categories = [],
   isSheetsConnected,
+  spreadsheetUrl,
   onSync,
   isSyncing,
 }) => {
   const [expandedGroupIds, setExpandedGroupIds] = useState<Record<number, boolean>>({ 1: true, 2: true });
-  const [questionBankOpen, setQuestionBankOpen] = useState(true);
+  const [questionBankOpen, setQuestionBankOpen] = useState(false);
 
   const toggleGroup = (id: number) => {
     setExpandedGroupIds((prev) => ({ ...prev, [id]: !(prev[id] ?? true) }));
@@ -361,17 +363,56 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
       </div>
 
-      {/* Storage Quota Card */}
+      {/* Public Database Connection & Sync Card */}
       <div className="p-3 border-t border-[#c3c6d7]/30 flex flex-col gap-2">
-        <div className="p-2.5 bg-[#f2f4f6] rounded border border-[#c3c6d7]/40">
-          <div className="flex justify-between items-center mb-1.5">
-            <span className="text-[11px] text-[#434655]">題庫空間儲存</span>
-            <span className="text-[11px] font-semibold text-[#004ac6]">68% 已使用</span>
+        <div className="p-3 bg-[#f8f9fa] rounded-xl border border-[#c3c6d7]/40 shadow-2xs flex flex-col gap-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#191c1e]">
+              <span className="material-symbols-outlined text-[18px] text-[#0f9d58]">table_chart</span>
+              <span>公用資料庫</span>
+            </div>
+
+            {isSheetsConnected ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#e8f5e9] text-[#2e7d32] border border-[#a5d6a7] text-[11px] font-medium shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#0f9d58] animate-pulse"></span>
+                <span>已連線</span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ffdad6]/70 text-[#ba1a1a] border border-[#ffb4ab] text-[11px] font-medium shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#ba1a1a]"></span>
+                <span>未連線</span>
+              </span>
+            )}
           </div>
-          <div className="w-full bg-[#e0e3e5] h-1.5 rounded-full overflow-hidden">
-            <div className="bg-[#004ac6] h-full w-[68%] rounded-full"></div>
+
+          <div className="flex items-center gap-1.5">
+            {onSync && (
+              <button
+                onClick={onSync}
+                disabled={isSyncing}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-[#004ac6] hover:bg-[#003da6] text-white text-[12px] font-semibold rounded-lg shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+                title={isSheetsConnected ? '同步 Google 試算表最新資料' : '連線並同步 Google 試算表資料'}
+                type="button"
+              >
+                <span className={`material-symbols-outlined text-[14px] ${isSyncing ? 'animate-spin' : ''}`}>
+                  sync
+                </span>
+                <span>{isSyncing ? '同步中...' : isSheetsConnected ? '同步' : '連線同步'}</span>
+              </button>
+            )}
+
+            {isSheetsConnected && spreadsheetUrl && (
+              <a
+                href={spreadsheetUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="p-1.5 text-[#434655] hover:text-[#004ac6] bg-white hover:bg-[#eceef0] border border-[#c3c6d7]/50 rounded-lg transition-colors flex items-center justify-center shrink-0"
+                title="在 Google 試算表開啟 (另開新分頁)"
+              >
+                <span className="material-symbols-outlined text-[16px]">open_in_new</span>
+              </a>
+            )}
           </div>
-          <div className="text-[11px] text-[#434655]/80 mt-1">6.8 GB / 10 GB 配額</div>
         </div>
       </div>
     </aside>

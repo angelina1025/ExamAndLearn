@@ -51,6 +51,9 @@ export default function App() {
   const [isSyncingSheets, setIsSyncingSheets] = useState(false);
   const [isLoadingSheetData, setIsLoadingSheetData] = useState(false);
   const [hasSyncedSheet, setHasSyncedSheet] = useState(false);
+  const [isOnline, setIsOnline] = useState<boolean>(() =>
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
 
   // Data states - directly read from Google Sheets (no hardcoded mock data)
   const [categories, setCategories] = useState<CategoryItem[]>([]);
@@ -99,7 +102,15 @@ export default function App() {
     const targetId = envSheetId || connectedSpreadsheetId;
 
     if (!targetId) {
+      setHasSyncedSheet(false);
       if (!silent) showToast('未設定 Google 試算表 ID，請確認 .env 或試算表連結', 'warning');
+      return;
+    }
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setIsOnline(false);
+      setHasSyncedSheet(false);
+      if (!silent) showToast('目前網路處於斷線狀態，無法同步公用資料庫', 'error');
       return;
     }
 
@@ -113,11 +124,12 @@ export default function App() {
       setExamPapers(result.allExams);
       setAuditLogs(result.auditLogs);
       setHasSyncedSheet(true);
+      setIsOnline(true);
       handleUpdateSpreadsheetConnection(targetId, targetUrl);
 
       if (!silent) {
         showToast(
-          `成功同步 Google 試算表：載入 ${result.categories.length} 個科目、${result.questions.length} 題試題、${result.allExams.length} 份試卷與 ${result.auditLogs.length} 筆日誌！`,
+          `成功同步公用資料庫：載入 ${result.categories.length} 個科目、${result.questions.length} 題試題、${result.allExams.length} 份試卷與 ${result.auditLogs.length} 筆日誌！`,
           'success'
         );
       }
@@ -136,9 +148,10 @@ export default function App() {
             setExamPapers(result.allExams);
             setAuditLogs(result.auditLogs);
             setHasSyncedSheet(true);
+            setIsOnline(true);
             handleUpdateSpreadsheetConnection(targetId, targetUrl);
             showToast(
-              `成功同步 Google 試算表：載入 ${result.categories.length} 個科目、${result.questions.length} 題試題、${result.allExams.length} 份試卷與 ${result.auditLogs.length} 筆日誌！`,
+              `成功同步公用資料庫：載入 ${result.categories.length} 個科目、${result.questions.length} 題試題、${result.allExams.length} 份試卷與 ${result.auditLogs.length} 筆日誌！`,
               'success'
             );
             return;
@@ -147,6 +160,8 @@ export default function App() {
           console.error('Google Sign-in error:', authErr);
         }
       }
+      // On sync failure, reset connection status to disconnected
+      setHasSyncedSheet(false);
       if (!silent) {
         showToast(`讀取試算表失敗: ${err.message || '請確認試算表架構或權限'}`, 'error');
       }
@@ -154,6 +169,25 @@ export default function App() {
       setIsLoadingSheetData(false);
     }
   };
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      handleFetchSpreadsheetData(true);
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      setHasSyncedSheet(false);
+      showToast('偵測到網路連線中斷，公用資料庫已切換為未連線狀態', 'warning');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     const unsubscribe = initAuth((_user, token) => {
@@ -178,6 +212,7 @@ export default function App() {
       const targetId = connectedSpreadsheetId || envSheetId;
 
       if (!targetId || !targetUrl) {
+        setHasSyncedSheet(false);
         showToast('未設定 Google 試算表網址，請在 .env 中填寫 VITE_GOOGLE_SHEET_URL', 'warning');
         setIsReconnectingSheets(false);
         return;
@@ -190,6 +225,7 @@ export default function App() {
       }
 
       if (!token) {
+        setHasSyncedSheet(false);
         showToast('Google 帳號授權未完成或登入已取消', 'warning');
         setIsReconnectingSheets(false);
         return;
@@ -205,12 +241,15 @@ export default function App() {
         setExamPapers(result.allExams);
         setAuditLogs(result.auditLogs);
         setHasSyncedSheet(true);
-        showToast(`Google Sheets 連線成功！已從「${stats.title}」載入 ${result.categories.length} 個科目、${result.questions.length} 題試題及 ${result.allExams.length} 份試卷。`, 'success');
+        setIsOnline(true);
+        showToast(`公用資料庫連線成功！已從「${stats.title}」載入 ${result.categories.length} 個科目、${result.questions.length} 題試題及 ${result.allExams.length} 份試卷。`, 'success');
       } catch (readErr: any) {
-        showToast(`Google Sheets 連線成功！試算表「${stats.title}」運作正常 (可點擊「寫入資料」初始化架構)`, 'info');
+        setHasSyncedSheet(false);
+        showToast(`試算表「${stats.title}」讀取資料表失敗，請確認試算表架構`, 'warning');
       }
     } catch (err: any) {
       console.error('Reconnect error:', err);
+      setHasSyncedSheet(false);
       showToast(`連線失敗: ${err.message || '請確認試算表網址或權限'}`, 'error');
     } finally {
       setIsReconnectingSheets(false);
@@ -301,13 +340,6 @@ export default function App() {
       time: '35 分鐘前',
       read: false,
       type: 'success',
-    },
-    {
-      id: 'notif-3',
-      title: '空間坐標系試題庫容量達到 68% 警戒水準',
-      time: '2 小時前',
-      read: true,
-      type: 'warning',
     },
   ]);
 
@@ -626,10 +658,6 @@ export default function App() {
             prev.map((n) => (n.id === id ? { ...n, read: true } : n))
           );
         }}
-        isSheetsConnected={hasSyncedSheet && !!connectedSpreadsheetId}
-        spreadsheetUrl={connectedSpreadsheetUrl}
-        onSync={() => handleFetchSpreadsheetData(false)}
-        isSyncing={isLoadingSheetData}
       />
 
       {/* Left Sidebar */}
@@ -649,7 +677,8 @@ export default function App() {
         onToggleCollapse={() => setCollapsedSidebar(!collapsedSidebar)}
         questions={questions}
         categories={categories}
-        isSheetsConnected={hasSyncedSheet && !!connectedSpreadsheetId}
+        isSheetsConnected={isOnline && hasSyncedSheet && !!connectedSpreadsheetId}
+        spreadsheetUrl={connectedSpreadsheetUrl}
         onSync={() => handleFetchSpreadsheetData(false)}
         isSyncing={isLoadingSheetData}
       />

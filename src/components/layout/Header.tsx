@@ -6,10 +6,6 @@ interface HeaderProps {
   onLogout: () => void;
   notifications: NotificationItem[];
   onMarkNotificationRead: (id: string) => void;
-  isSheetsConnected?: boolean;
-  spreadsheetUrl?: string | null;
-  onSync?: () => void;
-  isSyncing?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -17,10 +13,6 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout,
   notifications,
   onMarkNotificationRead,
-  isSheetsConnected,
-  spreadsheetUrl,
-  onSync,
-  isSyncing,
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -44,72 +36,6 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Global Actions, Search & Admin Profile */}
       <div className="flex items-center gap-4">
-        {/* Google Sheets DB connection status and sync button in Header */}
-        <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-[#f8f9fa] border border-[#c3c6d7]/40 shadow-2xs">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-[#191c1e]">
-            <span className="material-symbols-outlined text-[18px] text-[#0f9d58]">table_chart</span>
-            <span className="hidden lg:inline">Google Sheets 資料庫</span>
-          </div>
-
-          {isSheetsConnected ? (
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#e8f5e9] text-[#2e7d32] border border-[#a5d6a7] text-[11px] font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#0f9d58] animate-pulse"></span>
-                <span>已連線</span>
-              </span>
-
-              {/* Single Sync Button */}
-              {onSync && (
-                <button
-                  onClick={onSync}
-                  disabled={isSyncing}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#004ac6] hover:bg-[#003da6] text-white text-[11px] font-semibold rounded-md shadow-2xs transition-all cursor-pointer disabled:opacity-50"
-                  title="同步 Google 試算表最新資料"
-                  type="button"
-                >
-                  <span className={`material-symbols-outlined text-[13px] ${isSyncing ? 'animate-spin' : ''}`}>
-                    sync
-                  </span>
-                  <span>{isSyncing ? '同步中...' : '同步'}</span>
-                </button>
-              )}
-
-              {spreadsheetUrl && (
-                <a
-                  href={spreadsheetUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="p-1 text-[#434655] hover:text-[#004ac6] hover:bg-[#eceef0] rounded transition-colors"
-                  title="在 Google 試算表開啟 (另開新分頁)"
-                >
-                  <span className="material-symbols-outlined text-[15px]">open_in_new</span>
-                </a>
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ffdad6]/70 text-[#ba1a1a] border border-[#ffb4ab] text-[11px] font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#ba1a1a]"></span>
-                <span>未連線</span>
-              </span>
-              {onSync && (
-                <button
-                  onClick={onSync}
-                  disabled={isSyncing}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#004ac6] hover:bg-[#003da6] text-white text-[11px] font-semibold rounded-md shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
-                  title="連線並同步 Google 試算表資料"
-                  type="button"
-                >
-                  <span className={`material-symbols-outlined text-[13px] ${isSyncing ? 'animate-spin' : ''}`}>
-                    sync
-                  </span>
-                  <span>{isSyncing ? '同步中...' : '連線同步'}</span>
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
         {/* Search trigger button (⌘K) */}
         <button
           onClick={onOpenSearch}

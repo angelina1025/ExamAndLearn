@@ -49,10 +49,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         onLogout={onLogout}
         notifications={notifications}
         onMarkNotificationRead={onMarkNotificationRead}
-        isSheetsConnected={isSheetsConnected}
-        spreadsheetUrl={spreadsheetUrl}
-        onSync={onSync}
-        isSyncing={isSyncing}
       />
 
       <Sidebar
@@ -65,6 +61,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         onToggleCollapse={onToggleCollapse}
         questions={questions}
         isSheetsConnected={isSheetsConnected}
+        spreadsheetUrl={spreadsheetUrl}
+        onSync={onSync}
+        isSyncing={isSyncing}
       />
 
       <div className={`${collapsedSidebar ? 'pl-16' : 'pl-64'} transition-all duration-150`}>

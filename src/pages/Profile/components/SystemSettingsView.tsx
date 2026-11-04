@@ -26,7 +26,7 @@ export const SystemSettingsView: React.FC<SystemSettingsViewProps> = ({ auditLog
             系統全域組態設定 (System Settings)
           </h1>
           <p className="text-[13px] text-[#434655] mt-1">
-            管理測驗參數、監考防弊規則、配額空間與稽核日誌
+            管理測驗參數、監考防弊規則與稽核日誌
           </p>
         </div>
 
