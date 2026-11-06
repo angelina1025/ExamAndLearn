@@ -44,12 +44,13 @@ export const DATABASE_TABLE_SCHEMAS: Record<string, SheetTableSchema> = {
       { key: 'option', label: 'option', desc: '選項 (JSON / 選項列)' },
       { key: 'answer', label: 'answer', desc: '答案' },
       { key: 'Explanation', label: 'Explanation', desc: '詳解' },
-      { key: 'difficulty', label: 'difficulty', desc: '難度 (easy / medium / hard)' },
+      { key: 'difficulty', label: 'difficulty', desc: '難度 (數字)' },
       { key: 'score', label: 'score', desc: '配分' },
       { key: 'category_id', label: 'category_id', desc: '學科編號（外鍵關聯至categories.id）' },
       { key: 'taqs', label: 'taqs', desc: '標籤 / 知識點' },
       { key: 'updated_at', label: 'updated_at', desc: '更新時間' },
       { key: 'updated_by', label: 'updated_by', desc: '最後更新者 ID（外鍵關聯至 users.id）' },
+      { key: 'time', label: 'time', desc: '題目作答時長 (分鐘)' },
     ],
   },
   categories: {
@@ -181,6 +182,36 @@ export const INITIAL_ROLES_DATA = [
 export function getEnvConfiguredSpreadsheetUrl(): string {
   const env = (import.meta as any).env;
   return (env?.VITE_PUBLIC_GOOGLE_SHEET_URL || env?.VITE_GOOGLE_SHEET_URL || '').trim();
+}
+
+export function getEnvConfiguredScriptUrl(): string {
+  const env = (import.meta as any).env;
+  return (env?.VITE_GOOGLE_SCRIPT_URL || '').trim();
+}
+
+export async function postToGasScript(payload: Record<string, any>): Promise<any> {
+  const scriptUrl = getEnvConfiguredScriptUrl();
+  if (!scriptUrl) {
+    throw new Error('尚未設定 VITE_GOOGLE_SCRIPT_URL，請在 .env 中填入 Google Apps Script 部署網址');
+  }
+
+  const res = await fetch(scriptUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Google Apps Script 回應錯誤 (${res.status})`);
+  }
+
+  const data = await res.json().catch(() => ({ success: true }));
+  if (data && data.success === false) {
+    throw new Error(data.error || 'Google Apps Script 執行失敗');
+  }
+  return data;
 }
 
 /**
@@ -327,7 +358,7 @@ function generateBatchValues(
     ...questions.map((q, idx) => {
       const categoryId = q.categoryId || SUBJECT_TO_CATEGORY_ID[q.subjectId] || 3;
       const optionsStr = formatOptionsToJsonObject(q.options || q.optionsMap);
-      const diffScore = q.difficultyScore ?? (q.difficulty === 'hard' ? 4.5 : q.difficulty === 'medium' ? 3.0 : 1.5);
+      const diffScore = q.difficultyScore ?? (q.difficulty === 'hard' ? 4 : q.difficulty === 'medium' ? 3 : 2);
       return [
         idx + 1,
         q.id,
@@ -341,6 +372,7 @@ function generateBatchValues(
         q.tags.join(', '),
         q.updatedAt || nowStr,
         q.updatedBy || 1,
+        q.time ?? 0,
       ];
     }),
   ];
@@ -360,7 +392,7 @@ function generateBatchValues(
       e.id,
       e.title,
       e.subject,
-      `Lv.${e.difficultyLv}`,
+      e.difficultyLv,
       e.questionCount,
       e.totalScore,
       e.durationMinutes,
@@ -377,7 +409,7 @@ function generateBatchValues(
       e.id,
       e.title,
       e.subject,
-      `Lv.${e.difficultyLv}`,
+      e.difficultyLv,
       e.questionCount,
       e.totalScore,
       e.durationMinutes,
@@ -402,7 +434,7 @@ function generateBatchValues(
   return [
     { range: 'users!A1:K', values: userRows },
     { range: 'roles!A1:E', values: roleRows },
-    { range: 'test_bank!A1:L', values: testBankRows },
+    { range: 'test_bank!A1:M', values: testBankRows },
     { range: 'categories!A1:E', values: categoryRows },
     { range: 'quiz_bank_publish!A1:I', values: pubRows },
     { range: 'quiz_bank_unpublish!A1:I', values: unpubRows },
@@ -610,6 +642,10 @@ function parseTableValuesToResult(
     for (let i = 1; i < catRows.length; i++) {
       const row = catRows[i];
       if (!row || row.length === 0 || !row[1]) continue;
+      const col0 = String(row[0] || '').trim().toLowerCase();
+      const col1 = String(row[1] || '').trim().toLowerCase();
+      if (col0 === 'id' || col1 === 'categories_name') continue;
+
       categories.push({
         id: Number(row[0]) || i,
         categories_name: String(row[1] || '').trim(),
@@ -624,20 +660,42 @@ function parseTableValuesToResult(
   const questions: Question[] = [];
   const testBankRows = tableValuesMap['test_bank'] || [];
   if (testBankRows.length > 1) {
+    const headerRow = (testBankRows[0] || []).map((h) => String(h || '').trim().toLowerCase());
+    const findIdx = (names: string[], fallback: number) => {
+      const idx = headerRow.findIndex((h) => names.includes(h));
+      return idx >= 0 ? idx : fallback;
+    };
+    const idxTestId = findIdx(['test_id'], 1);
+    const idxQuestion = findIdx(['question'], 2);
+    const idxOption = findIdx(['option', 'options'], 3);
+    const idxAnswer = findIdx(['answer'], 4);
+    const idxExplanation = findIdx(['explanation'], 5);
+    const idxDifficulty = findIdx(['difficulty'], 6);
+    const idxScore = findIdx(['score'], 7);
+    const idxCategory = findIdx(['category_id'], 8);
+    const idxTags = findIdx(['taqs', 'tags'], 9);
+    const idxUpdatedAt = findIdx(['updated_at', 'update_time'], 10);
+    const idxUpdatedBy = findIdx(['updated_by', 'update_by'], 11);
+    const idxTime = headerRow.findIndex((h) => h === 'time' || h === 'duration');
+
     for (let i = 1; i < testBankRows.length; i++) {
       const row = testBankRows[i];
-      if (!row || row.length === 0 || !row[2]) continue;
+      if (!row || row.length === 0 || !row[idxQuestion]) continue;
+      const col0 = String(row[0] || '').trim().toLowerCase();
+      const col1 = String(row[idxTestId] || '').trim().toLowerCase();
+      const col2 = String(row[idxQuestion] || '').trim().toLowerCase();
+      if (col0 === 'id' || col1 === 'test_id' || col2 === 'question') continue;
 
-      const testId = String(row[1] || row[0] || `Q-IMPORT-${i}`).trim();
-      const content = String(row[2] || '').trim();
-      const { options: parsedOptions, optionsMap: parsedOptionsMap } = parseSheetOptionJson(row[3]);
+      const testId = String(row[idxTestId] || row[0] || `Q-IMPORT-${i}`).trim();
+      const content = String(row[idxQuestion] || '').trim();
+      const { options: parsedOptions, optionsMap: parsedOptionsMap } = parseSheetOptionJson(row[idxOption]);
 
-      const answer = String(row[4] || '').trim();
-      const explanation = String(row[5] || '').trim();
+      const answer = String(row[idxAnswer] || '').trim();
+      const explanation = String(row[idxExplanation] || '').trim();
 
-      const diffNum = parseFloat(String(row[6]));
+      const diffNum = parseFloat(String(row[idxDifficulty]));
       let difficulty: 'easy' | 'medium' | 'hard' = 'medium';
-      let difficultyScore: number | undefined = undefined;
+      let difficultyScore: number = 3;
 
       if (!isNaN(diffNum)) {
         difficultyScore = diffNum;
@@ -645,28 +703,34 @@ function parseTableValuesToResult(
         else if (diffNum >= 2.5) difficulty = 'medium';
         else difficulty = 'easy';
       } else {
-        const diffLower = String(row[6] || 'medium').toLowerCase();
+        const diffLower = String(row[idxDifficulty] || 'medium').toLowerCase();
         if (diffLower === 'hard') {
           difficulty = 'hard';
-          difficultyScore = 4.5;
+          difficultyScore = 4;
         } else if (diffLower === 'easy') {
           difficulty = 'easy';
-          difficultyScore = 1.5;
+          difficultyScore = 2;
         } else {
           difficulty = 'medium';
-          difficultyScore = 3.0;
+          difficultyScore = 3;
         }
       }
 
-      const points = Number(row[7]) || 10;
-      const catId = Number(row[8]) || 3;
+      const points = Number(row[idxScore]) || 10;
+      const catId = Number(row[idxCategory]) || 3;
       const subjectId = CATEGORY_ID_TO_SUBJECT[catId] || 'math';
-      const rawTags = String(row[9] || '');
+      const rawTags = String(row[idxTags] || '');
       const tags = rawTags
         ? rawTags.split(/[,，、]/).map((t) => t.trim()).filter(Boolean)
         : [];
-      const updatedAt = String(row[10] || new Date().toISOString().split('T')[0]).trim();
-      const updatedBy = Number(row[11]) || 1;
+      const updatedAt = String(row[idxUpdatedAt] || new Date().toISOString().split('T')[0]).trim();
+      const updatedBy = Number(row[idxUpdatedBy]) || 1;
+      const timeVal =
+        idxTime >= 0
+          ? Number(row[idxTime]) || 0
+          : row.length > 12
+          ? Number(row[12]) || 0
+          : 0;
 
       let type: 'single' | 'multiple' | 'true_false' = 'single';
       if (answer.includes(',') || answer.includes('、') || answer.length > 2) {
@@ -687,6 +751,7 @@ function parseTableValuesToResult(
         difficulty,
         difficultyScore,
         points,
+        time: timeVal,
         tags,
         updatedAt,
         categoryId: catId,
@@ -701,22 +766,30 @@ function parseTableValuesToResult(
     for (let i = 1; i < pubRows.length; i++) {
       const row = pubRows[i];
       if (!row || row.length === 0 || !row[2]) continue;
+      const col0 = String(row[0] || '').trim().toLowerCase();
+      const col1 = String(row[1] || '').trim().toLowerCase();
+      const col2 = String(row[2] || '').trim().toLowerCase();
+      if (col0 === 'id' || col1 === 'quiz_id' || col2 === 'quiz_name') continue;
 
       const quizId = String(row[1] || row[0] || `EXAM-PUB-${i}`).trim();
       const title = String(row[2] || '').trim();
-      const subjectName = String(row[3] || '高二數學').trim();
-      const diffStr = String(row[4] || 'Lv.3').trim();
-      const difficultyLv = parseInt(diffStr.replace(/\D/g, ''), 10) || 3;
+      const subjectName = String(row[3] || '數學').trim();
+      const diffMatch = String(row[4] ?? '').match(/(\d+(?:\.\d+)?)/);
+      const difficultyLv = diffMatch ? parseFloat(diffMatch[1]) : 3;
       const questionCount = Number(row[5]) || 0;
       const totalScore = Number(row[6]) || 100;
-      const durationMinutes = Number(row[7]) || 60;
+      const durationMinutes = Number(row[7]) || 0;
       const createdAt = String(row[8] || new Date().toISOString().split('T')[0]).trim();
+      const rawQuestionIds = String(row[9] || '').trim();
+      const questionIds = rawQuestionIds
+        ? rawQuestionIds.split(/[,，、\s]+/).map((s) => s.trim()).filter(Boolean)
+        : undefined;
       const subjectId = SUBJECT_NAME_MAP[subjectName] || 'math';
 
       publishedExams.push({
         id: quizId,
         title,
-        description: `${subjectName} 試卷測驗`,
+        description: '',
         subject: subjectName,
         subjectId,
         difficultyLv,
@@ -726,6 +799,7 @@ function parseTableValuesToResult(
         createdAt,
         status: 'published',
         examineeCount: 0,
+        questionIds,
       });
     }
   }
@@ -736,22 +810,30 @@ function parseTableValuesToResult(
     for (let i = 1; i < unpubRows.length; i++) {
       const row = unpubRows[i];
       if (!row || row.length === 0 || !row[2]) continue;
+      const col0 = String(row[0] || '').trim().toLowerCase();
+      const col1 = String(row[1] || '').trim().toLowerCase();
+      const col2 = String(row[2] || '').trim().toLowerCase();
+      if (col0 === 'id' || col1 === 'quiz_id' || col2 === 'quiz_name') continue;
 
       const quizId = String(row[1] || row[0] || `EXAM-DRAFT-${i}`).trim();
       const title = String(row[2] || '').trim();
-      const subjectName = String(row[3] || '高二數學').trim();
-      const diffStr = String(row[4] || 'Lv.3').trim();
-      const difficultyLv = parseInt(diffStr.replace(/\D/g, ''), 10) || 3;
+      const subjectName = String(row[3] || '數學').trim();
+      const diffMatch = String(row[4] ?? '').match(/(\d+(?:\.\d+)?)/);
+      const difficultyLv = diffMatch ? parseFloat(diffMatch[1]) : 3;
       const questionCount = Number(row[5]) || 0;
       const totalScore = Number(row[6]) || 100;
-      const durationMinutes = Number(row[7]) || 60;
+      const durationMinutes = Number(row[7]) || 0;
       const createdAt = String(row[8] || new Date().toISOString().split('T')[0]).trim();
+      const rawQuestionIds = String(row[9] || '').trim();
+      const questionIds = rawQuestionIds
+        ? rawQuestionIds.split(/[,，、\s]+/).map((s) => s.trim()).filter(Boolean)
+        : undefined;
       const subjectId = SUBJECT_NAME_MAP[subjectName] || 'math';
 
       draftExams.push({
         id: quizId,
         title,
-        description: `${subjectName} 草稿試卷`,
+        description: '',
         subject: subjectName,
         subjectId,
         difficultyLv,
@@ -761,6 +843,7 @@ function parseTableValuesToResult(
         createdAt,
         status: 'draft',
         examineeCount: 0,
+        questionIds,
       });
     }
   }
@@ -777,6 +860,10 @@ function parseTableValuesToResult(
     for (let i = 1; i < logRows.length; i++) {
       const row = logRows[i];
       if (!row || row.length === 0 || (!row[1] && !row[2])) continue;
+      const col0 = String(row[0] || '').trim().toLowerCase();
+      const col1 = String(row[1] || '').trim().toLowerCase();
+      const col2 = String(row[2] || '').trim().toLowerCase();
+      if (col0 === 'id' || col1 === 'log_id' || col2 === 'action') continue;
 
       const logId = String(row[1] || row[0] || `#LOG-${i}`).trim();
       const action = String(row[2] || '').trim();
@@ -802,10 +889,10 @@ function parseTableValuesToResult(
 
   const allExams = [...publishedExams, ...draftExams];
   const stats: Record<string, number> = {
-    test_bank: Math.max(0, testBankRows.length - 1),
-    quiz_bank_publish: Math.max(0, pubRows.length - 1),
-    quiz_bank_unpublish: Math.max(0, unpubRows.length - 1),
-    categories: Math.max(0, catRows.length - 1),
+    test_bank: questions.length,
+    quiz_bank_publish: publishedExams.length,
+    quiz_bank_unpublish: draftExams.length,
+    categories: categories.length,
     users: Math.max(0, (tableValuesMap['users'] || []).length - 1),
     roles: Math.max(0, (tableValuesMap['roles'] || []).length - 1),
     log: auditLogs.length,
@@ -837,7 +924,7 @@ export async function readPublicSpreadsheetViaGviz(
   await Promise.all(
     targetTables.map(async (sheetName) => {
       try {
-        const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+        const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&headers=1&sheet=${encodeURIComponent(sheetName)}`;
         const res = await fetch(url);
         if (!res.ok) return;
         const text = await res.text();
@@ -846,7 +933,12 @@ export async function readPublicSpreadsheetViaGviz(
         const json = JSON.parse(match[1]);
         if (json.status !== 'ok' || !json.table) return;
 
-        const cols: string[] = (json.table.cols || []).map((c: any) => c?.label || c?.id || '');
+        const hasColLabels = (json.table.cols || []).some(
+          (c: any) => c?.label && String(c.label).trim() !== ''
+        );
+        const cols: string[] = (json.table.cols || []).map((c: any) =>
+          c?.label ? String(c.label).trim() : ''
+        );
         const rows: any[][] = (json.table.rows || []).map((r: any) =>
           (r.c || []).map((cell: any) => {
             if (!cell) return '';
@@ -856,7 +948,7 @@ export async function readPublicSpreadsheetViaGviz(
           })
         );
 
-        tableValuesMap[sheetName] = [cols, ...rows];
+        tableValuesMap[sheetName] = hasColLabels ? [cols, ...rows] : rows;
       } catch (e) {
         console.warn(`Failed to fetch public sheet ${sheetName}:`, e);
       }
@@ -969,17 +1061,15 @@ export async function fetchSpreadsheetStats(
 }
 
 export async function appendQuestionToSpreadsheet(
-  accessToken: string,
+  accessToken: string | null,
   spreadsheetId: string,
   question: Question,
   rowIndex: number,
   userId: number = 1
 ): Promise<{ success: boolean; message: string }> {
-  await ensureSpreadsheetTablesExist(accessToken, spreadsheetId);
-
   const categoryId = question.categoryId || SUBJECT_TO_CATEGORY_ID[question.subjectId] || 3;
   const optionsStr = formatOptionsToJsonObject(question.options || question.optionsMap);
-  const diffScore = question.difficultyScore ?? (question.difficulty === 'hard' ? 4.5 : question.difficulty === 'medium' ? 3.0 : 1.5);
+  const diffScore = question.difficultyScore ?? (question.difficulty === 'hard' ? 4 : question.difficulty === 'medium' ? 3 : 2);
   const tagsStr = question.tags.join(', ');
   const nowTimestamp = formatSheetTimestamp();
 
@@ -996,10 +1086,33 @@ export async function appendQuestionToSpreadsheet(
     tagsStr,
     question.updatedAt || nowTimestamp,
     userId,
+    question.time ?? 0,
   ];
 
+  const scriptUrl = getEnvConfiguredScriptUrl();
+  if (scriptUrl) {
+    await postToGasScript({
+      action: 'upsertRow',
+      sheetName: 'test_bank',
+      headers: DATABASE_TABLE_SCHEMAS.test_bank.columns.map((c) => c.label),
+      keyColumnIndex: 1,
+      keyValue: question.id,
+      rowValues,
+    });
+    return {
+      success: true,
+      message: `題目 [${question.id}] 已透過 GAS 成功寫入 Google 試算表 test_bank 表！`,
+    };
+  }
+
+  if (!accessToken) {
+    throw new Error('請在 .env 設定 VITE_GOOGLE_SCRIPT_URL 以免登入直接寫入試算表');
+  }
+
+  await ensureSpreadsheetTablesExist(accessToken, spreadsheetId);
+
   const res = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/test_bank!A:L:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/test_bank!A:M:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
     {
       method: 'POST',
       headers: {
@@ -1024,13 +1137,11 @@ export async function appendQuestionToSpreadsheet(
 }
 
 export async function appendExamToSpreadsheet(
-  accessToken: string,
+  accessToken: string | null,
   spreadsheetId: string,
   exam: ExamPaper,
   rowIndex: number
 ): Promise<{ success: boolean; message: string }> {
-  await ensureSpreadsheetTablesExist(accessToken, spreadsheetId);
-
   const targetSheet = exam.status === 'published' ? 'quiz_bank_publish' : 'quiz_bank_unpublish';
   const nowTimestamp = formatSheetTimestamp();
 
@@ -1039,15 +1150,36 @@ export async function appendExamToSpreadsheet(
     exam.id,
     exam.title,
     exam.subject,
-    `Lv.${exam.difficultyLv}`,
+    exam.difficultyLv,
     exam.questionCount,
     exam.totalScore,
     exam.durationMinutes,
     nowTimestamp,
+    exam.questionIds ? exam.questionIds.join(', ') : '',
   ];
 
+  const scriptUrl = getEnvConfiguredScriptUrl();
+  if (scriptUrl) {
+    await postToGasScript({
+      action: 'appendRow',
+      sheetName: targetSheet,
+      headers: [...DATABASE_TABLE_SCHEMAS[targetSheet].columns.map((c) => c.label), 'test_id'],
+      rowValues,
+    });
+    return {
+      success: true,
+      message: `考卷 [${exam.id}] 已透過 GAS 成功寫入 Google 試算表 ${targetSheet}！`,
+    };
+  }
+
+  if (!accessToken) {
+    throw new Error('請在 .env 設定 VITE_GOOGLE_SCRIPT_URL 以免登入直接寫入試算表');
+  }
+
+  await ensureSpreadsheetTablesExist(accessToken, spreadsheetId);
+
   const res = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${targetSheet}!A:I:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${targetSheet}!A:J:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
     {
       method: 'POST',
       headers: {
@@ -1072,12 +1204,12 @@ export async function appendExamToSpreadsheet(
 }
 
 export async function syncExamsOnlyToSpreadsheet(
-  accessToken: string,
+  accessToken: string | null,
   spreadsheetId: string,
   exams: ExamPaper[]
 ): Promise<void> {
   const publishedExams = exams.filter((e) => e.status === 'published');
-  const pubHeaders = DATABASE_TABLE_SCHEMAS.quiz_bank_publish.columns.map((c) => c.label);
+  const pubHeaders = [...DATABASE_TABLE_SCHEMAS.quiz_bank_publish.columns.map((c) => c.label), 'test_id'];
   const pubRows: any[][] = [
     pubHeaders,
     ...publishedExams.map((e, idx) => [
@@ -1085,16 +1217,17 @@ export async function syncExamsOnlyToSpreadsheet(
       e.id,
       e.title,
       e.subject,
-      `Lv.${e.difficultyLv}`,
+      e.difficultyLv,
       e.questionCount,
       e.totalScore,
       e.durationMinutes,
       e.createdAt,
+      e.questionIds ? e.questionIds.join(', ') : '',
     ]),
   ];
 
   const draftExams = exams.filter((e) => e.status === 'draft');
-  const unpubHeaders = DATABASE_TABLE_SCHEMAS.quiz_bank_unpublish.columns.map((c) => c.label);
+  const unpubHeaders = [...DATABASE_TABLE_SCHEMAS.quiz_bank_unpublish.columns.map((c) => c.label), 'test_id'];
   const unpubRows: any[][] = [
     unpubHeaders,
     ...draftExams.map((e, idx) => [
@@ -1102,13 +1235,30 @@ export async function syncExamsOnlyToSpreadsheet(
       e.id,
       e.title,
       e.subject,
-      `Lv.${e.difficultyLv}`,
+      e.difficultyLv,
       e.questionCount,
       e.totalScore,
       e.durationMinutes,
       e.createdAt,
+      e.questionIds ? e.questionIds.join(', ') : '',
     ]),
   ];
+
+  const scriptUrl = getEnvConfiguredScriptUrl();
+  if (scriptUrl) {
+    await postToGasScript({
+      action: 'replaceSheets',
+      sheets: [
+        { sheetName: 'quiz_bank_publish', rows: pubRows },
+        { sheetName: 'quiz_bank_unpublish', rows: unpubRows },
+      ],
+    });
+    return;
+  }
+
+  if (!accessToken) {
+    throw new Error('請在 .env 設定 VITE_GOOGLE_SCRIPT_URL 以免登入直接更新試算表');
+  }
 
   try {
     await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchClear`, {
@@ -1134,21 +1284,35 @@ export async function syncExamsOnlyToSpreadsheet(
     body: JSON.stringify({
       valueInputOption: 'USER_ENTERED',
       data: [
-        { range: 'quiz_bank_publish!A1:I', values: pubRows },
-        { range: 'quiz_bank_unpublish!A1:I', values: unpubRows },
+        { range: 'quiz_bank_publish!A1:J', values: pubRows },
+        { range: 'quiz_bank_unpublish!A1:J', values: unpubRows },
       ],
     }),
   });
 }
 
+export async function deleteRowsFromSpreadsheetViaGas(
+  sheetNames: string[],
+  keyColumnIndex: number,
+  idsToDelete: string[]
+): Promise<void> {
+  const scriptUrl = getEnvConfiguredScriptUrl();
+  if (!scriptUrl) return;
+
+  await postToGasScript({
+    action: 'deleteRows',
+    sheetNames,
+    keyColumnIndex,
+    idsToDelete,
+  });
+}
+
 export async function appendLogToSpreadsheet(
-  accessToken: string,
+  accessToken: string | null,
   spreadsheetId: string,
   logEntry: AuditLog,
   rowIndex: number
 ): Promise<{ success: boolean; message: string }> {
-  await ensureSpreadsheetTablesExist(accessToken, spreadsheetId);
-
   const rowValues = [
     rowIndex,
     logEntry.id,
@@ -1158,6 +1322,29 @@ export async function appendLogToSpreadsheet(
     logEntry.timestamp,
     logEntry.status,
   ];
+
+  const scriptUrl = getEnvConfiguredScriptUrl();
+  if (scriptUrl) {
+    await postToGasScript({
+      action: 'appendRow',
+      sheetName: 'log',
+      headers: DATABASE_TABLE_SCHEMAS.log.columns.map((c) => c.label),
+      rowValues,
+    });
+    return {
+      success: true,
+      message: `日誌 [${logEntry.id}] 已透過 GAS 寫入 Google 試算表 log 分頁！`,
+    };
+  }
+
+  if (!accessToken) {
+    return {
+      success: false,
+      message: '未設定 GAS 或 OAuth Token，略過雲端日誌寫入',
+    };
+  }
+
+  await ensureSpreadsheetTablesExist(accessToken, spreadsheetId);
 
   const res = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/log!A:G:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,

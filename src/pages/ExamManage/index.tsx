@@ -11,7 +11,6 @@ interface ExamPapersViewProps {
   onOpenCreateExamModal?: () => void;
   onOpenBatchDeleteModal: () => void;
   onPreviewExam: (exam: ExamPaper) => void;
-  onEditExam: (exam: ExamPaper) => void;
   onDeleteSingleExam: (exam: ExamPaper) => void;
   onExportReport?: () => void;
   onBatchExport: () => void;
@@ -32,7 +31,6 @@ export const ExamPapersView: React.FC<ExamPapersViewProps> = ({
   onClearExamSelection,
   onOpenBatchDeleteModal,
   onPreviewExam,
-  onEditExam,
   onDeleteSingleExam,
   onBatchExport,
   onPublishExams,
@@ -154,17 +152,17 @@ export const ExamPapersView: React.FC<ExamPapersViewProps> = ({
     if (!exam.subject || !exam.subjectId) {
       missing.push('學科類別 (未指定學科)');
     }
-    if (!exam.difficultyLv || exam.difficultyLv < 1 || exam.difficultyLv > 5) {
-      missing.push('難易度等級 (需介於 Lv.1 ~ Lv.5)');
+    if (exam.difficultyLv === undefined || exam.difficultyLv === null || exam.difficultyLv <= 0) {
+      missing.push('難易度 (需大於 0)');
     }
-    if (!exam.questionCount || exam.questionCount <= 0 || !exam.questionIds || exam.questionIds.length === 0) {
-      missing.push('試卷題數/題目配置 (題數需大於 0，且必須已配置試題)');
+    if (!exam.questionCount || exam.questionCount <= 0) {
+      missing.push('試卷題數 (題數需大於 0)');
     }
     if (!exam.totalScore || exam.totalScore <= 0) {
       missing.push('試卷總分 (總分需大於 0 分)');
     }
-    if (!exam.durationMinutes || exam.durationMinutes <= 0) {
-      missing.push('測驗時長 (時長需大於 0 分鐘)');
+    if (exam.durationMinutes === undefined || exam.durationMinutes === null || exam.durationMinutes < 0) {
+      missing.push('測驗時長 (時長不可小於 0 分鐘)');
     }
 
     return {
@@ -815,7 +813,7 @@ export const ExamPapersView: React.FC<ExamPapersViewProps> = ({
                     {columnVisibility.difficulty && (
                       <td className="py-3 px-3 text-center">
                         <span className="font-mono text-[12px] font-semibold text-[#191c1e]">
-                          Lv. {exam.difficultyLv}
+                          {exam.difficultyLv}
                         </span>
                       </td>
                     )}
@@ -900,14 +898,6 @@ export const ExamPapersView: React.FC<ExamPapersViewProps> = ({
                             type="button"
                           >
                             <span className="material-symbols-outlined text-[18px]">visibility</span>
-                          </button>
-                          <button
-                            onClick={() => onEditExam(exam)}
-                            className="p-1 hover:text-[#004ac6] transition-colors cursor-pointer"
-                            title="編輯內容"
-                            type="button"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">edit</span>
                           </button>
                           <button
                             onClick={() => onPreviewExam(exam)}

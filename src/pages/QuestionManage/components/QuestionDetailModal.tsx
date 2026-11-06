@@ -57,14 +57,13 @@ export const QuestionDetailModal: React.FC<QuestionDetailModalProps> = ({
             <span className="font-medium px-2.5 py-1 rounded bg-[#dae2fd] text-[#5c647a]">
               配分：{question.points} 分
             </span>
-            <span className={`font-semibold px-2.5 py-1 rounded ${
-              question.difficulty === 'hard'
-                ? 'bg-[#ffdad6] text-[#ba1a1a]'
-                : question.difficulty === 'medium'
-                ? 'bg-[#dae2fd] text-[#5c647a]'
-                : 'bg-[#6ffbbe]/40 text-[#006242]'
-            }`}>
-              難度：{question.difficultyScore !== undefined ? `★ ${question.difficultyScore} / 5.0 (${question.difficulty === 'hard' ? '困難' : question.difficulty === 'medium' ? '中等' : '簡單'})` : question.difficulty === 'hard' ? '困難 Hard' : question.difficulty === 'medium' ? '中等 Medium' : '簡單 Easy'}
+            {question.time !== undefined && (
+              <span className="font-medium px-2.5 py-1 rounded bg-[#eceef0] text-[#191c1e]">
+                時長：{question.time} 分鐘
+              </span>
+            )}
+            <span className="font-semibold px-2.5 py-1 rounded bg-[#dae2fd] text-[#004ac6] font-mono">
+              難度：{question.difficultyScore ?? (question.difficulty === 'hard' ? 4 : question.difficulty === 'medium' ? 3 : 2)}
             </span>
           </div>
 

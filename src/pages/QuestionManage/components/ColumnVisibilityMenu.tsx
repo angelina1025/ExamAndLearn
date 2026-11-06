@@ -49,6 +49,7 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
         content: false,
         difficulty: false,
         points: false,
+        time: false,
         tags: false,
         updatedAt: false,
         actions: false,
@@ -60,6 +61,7 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
         content: true,
         difficulty: true,
         points: true,
+        time: true,
         tags: true,
         updatedAt: true,
         actions: true,
@@ -73,6 +75,7 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
       content: true,
       difficulty: true,
       points: true,
+      time: true,
       tags: true,
       updatedAt: true,
       actions: true,
@@ -206,6 +209,23 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
                 {draftColumns.points ? 'check_box' : 'check_box_outline_blank'}
               </span>
               <span>配分</span>
+            </span>
+          </label>
+
+          {/* 時長 */}
+          <label
+            onClick={() => toggleColumn('time')}
+            className="flex items-center justify-between p-1.5 rounded hover:bg-[#f2f4f6] cursor-pointer select-none"
+          >
+            <span className="flex items-center gap-2 text-[13px] text-[#191c1e]">
+              <span
+                className={`material-symbols-outlined text-[18px] ${
+                  draftColumns.time ? 'text-[#004ac6]' : 'text-[#737686]'
+                }`}
+              >
+                {draftColumns.time ? 'check_box' : 'check_box_outline_blank'}
+              </span>
+              <span>時長</span>
             </span>
           </label>
 
