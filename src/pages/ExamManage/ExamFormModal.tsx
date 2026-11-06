@@ -16,25 +16,42 @@ export const ExamGenerationModal: React.FC<ExamGenerationModalProps> = ({
   onExamCreated,
 }) => {
   const [step, setStep] = useState<'form' | 'success'>('form');
-  const [examTitle, setExamTitle] = useState('2024年高二數學科平時測驗 (單元：函數與空間幾何)');
-  const [description, setDescription] = useState('限時 45 分鐘，滿分 100 分');
-  const [duration, setDuration] = useState(45);
-  const [difficultyLv, setDifficultyLv] = useState(4);
+  const [examTitle, setExamTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [duration, setDuration] = useState(0);
+  const [difficultyLv, setDifficultyLv] = useState(0);
   const [status, setStatus] = useState<'published' | 'draft'>('published');
   const [createdExamId, setCreatedExamId] = useState('');
   const confirmBtnRef = useRef<HTMLButtonElement>(null);
 
   const totalPoints = selectedQuestions.reduce((acc, q) => acc + q.points, 0);
+  const calculatedDuration = selectedQuestions.reduce((acc, q) => acc + (Number(q.time) || 0), 0);
+  const calculatedDifficulty =
+    selectedQuestions.length > 0
+      ? Number(
+          (
+            selectedQuestions.reduce(
+              (acc, q) =>
+                acc +
+                (q.difficultyScore ??
+                  (q.difficulty === 'hard' ? 4 : q.difficulty === 'medium' ? 3 : 2)),
+              0
+            ) / selectedQuestions.length
+          ).toFixed(2)
+        )
+      : 0;
 
   useEffect(() => {
     if (isOpen) {
       setStep('form');
-      setExamTitle('2024年高二數學科平時測驗 (單元：函數與空間幾何)');
-      setDescription('限時 45 分鐘，滿分 100 分');
+      setExamTitle('');
+      setDescription('');
+      setDuration(calculatedDuration);
+      setDifficultyLv(calculatedDifficulty);
       setStatus('published');
       setCreatedExamId(`EXAM-2024-MATH-${String(Math.floor(82 + Math.random() * 50)).padStart(3, '0')}`);
     }
-  }, [isOpen]);
+  }, [isOpen, calculatedDuration, calculatedDifficulty]);
 
   useEffect(() => {
     if (step === 'success') {
@@ -64,13 +81,13 @@ export const ExamGenerationModal: React.FC<ExamGenerationModalProps> = ({
     e.preventDefault();
     const newExam: ExamPaper = {
       id: createdExamId,
-      title: examTitle.trim() || '高二數學平時評量測驗',
-      description: description.trim() || '依選定題庫組合試卷',
+      title: examTitle.trim(),
+      description: description.trim(),
       subject: '數學',
       subjectId: 'math',
       difficultyLv: difficultyLv,
       questionCount: selectedQuestions.length,
-      totalScore: 100,
+      totalScore: totalPoints || 100,
       durationMinutes: duration,
       createdAt: formatSheetTimestamp(),
       status: status,
@@ -86,7 +103,7 @@ export const ExamGenerationModal: React.FC<ExamGenerationModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
@@ -95,9 +112,9 @@ export const ExamGenerationModal: React.FC<ExamGenerationModalProps> = ({
 
       {step === 'form' ? (
         /* Step 1: Exam Form */
-        <div className="relative bg-white rounded-xl max-w-lg w-full shadow-2xl p-6 flex flex-col gap-4 z-10 animate-in fade-in zoom-in-95 duration-200 border border-[#c3c6d7]/30">
+        <div className="relative bg-white rounded-xl max-w-lg w-full max-h-[90vh] shadow-2xl p-6 flex flex-col gap-4 z-10 animate-in fade-in zoom-in-95 duration-200 border border-[#c3c6d7]/30 overflow-hidden my-auto">
           {/* Header */}
-          <div className="flex items-center justify-between pb-2 border-b border-[#c3c6d7]/30">
+          <div className="flex items-center justify-between pb-2 border-b border-[#c3c6d7]/30 shrink-0">
             <div className="flex items-center gap-3">
               <span className="w-8 h-8 rounded-lg bg-[#dbe1ff] text-[#004ac6] flex items-center justify-center">
                 <span className="material-symbols-outlined text-[20px]">assignment_add</span>
@@ -105,7 +122,7 @@ export const ExamGenerationModal: React.FC<ExamGenerationModalProps> = ({
               <div>
                 <h2 className="text-[18px] text-[#191c1e] font-bold">快速生成考卷</h2>
                 <p className="text-[11px] text-[#004ac6] font-semibold">
-                  已選 {selectedQuestions.length} 題 / 題庫原始配分總計 {totalPoints} 分 (可自動等比折算100分)
+                  已選 {selectedQuestions.length} 題 / 題庫配分總計 {totalPoints} 分 / 時長總計 {calculatedDuration} 分鐘 / 平均難度 {calculatedDifficulty}
                 </p>
               </div>
             </div>
@@ -118,143 +135,153 @@ export const ExamGenerationModal: React.FC<ExamGenerationModalProps> = ({
             </button>
           </div>
 
-          {/* Selected items mini-list preview */}
-          <div className="flex flex-col gap-1">
-            <span className="text-[12px] text-[#434655] font-semibold">
-              已選題目清單 ({selectedQuestions.length})
-            </span>
-            <div className="max-h-36 overflow-y-auto bg-[#f2f4f6] p-2 rounded-lg flex flex-col gap-1.5 border border-[#c3c6d7]/30">
-              {selectedQuestions.map((q) => (
-                <div
-                  key={q.id}
-                  className="p-2 bg-white rounded shadow-2xs flex items-center justify-between border border-[#eceef0]"
-                >
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    <span className="font-mono text-[12px] font-semibold text-[#004ac6] shrink-0">
-                      {q.id}
-                    </span>
-                    <span className="text-[12px] text-[#191c1e] truncate max-w-[240px]">
-                      {q.content}
-                    </span>
-                  </div>
-                  <span className="text-[11px] bg-[#dae2fd] text-[#5c647a] px-1.5 py-0.5 rounded font-medium shrink-0">
-                    {q.points}分
-                  </span>
+          {/* Form & Scrollable Body */}
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3 flex-1 min-h-0 overflow-hidden">
+            <div className="flex flex-col gap-3 overflow-y-auto flex-1 pr-1 pt-0.5">
+              {/* Selected items mini-list preview */}
+              <div className="flex flex-col gap-1 shrink-0">
+                <span className="text-[12px] text-[#434655] font-semibold">
+                  已選題目清單 ({selectedQuestions.length})
+                </span>
+                <div className="max-h-24 overflow-y-auto bg-[#f2f4f6] p-2 rounded-lg flex flex-col gap-1.5 border border-[#c3c6d7]/30">
+                  {selectedQuestions.map((q) => (
+                    <div
+                      key={q.id}
+                      className="p-2 bg-white rounded shadow-2xs flex items-center justify-between gap-2 border border-[#eceef0]"
+                    >
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <span className="font-mono text-[12px] font-semibold text-[#004ac6] shrink-0">
+                          {q.id}
+                        </span>
+                        <span className="text-[12px] text-[#191c1e] truncate max-w-[200px]">
+                          {q.content}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-[11px] bg-[#eceef0] text-[#434655] px-1.5 py-0.5 rounded font-mono font-medium">
+                          難度 {q.difficultyScore ?? 3}
+                        </span>
+                        <span className="text-[11px] bg-[#eceef0] text-[#434655] px-1.5 py-0.5 rounded font-mono font-medium">
+                          {q.time ?? 0}分(時長)
+                        </span>
+                        <span className="text-[11px] bg-[#dae2fd] text-[#5c647a] px-1.5 py-0.5 rounded font-medium">
+                          {q.points}分
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
 
-          {/* Form Inputs */}
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-            <div className="flex flex-col gap-1">
-              <label className="text-[12px] text-[#191c1e] font-semibold flex items-center gap-1">
-                <span>試卷名稱</span>
-                <span className="text-[#ba1a1a]">*</span>
-              </label>
-              <input
-                required
-                type="text"
-                value={examTitle}
-                onChange={(e) => setExamTitle(e.target.value)}
-                className="w-full bg-[#f2f4f6] text-[#191c1e] text-[13px] px-3 py-2 rounded-lg border border-[#c3c6d7] focus:ring-2 focus:ring-[#004ac6]/40 focus:outline-none"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-[12px] text-[#191c1e] font-semibold">
-                測驗說明 / 備註標籤
-              </label>
-              <input
-                type="text"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full bg-[#f2f4f6] text-[#191c1e] text-[13px] px-3 py-2 rounded-lg border border-[#c3c6d7] focus:ring-2 focus:ring-[#004ac6]/40 focus:outline-none"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1">
-                <label className="text-[12px] text-[#191c1e] font-semibold">
-                  考試時長 (分鐘)
+                <label className="text-[12px] text-[#191c1e] font-semibold flex items-center gap-1">
+                  <span>試卷名稱</span>
+                  <span className="text-[#ba1a1a]">*</span>
                 </label>
                 <input
-                  type="number"
-                  min="10"
-                  max="300"
-                  value={duration}
-                  onChange={(e) => setDuration(Number(e.target.value))}
+                  required
+                  type="text"
+                  placeholder="請輸入試卷名稱..."
+                  value={examTitle}
+                  onChange={(e) => setExamTitle(e.target.value)}
                   className="w-full bg-[#f2f4f6] text-[#191c1e] text-[13px] px-3 py-2 rounded-lg border border-[#c3c6d7] focus:ring-2 focus:ring-[#004ac6]/40 focus:outline-none"
                 />
               </div>
 
               <div className="flex flex-col gap-1">
                 <label className="text-[12px] text-[#191c1e] font-semibold">
-                  難度等級 (Lv. 1 - 5)
+                  測驗說明 / 備註標籤
                 </label>
-                <select
-                  value={difficultyLv}
-                  onChange={(e) => setDifficultyLv(Number(e.target.value))}
+                <input
+                  type="text"
+                  placeholder="選填，請輸入測驗說明或備註..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                   className="w-full bg-[#f2f4f6] text-[#191c1e] text-[13px] px-3 py-2 rounded-lg border border-[#c3c6d7] focus:ring-2 focus:ring-[#004ac6]/40 focus:outline-none"
-                >
-                  <option value={1}>Lv. 1 (基礎入門)</option>
-                  <option value={2}>Lv. 2 (標準基礎)</option>
-                  <option value={3}>Lv. 3 (中等進階)</option>
-                  <option value={4}>Lv. 4 (高階挑戰)</option>
-                  <option value={5}>Lv. 5 (資優拔尖)</option>
-                </select>
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[12px] text-[#191c1e] font-semibold">
+                    考試時長 (分鐘，已選題目時長加總)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    value={duration}
+                    onChange={(e) => setDuration(Number(e.target.value))}
+                    className="w-full bg-[#f2f4f6] text-[#191c1e] font-mono text-[13px] px-3 py-2 rounded-lg border border-[#c3c6d7] focus:ring-2 focus:ring-[#004ac6]/40 focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[12px] text-[#191c1e] font-semibold">
+                    難度 (已選題目難度平均)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="5"
+                    step="any"
+                    value={difficultyLv}
+                    onChange={(e) => setDifficultyLv(Number(e.target.value))}
+                    className="w-full bg-[#f2f4f6] text-[#191c1e] font-mono text-[13px] px-3 py-2 rounded-lg border border-[#c3c6d7] focus:ring-2 focus:ring-[#004ac6]/40 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* 試卷狀態與資料表歸屬 */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[12px] text-[#191c1e] font-semibold">
+                  試卷狀態與資料表歸屬
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <label
+                    className={`p-2.5 rounded-lg border cursor-pointer flex flex-col gap-1 transition-all ${
+                      status === 'draft'
+                        ? 'border-[#004ac6] bg-[#dbe1ff]/30 text-[#004ac6]'
+                        : 'border-[#c3c6d7]/60 bg-white text-[#434655] hover:bg-[#f2f4f6]'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[13px] font-bold">草稿</span>
+                      <input
+                        type="radio"
+                        name="examStatus"
+                        checked={status === 'draft'}
+                        onChange={() => setStatus('draft')}
+                        className="accent-[#004ac6]"
+                      />
+                    </div>
+                    <span className="text-[11px] text-[#565e74] font-medium">寫在草稿資料表</span>
+                  </label>
+
+                  <label
+                    className={`p-2.5 rounded-lg border cursor-pointer flex flex-col gap-1 transition-all ${
+                      status === 'published'
+                        ? 'border-[#137333] bg-[#e6f4ea] text-[#137333]'
+                        : 'border-[#c3c6d7]/60 bg-white text-[#434655] hover:bg-[#f2f4f6]'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[13px] font-bold">正式發布</span>
+                      <input
+                        type="radio"
+                        name="examStatus"
+                        checked={status === 'published'}
+                        onChange={() => setStatus('published')}
+                        className="accent-[#137333]"
+                      />
+                    </div>
+                    <span className="text-[11px] text-[#565e74] font-medium">寫在公用試卷資料表</span>
+                  </label>
+                </div>
               </div>
             </div>
 
-            {/* 試卷狀態與資料表歸屬 */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[12px] text-[#191c1e] font-semibold">
-                試卷狀態與資料表歸屬
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <label
-                  className={`p-2.5 rounded-lg border cursor-pointer flex flex-col gap-1 transition-all ${
-                    status === 'draft'
-                      ? 'border-[#004ac6] bg-[#dbe1ff]/30 text-[#004ac6]'
-                      : 'border-[#c3c6d7]/60 bg-white text-[#434655] hover:bg-[#f2f4f6]'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[13px] font-bold">草稿</span>
-                    <input
-                      type="radio"
-                      name="examStatus"
-                      checked={status === 'draft'}
-                      onChange={() => setStatus('draft')}
-                      className="accent-[#004ac6]"
-                    />
-                  </div>
-                  <span className="text-[11px] text-[#565e74] font-medium">寫在草稿資料表</span>
-                </label>
-
-                <label
-                  className={`p-2.5 rounded-lg border cursor-pointer flex flex-col gap-1 transition-all ${
-                    status === 'published'
-                      ? 'border-[#137333] bg-[#e6f4ea] text-[#137333]'
-                      : 'border-[#c3c6d7]/60 bg-white text-[#434655] hover:bg-[#f2f4f6]'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[13px] font-bold">正式發布</span>
-                    <input
-                      type="radio"
-                      name="examStatus"
-                      checked={status === 'published'}
-                      onChange={() => setStatus('published')}
-                      className="accent-[#137333]"
-                    />
-                  </div>
-                  <span className="text-[11px] text-[#565e74] font-medium">寫在公用試卷資料表</span>
-                </label>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#c3c6d7]/20 shrink-0">
               <button
                 type="button"
                 onClick={onClose}

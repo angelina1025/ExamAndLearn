@@ -21,8 +21,9 @@ export const CreateQuestionModal: React.FC<CreateQuestionModalProps> = ({
   const [type, setType] = useState<'single' | 'multiple' | 'true_false'>('single');
   const [content, setContent] = useState('');
   const [difficulty, setDifficulty] = useState<DifficultyLevel>('medium');
-  const [difficultyScore, setDifficultyScore] = useState<number>(4.5);
+  const [difficultyScore, setDifficultyScore] = useState<number>(3);
   const [points, setPoints] = useState(6);
+  const [time, setTime] = useState<number>(5);
   const [tagsInput, setTagsInput] = useState('');
   const [optA, setOptA] = useState('');
   const [optB, setOptB] = useState('');
@@ -37,8 +38,9 @@ export const CreateQuestionModal: React.FC<CreateQuestionModalProps> = ({
       setType(initialQuestion.type);
       setContent(initialQuestion.content);
       setDifficulty(initialQuestion.difficulty);
-      setDifficultyScore(initialQuestion.difficultyScore ?? (initialQuestion.difficulty === 'hard' ? 4.5 : initialQuestion.difficulty === 'medium' ? 3.0 : 1.5));
+      setDifficultyScore(initialQuestion.difficultyScore ?? (initialQuestion.difficulty === 'hard' ? 4 : initialQuestion.difficulty === 'medium' ? 3 : 2));
       setPoints(initialQuestion.points);
+      setTime(initialQuestion.time ?? 5);
       setTagsInput(initialQuestion.tags.join(', '));
       setOptA(initialQuestion.options?.[0] || '');
       setOptB(initialQuestion.options?.[1] || '');
@@ -51,8 +53,9 @@ export const CreateQuestionModal: React.FC<CreateQuestionModalProps> = ({
       setType('single');
       setContent('');
       setDifficulty('medium');
-      setDifficultyScore(4.5);
+      setDifficultyScore(3);
       setPoints(6);
+      setTime(5);
       setTagsInput('');
       setOptA('');
       setOptB('');
@@ -86,8 +89,9 @@ export const CreateQuestionModal: React.FC<CreateQuestionModalProps> = ({
       type,
       content: content.trim(),
       difficulty: diffLevel,
-      difficultyScore: Number(difficultyScore) || 3.0,
+      difficultyScore: Number(difficultyScore) || 3,
       points: Number(points) || 6,
+      time: Number(time) || 0,
       tags: tags.length > 0 ? tags : ['未分類'],
       updatedAt: formatSheetTimestamp(),
       options,
@@ -170,32 +174,29 @@ export const CreateQuestionModal: React.FC<CreateQuestionModalProps> = ({
 
             {/* Difficulty Score (1~5) */}
             <div className="flex flex-col gap-1">
-              <label className="text-[12px] text-[#191c1e] font-semibold flex items-center justify-between">
-                <span>難度 (1~5)</span>
-                <span className="text-[11px] text-[#004ac6] font-mono font-semibold">
-                  {difficultyScore >= 4.0 ? '困難' : difficultyScore >= 2.5 ? '中等' : '簡單'} ({difficultyScore})
-                </span>
+              <label className="text-[12px] text-[#191c1e] font-semibold">
+                難度 (1~5)
               </label>
               <input
                 type="number"
-                min="1.0"
-                max="5.0"
-                step="0.5"
+                min="1"
+                max="5"
+                step="any"
                 value={difficultyScore}
                 onChange={(e) => {
-                  const val = parseFloat(e.target.value) || 3.0;
+                  const val = parseFloat(e.target.value) || 3;
                   setDifficultyScore(val);
                   setDifficulty(val >= 4.0 ? 'hard' : val >= 2.5 ? 'medium' : 'easy');
                 }}
-                className="bg-[#f2f4f6] text-[#191c1e] text-[13px] px-3 py-2 rounded-lg border border-[#c3c6d7] focus:ring-2 focus:ring-[#004ac6]/40 focus:outline-none"
+                className="bg-[#f2f4f6] text-[#191c1e] font-mono text-[13px] px-3 py-2 rounded-lg border border-[#c3c6d7] focus:ring-2 focus:ring-[#004ac6]/40 focus:outline-none"
               />
             </div>
           </div>
 
-          {/* Points & Tags */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Points, Time & Tags */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div className="flex flex-col gap-1">
-              <label className="text-[12px] text-[#191c1e] font-semibold">配分 (Points)</label>
+              <label className="text-[12px] text-[#191c1e] font-semibold">配分 (score)</label>
               <input
                 required
                 type="number"
@@ -203,6 +204,18 @@ export const CreateQuestionModal: React.FC<CreateQuestionModalProps> = ({
                 max="50"
                 value={points}
                 onChange={(e) => setPoints(Number(e.target.value))}
+                className="bg-[#f2f4f6] text-[#191c1e] text-[13px] px-3 py-2 rounded-lg border border-[#c3c6d7] focus:ring-2 focus:ring-[#004ac6]/40 focus:outline-none"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[12px] text-[#191c1e] font-semibold">題目時長 (time, 分鐘)</label>
+              <input
+                required
+                type="number"
+                min="0"
+                step="any"
+                value={time}
+                onChange={(e) => setTime(Number(e.target.value))}
                 className="bg-[#f2f4f6] text-[#191c1e] text-[13px] px-3 py-2 rounded-lg border border-[#c3c6d7] focus:ring-2 focus:ring-[#004ac6]/40 focus:outline-none"
               />
             </div>

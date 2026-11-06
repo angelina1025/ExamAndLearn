@@ -35,8 +35,7 @@ export const QuestionBankView: React.FC<QuestionBankViewProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<QuestionType>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [difficultyFilter, setDifficultyFilter] = useState<'all' | DifficultyLevel>('all');
-  type QuestionSortField = 'id' | 'content' | 'difficulty' | 'points' | 'tags' | 'updatedAt';
+  type QuestionSortField = 'id' | 'content' | 'difficulty' | 'points' | 'time' | 'tags' | 'updatedAt';
   type SortOrder = 'asc' | 'desc';
 
   const [sortField, setSortField] = useState<QuestionSortField>('updatedAt');
@@ -46,18 +45,16 @@ export const QuestionBankView: React.FC<QuestionBankViewProps> = ({
   const [jumpPage, setJumpPage] = useState('1');
   const [copyFeedbackId, setCopyFeedbackId] = useState<string | null>(null);
 
-  const difficultyWeights: Record<DifficultyLevel, number> = {
-    easy: 1,
-    medium: 2,
-    hard: 3,
-  };
-
   const handleSort = (field: QuestionSortField) => {
     if (sortField === field) {
       setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortField(field);
-      setSortOrder(field === 'updatedAt' || field === 'points' || field === 'difficulty' ? 'desc' : 'asc');
+      setSortOrder(
+        field === 'updatedAt' || field === 'points' || field === 'difficulty' || field === 'time'
+          ? 'desc'
+          : 'asc'
+      );
     }
     setCurrentPage(1);
   };
@@ -94,6 +91,7 @@ export const QuestionBankView: React.FC<QuestionBankViewProps> = ({
     content: true,
     difficulty: true,
     points: true,
+    time: true,
     tags: true,
     updatedAt: true,
     actions: true,
@@ -147,9 +145,6 @@ export const QuestionBankView: React.FC<QuestionBankViewProps> = ({
         // Type tab filter
         if (activeTab !== 'all' && q.type !== activeTab) return false;
 
-        // Difficulty filter
-        if (difficultyFilter !== 'all' && q.difficulty !== difficultyFilter) return false;
-
         // Text query
         if (searchQuery.trim()) {
           const query = searchQuery.toLowerCase();
@@ -168,10 +163,15 @@ export const QuestionBankView: React.FC<QuestionBankViewProps> = ({
             return a.id.localeCompare(b.id) * factor;
           case 'content':
             return a.content.localeCompare(b.content, 'zh-Hant') * factor;
-          case 'difficulty':
-            return ((difficultyWeights[a.difficulty] || 0) - (difficultyWeights[b.difficulty] || 0)) * factor;
+          case 'difficulty': {
+            const diffA = a.difficultyScore ?? (a.difficulty === 'hard' ? 4 : a.difficulty === 'medium' ? 3 : 2);
+            const diffB = b.difficultyScore ?? (b.difficulty === 'hard' ? 4 : b.difficulty === 'medium' ? 3 : 2);
+            return (diffA - diffB) * factor;
+          }
           case 'points':
             return (a.points - b.points) * factor;
+          case 'time':
+            return ((a.time ?? 0) - (b.time ?? 0)) * factor;
           case 'tags':
             return (a.tags.join(', ').localeCompare(b.tags.join(', '), 'zh-Hant')) * factor;
           case 'updatedAt':
@@ -180,7 +180,7 @@ export const QuestionBankView: React.FC<QuestionBankViewProps> = ({
             return 0;
         }
       });
-  }, [currentSubjectQuestions, activeTab, difficultyFilter, searchQuery, sortField, sortOrder]);
+  }, [currentSubjectQuestions, activeTab, searchQuery, sortField, sortOrder]);
 
   // Pagination calculation based on real filtered mock data
   const totalPages = Math.max(1, Math.ceil(filteredQuestions.length / pageSize));
@@ -373,56 +373,6 @@ export const QuestionBankView: React.FC<QuestionBankViewProps> = ({
                 ⌘K
               </kbd>
             </div>
-
-            {/* Difficulty Filter */}
-            <div className="relative">
-              <select
-                value={difficultyFilter}
-                onChange={(e) => {
-                  setDifficultyFilter(e.target.value as any);
-                  setCurrentPage(1);
-                }}
-                className="appearance-none bg-[#f2f4f6] text-[#191c1e] text-[13px] pl-3 pr-8 py-1.5 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#004ac6]/30 border-0"
-              >
-                <option value="all">難度: 全部難度</option>
-                <option value="easy">簡單 Easy</option>
-                <option value="medium">中等 Medium</option>
-                <option value="hard">困難 Hard</option>
-              </select>
-              <span className="material-symbols-outlined pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#434655] text-[18px]">
-                expand_more
-              </span>
-            </div>
-
-            {/* Sort Filter */}
-            <div className="relative">
-              <select
-                value={`${sortField}_${sortOrder}`}
-                onChange={(e) => {
-                  const [field, order] = e.target.value.split('_') as [QuestionSortField, SortOrder];
-                  setSortField(field);
-                  setSortOrder(order);
-                  setCurrentPage(1);
-                }}
-                className="appearance-none bg-[#f2f4f6] text-[#191c1e] text-[13px] pl-3 pr-8 py-1.5 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#004ac6]/30 border-0"
-              >
-                <option value="updatedAt_desc">排序: 建立時間 (新到舊)</option>
-                <option value="updatedAt_asc">排序: 建立時間 (舊到新)</option>
-                <option value="points_desc">排序: 配分 (高到低)</option>
-                <option value="points_asc">排序: 配分 (低到高)</option>
-                <option value="difficulty_desc">排序: 難度 (難到易)</option>
-                <option value="difficulty_asc">排序: 難度 (易到難)</option>
-                <option value="id_asc">排序: 題目 ID (A-Z)</option>
-                <option value="id_desc">排序: 題目 ID (Z-A)</option>
-                <option value="content_asc">排序: 內容摘要 (A-Z)</option>
-                <option value="content_desc">排序: 內容摘要 (Z-A)</option>
-                <option value="tags_asc">排序: 知識點標籤 (A-Z)</option>
-                <option value="tags_desc">排序: 知識點標籤 (Z-A)</option>
-              </select>
-              <span className="material-symbols-outlined pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#434655] text-[18px]">
-                expand_more
-              </span>
-            </div>
           </div>
 
           {/* Right Action: Column Visibility Button */}
@@ -527,6 +477,22 @@ export const QuestionBankView: React.FC<QuestionBankViewProps> = ({
                     >
                       <span>配分</span>
                       {renderSortArrow('points')}
+                    </div>
+                  </th>
+                )}
+
+                {/* 時長 */}
+                {columnVisibility.time && (
+                  <th className="py-3 px-2 w-24 text-center">
+                    <div
+                      onClick={() => handleSort('time')}
+                      className={`inline-flex items-center justify-center gap-1 cursor-pointer group transition-colors select-none mx-auto ${
+                        sortField === 'time' ? 'text-[#004ac6] font-semibold' : 'text-[#434655] hover:text-[#004ac6]'
+                      }`}
+                      title="點擊依時長排序"
+                    >
+                      <span>時長</span>
+                      {renderSortArrow('time')}
                     </div>
                   </th>
                 )}
@@ -646,23 +612,8 @@ export const QuestionBankView: React.FC<QuestionBankViewProps> = ({
 
                     {/* 難易度 */}
                     {columnVisibility.difficulty && (
-                      <td className="py-2.5 px-2">
-                        {q.difficulty === 'hard' ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ffdad6] text-[#93000a] text-[11px] font-semibold">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#ba1a1a]"></span>
-                            困難 Hard
-                          </span>
-                        ) : q.difficulty === 'medium' ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#dae2fd] text-[#5c647a] text-[11px] font-semibold">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#565e74]"></span>
-                            中等 Medium
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#6ffbbe]/50 text-[#002113] text-[11px] font-semibold">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#006242]"></span>
-                            簡單 Easy
-                          </span>
-                        )}
+                      <td className="py-2.5 px-2 font-mono text-[14px] font-bold text-[#191c1e]">
+                        {q.difficultyScore ?? (q.difficulty === 'hard' ? 4 : q.difficulty === 'medium' ? 3 : 2)}
                       </td>
                     )}
 
@@ -670,6 +621,13 @@ export const QuestionBankView: React.FC<QuestionBankViewProps> = ({
                     {columnVisibility.points && (
                       <td className="py-2.5 px-2 text-center text-[15px] font-bold text-[#191c1e]">
                         {q.points}分
+                      </td>
+                    )}
+
+                    {/* 時長 */}
+                    {columnVisibility.time && (
+                      <td className="py-2.5 px-2 text-center font-mono text-[14px] font-semibold text-[#191c1e]">
+                        {q.time ?? 0} 分鐘
                       </td>
                     )}
 
@@ -739,7 +697,7 @@ export const QuestionBankView: React.FC<QuestionBankViewProps> = ({
 
               {displayedQuestions.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-[#434655]">
+                  <td colSpan={9} className="py-12 text-center text-[#434655]">
                     <div className="flex flex-col items-center gap-2">
                       <span className={`material-symbols-outlined text-[36px] text-[#737686] ${isLoadingData ? 'animate-spin text-[#004ac6]' : ''}`}>
                         {isLoadingData ? 'sync' : 'search_off'}
@@ -765,7 +723,6 @@ export const QuestionBankView: React.FC<QuestionBankViewProps> = ({
                         <button
                           onClick={() => {
                             setSearchQuery('');
-                            setDifficultyFilter('all');
                             setActiveTab('all');
                           }}
                           className="text-[13px] text-[#004ac6] hover:underline cursor-pointer"

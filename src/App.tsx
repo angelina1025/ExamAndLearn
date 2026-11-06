@@ -19,6 +19,7 @@ import { INITIAL_QUESTIONS, INITIAL_EXAM_PAPERS } from '@/data/initialData';
 import { Question, ExamPaper, SubjectId, SubjectFilter, AuditLog, NotificationItem, CategoryItem } from '@/types';
 import {
   getEnvConfiguredSpreadsheetUrl,
+  getEnvConfiguredScriptUrl,
   extractSpreadsheetId,
   fetchSpreadsheetStats,
   syncAllToSpreadsheet,
@@ -27,6 +28,7 @@ import {
   appendExamToSpreadsheet,
   appendLogToSpreadsheet,
   syncExamsOnlyToSpreadsheet,
+  deleteRowsFromSpreadsheetViaGas,
   formatSheetTimestamp,
   INITIAL_CATEGORIES_DATA,
 } from '@/services/publicSheet';
@@ -87,8 +89,9 @@ export default function App() {
     if (!targetId) return;
 
     try {
+      const hasGas = Boolean(getEnvConfiguredScriptUrl());
       const token = explicitToken || (await getAccessToken());
-      if (token) {
+      if (hasGas || token) {
         const nextRowIdx = auditLogs.length + 1;
         await appendLogToSpreadsheet(token, targetId, logEntry, nextRowIdx);
       }
@@ -409,7 +412,7 @@ export default function App() {
     setSingleItemToDelete({
       id: q.id,
       title: q.content,
-      extraInfo: `${q.points}分 / ${q.difficulty}`,
+      extraInfo: `${q.points}分 / 難度 ${q.difficultyScore ?? (q.difficulty === 'hard' ? 4 : q.difficulty === 'medium' ? 3 : 2)}`,
     });
     setIsTwoPhaseDeleteOpen(true);
   };
@@ -426,6 +429,16 @@ export default function App() {
 
       setExamPapers((prev) => prev.filter((e) => !idsToRemove.includes(e.id)));
       setSelectedExamIds((prev) => prev.filter((id) => !idsToRemove.includes(id)));
+
+      try {
+        await deleteRowsFromSpreadsheetViaGas(
+          ['quiz_bank_publish', 'quiz_bank_unpublish'],
+          1,
+          idsToRemove
+        );
+      } catch (err) {
+        console.warn('Failed to delete exam rows via GAS:', err);
+      }
 
       const logEntry: AuditLog = {
         id: newLogId,
@@ -445,6 +458,12 @@ export default function App() {
 
       setQuestions((prev) => prev.filter((q) => !idsToRemove.includes(q.id)));
       setSelectedQuestionIds((prev) => prev.filter((id) => !idsToRemove.includes(id)));
+
+      try {
+        await deleteRowsFromSpreadsheetViaGas(['test_bank'], 1, idsToRemove);
+      } catch (err) {
+        console.warn('Failed to delete question rows via GAS:', err);
+      }
 
       const logEntry: AuditLog = {
         id: newLogId,
@@ -491,11 +510,12 @@ export default function App() {
 
     // Synchronize exam tables and log on Google Sheets
     const targetId = connectedSpreadsheetId || envSheetId;
+    const hasGas = Boolean(getEnvConfiguredScriptUrl());
     let token: string | null = null;
     if (targetId) {
       try {
         token = await getAccessToken();
-        if (token) {
+        if (hasGas || token) {
           await syncExamsOnlyToSpreadsheet(token, targetId, updatedExams);
           showToast(`✅ 已同步更新 Google 試算表 quiz_bank_publish 與 quiz_bank_unpublish！`, 'success');
         }
@@ -510,7 +530,6 @@ export default function App() {
   const handleExamCreated = async (newExam: ExamPaper) => {
     setExamPapers((prev) => [newExam, ...prev]);
 
-    const targetUrl = connectedSpreadsheetUrl || envSheetUrl;
     const targetId = connectedSpreadsheetId || envSheetId;
     const targetTable = newExam.status === 'published' ? 'quiz_bank_publish' : 'quiz_bank_unpublish';
     const targetTableName = newExam.status === 'published' ? '公用試卷資料表' : '草稿資料表';
@@ -532,14 +551,15 @@ export default function App() {
     }
 
     try {
+      const hasGas = Boolean(getEnvConfiguredScriptUrl());
       let token = await getAccessToken();
-      if (!token) {
+      if (!hasGas && !token) {
         showToast('正在開啟 Google 授權視窗，請允許寫入試算表...', 'info');
         const signRes = await googleSignIn();
         token = signRes?.accessToken || null;
       }
 
-      if (token) {
+      if (hasGas || token) {
         showToast(`正在將考卷 ${newExam.id} 寫入 Google 試算表 (${targetTable})...`, 'info');
         const nextRowIdx = examPapers.filter((e) => e.status === newExam.status).length + 1;
         await appendExamToSpreadsheet(token, targetId, newExam, nextRowIdx);
@@ -547,12 +567,12 @@ export default function App() {
         showToast(`✅ 考卷 ${newExam.id} 已成功寫入 Google 試算表「${targetTableName}」與 log 分頁！`, 'success');
       } else {
         await recordAuditLog(logEntry);
-        showToast(`考卷 ${newExam.id} 已建立，但因未授權 Google 帳號，未能寫入雲端`, 'warning');
+        showToast(`考卷 ${newExam.id} 已建立，但尚未設定 VITE_GOOGLE_SCRIPT_URL，未能寫入雲端`, 'warning');
       }
     } catch (err: any) {
       console.error('Error appending exam to Google Sheets:', err);
       await recordAuditLog(logEntry);
-      showToast(`寫入 Google 試算表失敗: ${err.message || '請確認試算表權限'}`, 'error');
+      showToast(`寫入 Google 試算表失敗: ${err.message || '請確認 VITE_GOOGLE_SCRIPT_URL 設定'}`, 'error');
     }
   };
 
@@ -568,13 +588,12 @@ export default function App() {
       return [q, ...prev];
     });
 
-    const targetUrl = connectedSpreadsheetUrl || envSheetUrl;
     const targetId = connectedSpreadsheetId || envSheetId;
 
     const now = formatSheetTimestamp();
     const logEntry: AuditLog = {
       id: `#LOG-${Date.now().toString().slice(-6)}`,
-      action: '新增試題並寫入 Google 試算表',
+      action: '新增/更新試題並寫入 Google 試算表',
       target: `${q.id} (test_bank)`,
       operator: '王敏行 (Admin Wang)',
       timestamp: now,
@@ -588,14 +607,15 @@ export default function App() {
     }
 
     try {
+      const hasGas = Boolean(getEnvConfiguredScriptUrl());
       let token = await getAccessToken();
-      if (!token) {
+      if (!hasGas && !token) {
         showToast('正在開啟 Google 授權視窗，請允許寫入試算表...', 'info');
         const signRes = await googleSignIn();
         token = signRes?.accessToken || null;
       }
 
-      if (token) {
+      if (hasGas || token) {
         showToast(`正在將題目 ${q.id} 寫入 Google 試算表 (test_bank)...`, 'info');
         const nextRowIdx = questions.length + 1;
         await appendQuestionToSpreadsheet(token, targetId, q, nextRowIdx);
@@ -603,12 +623,12 @@ export default function App() {
         showToast(`✅ 題目 ${q.id} 已成功寫入 Google 試算表 test_bank 與 log 資料表！`, 'success');
       } else {
         await recordAuditLog(logEntry);
-        showToast(`題目 ${q.id} 已建立，但因未授權 Google 帳號，未能寫入雲端`, 'warning');
+        showToast(`題目 ${q.id} 已建立，但尚未設定 VITE_GOOGLE_SCRIPT_URL，未能寫入雲端`, 'warning');
       }
     } catch (err: any) {
       console.error('Error appending question to Google Sheets:', err);
       await recordAuditLog(logEntry);
-      showToast(`寫入 Google 試算表失敗: ${err.message || '請確認試算表權限'}`, 'error');
+      showToast(`寫入 Google 試算表失敗: ${err.message || '請確認 VITE_GOOGLE_SCRIPT_URL 設定'}`, 'error');
     }
   };
 
@@ -642,7 +662,7 @@ export default function App() {
         return {
           id,
           title: q?.content || id,
-          extraInfo: `${q?.points || 0}分 / ${q?.difficulty || ''}`,
+          extraInfo: `${q?.points || 0}分 / 難度 ${q?.difficultyScore ?? 3}`,
         };
       });
 
@@ -707,10 +727,6 @@ export default function App() {
               }}
               onOpenBatchDeleteModal={handleOpenBatchDeleteExams}
               onPreviewExam={(exam) => setPreviewingExam(exam)}
-              onEditExam={(exam) => {
-                showToast(`開啟編輯試卷 [${exam.id}]`);
-                setPreviewingExam(exam);
-              }}
               onDeleteSingleExam={handleOpenSingleDeleteExam}
               onExportReport={handleExportReport}
               onBatchExport={handleBatchExportExams}
