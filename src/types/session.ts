@@ -1,11 +1,13 @@
-export interface ExamSessionState {
-  examId: string | null;
-  currentQuestionIndex: number;
-  userAnswers: Record<string, string[]>; // questionId -> ['A'] or ['A', 'C']
-  flags: Record<string, boolean>; // questionId -> isFlagged
-  remainingSeconds: number;
-  isPaused: boolean;
-  startedAt: string | null;
-  submittedAt: string | null;
-}
+export type Answer = string | string[];
 
+export type ExamStatus = 'running' | 'paused' | 'submitted';
+
+export interface ExamSessionState {
+  examId: string;
+  answers: Record<string, Answer>;
+  flags: string[];
+  currentIndex: number;
+  remainingSec: number;
+  status: ExamStatus;
+  deadline: number | null;
+}

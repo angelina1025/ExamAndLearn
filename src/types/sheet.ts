@@ -1,6 +1,24 @@
-import { Question } from './question';
-import { ExamPaper } from './exam';
-import { AuditLog } from './user';
+import { Question } from '@/types/question';
+import { ExamPaper } from '@/types/exam';
+import { AuditLog } from '@/types/user';
+
+export interface SheetQuestionRow {
+  id: string;
+  test_id: string;
+  question: string;
+  option: string; // JSON string
+  answer: string; // e.g. "A" or "A, C"
+  explanation?: string;
+}
+
+export interface SheetExamRow {
+  id: string;
+  title: string;
+  subtitle?: string;
+  question_ids: string;
+  duration_sec: number;
+  passing_score?: number;
+}
 
 export interface CategoryItem {
   id: number;
@@ -34,4 +52,3 @@ export interface ReadSpreadsheetResult {
   stats: Record<string, number>;
   message: string;
 }
-

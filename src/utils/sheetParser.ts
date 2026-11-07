@@ -1,3 +1,30 @@
+import type { ExamOption } from '@/types/question';
+
+export function parseOptionJson(optionRaw: string): ExamOption[] {
+  try {
+    const parsed: unknown = JSON.parse(optionRaw);
+    if (Array.isArray(parsed)) {
+      return parsed as ExamOption[];
+    }
+    if (parsed && typeof parsed === 'object') {
+      return Object.entries(parsed as Record<string, string>).map(([id, text]) => ({
+        id,
+        text: String(text),
+      }));
+    }
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+export function parseAnswerString(answerRaw: string): string[] {
+  return answerRaw
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 /**
  * Format options into user-specified JSON object string: {"A": "...", "B": "...", ...}
  */
@@ -74,4 +101,3 @@ export function extractSpreadsheetId(input: string): string | null {
   }
   return null;
 }
-

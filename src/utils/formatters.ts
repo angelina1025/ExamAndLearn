@@ -1,3 +1,5 @@
+import { remainingFromDeadline } from '@/hooks/useCountdown';
+
 /**
  * Format timestamp to Google Sheet standard format: "YYYY/M/D HH:mm:ss"
  */
@@ -14,10 +16,13 @@ export function formatSheetTimestamp(date: Date = new Date()): string {
 /**
  * Format seconds into mm:ss string for exam countdown timer
  */
-export function formatSecondsToMmSs(totalSeconds: number): string {
-  const safeSeconds = Math.max(0, Math.floor(totalSeconds));
-  const mins = Math.floor(safeSeconds / 60);
-  const secs = safeSeconds % 60;
-  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+export function formatTime(totalSec: number): string {
+  const safe = Math.max(0, Math.floor(totalSec));
+  const minutes = Math.floor(safe / 60);
+  const seconds = safe % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
+export const formatSecondsToMmSs = formatTime;
+
+export { remainingFromDeadline };

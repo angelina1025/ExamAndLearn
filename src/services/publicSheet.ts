@@ -1,6 +1,14 @@
-import { Question, ExamPaper, SheetTableSchema, ReadSpreadsheetResult, SubjectId, CategoryItem, AuditLog } from '@/types';
+import { Question, ExamPaper, Exam, SheetTableSchema, ReadSpreadsheetResult, SubjectId, CategoryItem, AuditLog } from '@/types';
+import { assignedExam } from '@/services/mockExamData';
 import { formatSheetTimestamp } from '@/utils/formatters';
 import { formatOptionsToJsonObject, parseSheetOptionJson, extractSpreadsheetId } from '@/utils/sheetParser';
+
+export const ASSIGNED_EXAM_ID = 'assigned-demo';
+
+export async function getAssignedExam(examId: string): Promise<Exam | null> {
+  if (examId !== ASSIGNED_EXAM_ID) return null;
+  return assignedExam;
+}
 
 export { formatSheetTimestamp, formatOptionsToJsonObject, extractSpreadsheetId };
 export type { SheetTableSchema, ReadSpreadsheetResult, CategoryItem };

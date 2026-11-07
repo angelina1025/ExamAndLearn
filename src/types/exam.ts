@@ -1,4 +1,13 @@
-import { SubjectId } from './question';
+import { SubjectId, ExamQuestion } from '@/types/question';
+
+export interface Exam {
+  id: string;
+  title: string;
+  subtitle: string;
+  durationSec: number;
+  passingScore?: number;
+  questions: ExamQuestion[];
+}
 
 export interface ExamPaper {
   id: string; // e.g. "EXAM-2024-MATH-081" (對應 quiz_id)
@@ -31,3 +40,5 @@ export interface ExamColumnVisibilityState {
   actions: boolean;
 }
 
+export type { QuestionType, ExamQuestionType, ExamOption, ExamQuestion } from '@/types/question';
+export type { Answer, ExamStatus, ExamSessionState } from '@/types/session';

@@ -1,42 +1,23 @@
-import { useState, useEffect } from 'react';
+'use client';
 
-interface UseCountdownOptions {
-  initialSeconds: number;
-  isPaused?: boolean;
-  onExpire?: () => void;
+import { useEffect } from 'react';
+
+export function remainingFromDeadline(deadline: number, now: number = Date.now()): number {
+  return Math.max(0, Math.ceil((deadline - now) / 1000));
 }
 
-/**
- * 倒數計時與強制交卷 Custom Hook
- */
-export function useCountdown({
-  initialSeconds,
-  isPaused = false,
-  onExpire,
-}: UseCountdownOptions) {
-  const [remainingSeconds, setRemainingSeconds] = useState(initialSeconds);
-
+export function useCountdown(
+  enabled: boolean,
+  deadline: number | null,
+  onTick: (remainingSec: number) => void
+) {
   useEffect(() => {
-    setRemainingSeconds(initialSeconds);
-  }, [initialSeconds]);
-
-  useEffect(() => {
-    if (isPaused || remainingSeconds <= 0) return;
-
-    const timer = window.setInterval(() => {
-      setRemainingSeconds((prev) => {
-        if (prev <= 1) {
-          window.clearInterval(timer);
-          onExpire?.();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
+    if (!enabled || deadline === null) return;
+    const tick = () => {
+      onTick(remainingFromDeadline(deadline));
+    };
+    tick();
+    const timer = window.setInterval(tick, 250);
     return () => window.clearInterval(timer);
-  }, [isPaused, remainingSeconds, onExpire]);
-
-  return { remainingSeconds, setRemainingSeconds };
+  }, [enabled, deadline, onTick]);
 }
-

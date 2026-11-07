@@ -12,9 +12,27 @@ export type SubjectId =
 
 export type SubjectFilter = SubjectId | 'all';
 
-export type QuestionType = 'all' | 'single' | 'multiple' | 'true_false';
+export type QuestionType = 'all' | 'single' | 'multiple' | 'true_false' | 'boolean';
+
+export type ExamQuestionType = 'single' | 'multiple' | 'boolean';
 
 export type DifficultyLevel = 'easy' | 'medium' | 'hard';
+
+export interface ExamOption {
+  id: string;
+  text: string;
+}
+
+export interface ExamQuestion {
+  id: string;
+  test_id?: string;
+  type: ExamQuestionType;
+  prompt: string;
+  options: ExamOption[];
+  points: number;
+  answer?: string;
+  explanation?: string;
+}
 
 export interface Question {
   id: string; // e.g. "Q-MATH-20240901" (對應 Sheet 的 test_id)
@@ -49,4 +67,3 @@ export interface ColumnVisibilityState {
   updatedAt: boolean;
   actions: boolean;
 }
-

@@ -1,4 +1,11 @@
-import { SubjectId } from './question';
+import { SubjectId } from '@/types/question';
+
+export interface SubjectAnalysis {
+  subject: string;
+  correctCount: number;
+  totalCount: number;
+  accuracy: number;
+}
 
 export interface SubjectAnalysisItem {
   subjectId: SubjectId;
@@ -17,18 +24,19 @@ export interface WrongQuestionRecord {
 }
 
 export interface ExamResultSummary {
-  resultId: string;
+  sessionId?: string;
+  resultId?: string;
   examId: string;
-  examTitle: string;
+  examTitle?: string;
   score: number;
-  totalScore: number;
-  isPassed: boolean;
+  totalScore?: number;
+  isPassed?: boolean;
   correctCount: number;
   wrongCount: number;
   unansweredCount: number;
-  durationUsedSeconds: number;
+  durationUsedSeconds?: number;
   submittedAt: string;
-  analysis: SubjectAnalysisItem[];
-  wrongQuestions: WrongQuestionRecord[];
+  analysis?: SubjectAnalysisItem[];
+  subjectAnalysis?: SubjectAnalysis[];
+  wrongQuestions?: WrongQuestionRecord[];
 }
-
