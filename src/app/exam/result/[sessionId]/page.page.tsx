@@ -1,7 +1,8 @@
+import { Suspense } from 'react';
 import { QuestionReviewList } from '@/app/exam/result/[sessionId]/_components/QuestionReviewList';
 import { SubjectAnalysisChart } from '@/app/exam/result/[sessionId]/_components/SubjectAnalysisChart';
 
-export default async function ExamResultPage({
+async function ExamResultContent({
   params,
 }: {
   params?: Promise<{ sessionId: string }>;
@@ -17,3 +18,14 @@ export default async function ExamResultPage({
   );
 }
 
+export default function ExamResultPage({
+  params,
+}: {
+  params?: Promise<{ sessionId: string }>;
+}) {
+  return (
+    <Suspense fallback={<main className="exam-shell py-8">載入考試結果…</main>}>
+      <ExamResultContent params={params} />
+    </Suspense>
+  );
+}
