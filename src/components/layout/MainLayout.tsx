@@ -1,6 +1,8 @@
+'use client';
+
 import React from 'react';
-import { Header } from './Header';
-import { Sidebar } from './Sidebar';
+import { Header } from '@/components/layout/Header';
+import { Sidebar } from '@/components/layout/Sidebar';
 import { NotificationItem, Question, SubjectFilter } from '@/types';
 
 interface MainLayoutProps {

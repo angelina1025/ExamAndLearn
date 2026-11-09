@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { SubjectId, SubjectFilter, Question, CategoryItem } from '@/types';
 import { CATEGORY_ID_TO_SUBJECT, SUBJECT_NAME_MAP } from '@/services/publicSheet';
@@ -8,6 +10,7 @@ interface SidebarProps {
   onSelectSubject: (id: SubjectFilter) => void;
   onNavigate: (page: 'question-bank' | 'exam-papers' | 'system-settings') => void;
   onOpenCreateQuestion: () => void;
+  onOpenUploadExam?: () => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
   questions: Question[];
@@ -46,6 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectSubject,
   onNavigate,
   onOpenCreateQuestion,
+  onOpenUploadExam,
   collapsed,
   onToggleCollapse,
   questions,
@@ -134,7 +138,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <button
           onClick={onOpenCreateQuestion}
           className="p-2.5 bg-[#dbe1ff] text-[#004ac6] rounded-full hover:bg-[#b4c5ff] transition-colors cursor-pointer"
-          title="新增題目"
+          title="手動新增題目"
           type="button"
         >
           <span className="material-symbols-outlined text-[20px]">add</span>
@@ -177,14 +181,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             {questionBankOpen && (
               <div className="pl-4 flex flex-col gap-1 mt-1">
-                {/* 新增題目 */}
+                {/* 手動新增題目 */}
                 <button
                   onClick={onOpenCreateQuestion}
                   className="flex items-center gap-2 px-3 py-1.5 rounded text-[13px] text-[#004ac6] hover:bg-[#dbe1ff]/30 transition-colors w-full text-left font-medium cursor-pointer"
                   type="button"
                 >
                   <span className="material-symbols-outlined text-[16px]">add</span>
-                  <span>新增題目</span>
+                  <span>手動新增題目</span>
+                </button>
+
+                {/* 上傳整份試卷 */}
+                <button
+                  onClick={onOpenUploadExam}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded text-[13px] text-[#004ac6] hover:bg-[#dbe1ff]/30 transition-colors w-full text-left font-medium cursor-pointer"
+                  type="button"
+                >
+                  <span className="material-symbols-outlined text-[16px]">upload_file</span>
+                  <span>上傳整份試卷</span>
                 </button>
 
                 {/* 題目列表 (點擊前往題目列表總表，同時展開各科目) */}

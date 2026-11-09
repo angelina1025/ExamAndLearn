@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -6,14 +8,15 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { QuestionBankView } from '@/pages/QuestionManage';
-import { ExamPapersView } from '@/pages/ExamManage';
-import { SystemSettingsView } from '@/pages/Profile/components/SystemSettingsView';
+import { QuestionBankView } from '@/app/(dashboard)/questions/page';
+import { ExamPapersView } from '@/app/(dashboard)/exams/page';
+import { SystemSettingsView } from '@/app/(auth)/profile/page';
 import { TwoPhaseDeleteModal, DeleteItem } from '@/components/common/TwoPhaseDeleteModal';
-import { ExamGenerationModal } from '@/pages/ExamManage/ExamFormModal';
-import { QuestionDetailModal } from '@/pages/QuestionManage/components/QuestionDetailModal';
-import { CreateQuestionModal } from '@/pages/QuestionManage/QuestionModal';
-import { ExamPaperPreviewModal } from '@/pages/ExamManage/components/ExamPaperPreviewModal';
+import { ExamGenerationModal } from '@/app/(dashboard)/exams/_components/ExamFormModal';
+import { QuestionDetailModal } from '@/app/(dashboard)/questions/_components/QuestionDetailModal';
+import { CreateQuestionModal } from '@/app/(dashboard)/questions/_components/QuestionModal';
+import { UploadExamModal } from '@/app/(dashboard)/questions/_components/UploadExamModal';
+import { ExamPaperPreviewModal } from '@/app/(dashboard)/exams/_components/ExamPaperPreviewModal';
 import { GlobalSearchModal } from '@/components/layout/GlobalSearchModal';
 import { INITIAL_QUESTIONS, INITIAL_EXAM_PAPERS } from '@/data/initialData';
 import { Question, ExamPaper, SubjectId, SubjectFilter, AuditLog, NotificationItem, CategoryItem } from '@/types';
@@ -44,10 +47,18 @@ export default function App() {
   const envSheetId = extractSpreadsheetId(envSheetUrl);
 
   const [connectedSpreadsheetId, setConnectedSpreadsheetId] = useState<string | null>(() => {
-    return envSheetId || localStorage.getItem('google_spreadsheet_id') || null;
+    return (
+      envSheetId ||
+      (typeof window !== 'undefined' ? localStorage.getItem('google_spreadsheet_id') : null) ||
+      null
+    );
   });
   const [connectedSpreadsheetUrl, setConnectedSpreadsheetUrl] = useState<string | null>(() => {
-    return envSheetUrl || localStorage.getItem('google_spreadsheet_url') || null;
+    return (
+      envSheetUrl ||
+      (typeof window !== 'undefined' ? localStorage.getItem('google_spreadsheet_url') : null) ||
+      null
+    );
   });
   const [isReconnectingSheets, setIsReconnectingSheets] = useState(false);
   const [isSyncingSheets, setIsSyncingSheets] = useState(false);
@@ -123,7 +134,11 @@ export default function App() {
     try {
       const result = await readAllTablesFromSpreadsheet(token, targetId);
       setCategories(result.categories);
-      setQuestions(result.questions);
+      setQuestions((prev) => {
+        const remoteIds = new Set(result.questions.map((q) => q.id));
+        const localUnsynced = prev.filter((q) => !remoteIds.has(q.id));
+        return [...localUnsynced, ...result.questions];
+      });
       setExamPapers(result.allExams);
       setAuditLogs(result.auditLogs);
       setHasSyncedSheet(true);
@@ -358,6 +373,7 @@ export default function App() {
   const [previewingQuestion, setPreviewingQuestion] = useState<Question | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [isCreateQuestionOpen, setIsCreateQuestionOpen] = useState(false);
+  const [isUploadExamOpen, setIsUploadExamOpen] = useState(false);
 
   const [previewingExam, setPreviewingExam] = useState<ExamPaper | null>(null);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
@@ -693,6 +709,7 @@ export default function App() {
           setEditingQuestion(null);
           setIsCreateQuestionOpen(true);
         }}
+        onOpenUploadExam={() => setIsUploadExamOpen(true)}
         collapsed={collapsedSidebar}
         onToggleCollapse={() => setCollapsedSidebar(!collapsedSidebar)}
         questions={questions}
@@ -807,6 +824,58 @@ export default function App() {
         onSave={handleSaveQuestion}
         initialQuestion={editingQuestion}
         defaultSubjectId={selectedSubject === 'all' ? 'math' : selectedSubject}
+      />
+
+      {/* Upload Full Exam Paper Modal */}
+      <UploadExamModal
+        isOpen={isUploadExamOpen}
+        onClose={() => setIsUploadExamOpen(false)}
+        onUploadSuccess={async (importedQuestions, file) => {
+          setQuestions((prev) => [...importedQuestions, ...prev]);
+          setSelectedSubject('all');
+          setActivePage('question-bank');
+          showToast(
+            `✅ 上傳成功！「${file.name}」通過審查，已匯入 ${importedQuestions.length} 筆題目。`,
+            'success'
+          );
+
+          const targetId = connectedSpreadsheetId || envSheetId;
+          const now = formatSheetTimestamp();
+          const logEntry: AuditLog = {
+            id: `#LOG-UPL-${Date.now().toString().slice(-4)}`,
+            action: `上傳整份試卷匯入題庫 (${importedQuestions.length} 題)`,
+            target: `${file.name} (test_bank)`,
+            operator: '王敏行 (Admin Wang)',
+            timestamp: now,
+            status: 'success',
+          };
+
+          if (targetId) {
+            try {
+              const hasGas = Boolean(getEnvConfiguredScriptUrl());
+              let token = await getAccessToken();
+              if (!hasGas && !token) {
+                const signRes = await googleSignIn();
+                token = signRes?.accessToken || null;
+              }
+              if (hasGas || token) {
+                let rowOffset = questions.length + 1;
+                for (const q of importedQuestions) {
+                  await appendQuestionToSpreadsheet(token, targetId, q, rowOffset++);
+                }
+                await recordAuditLog(logEntry, token);
+                showToast(
+                  `✅ 已將「${file.name}」的 ${importedQuestions.length} 筆題目同步寫入 Google 試算表 test_bank！`,
+                  'success'
+                );
+              }
+            } catch (err) {
+              console.warn('Error writing uploaded questions to Google Sheets:', err);
+            }
+          } else {
+            await recordAuditLog(logEntry);
+          }
+        }}
       />
 
       {/* Exam Paper Preview & Export Modal */}

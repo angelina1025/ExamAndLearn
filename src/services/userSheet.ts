@@ -4,7 +4,7 @@ import {
   readAllTablesFromSpreadsheet,
   appendQuestionToSpreadsheet,
   appendExamToSpreadsheet,
-} from './publicSheet';
+} from '@/services/publicSheet';
 
 /**
  * 私人 Sheet 存取服務 (動態依登入使用者的 google_sheet_URL 讀寫個人題庫、考卷與作答紀錄)
