@@ -1,20 +1,17 @@
-import React from 'react';
 import type { Metadata } from 'next';
-import '@/app/globals.css';
+import React from 'react';
 import { Providers } from '@/app/providers';
+import './globals.css';
+import './selection-pages.css';
 
 export const metadata: Metadata = {
   title: 'QuizCMS — 數位題庫與組卷管理系統',
   description: '數位題庫管理、組卷、線上測驗與錯題分析平台',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="zh-TW">
+    <html lang="zh-Hant">
       <head>
         <link
           rel="stylesheet"
@@ -27,4 +24,3 @@ export default function RootLayout({
     </html>
   );
 }
-
