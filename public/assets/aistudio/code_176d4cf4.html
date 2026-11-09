@@ -1,0 +1,488 @@
+<!DOCTYPE html><html lang="zh-Hant" style=""><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"secondary-container":"#dae2fd","inverse-primary":"#b4c5ff","tertiary-fixed":"#6ffbbe","on-error-container":"#93000a","on-primary":"#ffffff","on-secondary":"#ffffff","primary":"#004ac6","on-error":"#ffffff","surface-tint":"#0053db","outline":"#737686","secondary":"#565e74","on-background":"#191c1e","primary-fixed":"#dbe1ff","inverse-on-surface":"#eff1f3","primary-fixed-dim":"#b4c5ff","on-secondary-fixed":"#131b2e","secondary-fixed":"#dae2fd","outline-variant":"#c3c6d7","on-surface":"#191c1e","tertiary-fixed-dim":"#4edea3","surface-container-highest":"#e0e3e5","on-secondary-container":"#5c647a","background":"#f7f9fb","surface-variant":"#e0e3e5","tertiary":"#006242","on-primary-fixed-variant":"#003ea8","on-tertiary-fixed":"#002113","on-surface-variant":"#434655","surface-container":"#eceef0","surface-container-low":"#f2f4f6","on-tertiary-fixed-variant":"#005236","surface-bright":"#f7f9fb","error":"#ba1a1a","on-tertiary":"#ffffff","tertiary-container":"#007d55","surface-container-lowest":"#ffffff","on-secondary-fixed-variant":"#3f465c","error-container":"#ffdad6","primary-container":"#2563eb","surface":"#f7f9fb","on-primary-fixed":"#00174b","inverse-surface":"#2d3133","surface-dim":"#d8dadc","surface-container-high":"#e6e8ea","secondary-fixed-dim":"#bec6e0","on-primary-container":"#eeefff","on-tertiary-container":"#bdffdb"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"margin":"1.5rem","space-sm":"0.5rem","space-xs":"0.25rem","space-xl":"1.5rem","space-md":"0.75rem","gutter":"1rem","space-lg":"1rem","gutter-lg":"1.5rem","margin-lg":"2rem","space-2xl":"2rem","space-2xs":"0.125rem"},"fontFamily":{"headline-md":["Inter"],"headline-lg":["Inter"],"body-sm":["Inter"],"headline-sm":["Inter"],"label-sm":["Inter"],"body-md":["Inter"],"body-lg":["Inter"],"headline-xl":["Inter"],"code-sm":["JetBrains Mono"],"label-md":["Inter"]},"fontSize":{"headline-md":["20px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"headline-lg":["24px",{"lineHeight":"32px","letterSpacing":"-0.015em","fontWeight":"600"}],"body-sm":["13px",{"lineHeight":"18px","fontWeight":"400"}],"headline-sm":["16px",{"lineHeight":"24px","letterSpacing":"-0.005em","fontWeight":"600"}],"label-sm":["11px",{"lineHeight":"14px","letterSpacing":"0.04em","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-xl":["30px",{"lineHeight":"38px","letterSpacing":"-0.02em","fontWeight":"700"}],"code-sm":["12px",{"lineHeight":"16px","fontWeight":"500"}],"label-md":["12px",{"lineHeight":"16px","letterSpacing":"0.02em","fontWeight":"600"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 h-14 bg-surface-container-lowest/90 backdrop-blur-md z-40 border-b border-outline-variant/30 flex items-center justify-between px-margin"><div class="flex items-center gap-space-md"><img alt="線上測驗系統 Admin Portal Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1U9Xei6BF5tKU4ovyABJX51bitT5v0GIxx_f58F8Ze17-wCwh9CLBWCbQ226A-kh3HQvl64PR34g3tWBZlYRdg2_Kyf3d3qCPGRb78Ce2Gy3qcjF8eeI0xgmKdsU09sFLJohfwWlIzOE9byiJ5Tc3GM-fKObWFC7Vtb9daeUqUqCreQAr0peok7Ubh2UoDh7L49s8rgHht06uKvwjOKr0sn_GzA5E_-rKCEo3cX-PvP0Q"><div class="flex items-center gap-space-sm"><span class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">線上測驗管理系統 (Admin Portal)</span><span class="font-label-sm text-label-sm px-space-xs py-space-2xs bg-secondary-fixed text-on-secondary-fixed rounded border border-outline-variant/40 font-medium">v2.4 Pro</span></div></div><div class="flex items-center gap-space-lg"><button class="flex items-center gap-space-md px-space-md py-space-xs bg-surface-container-low border border-outline-variant/50 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">search</span><span class="font-body-sm text-body-sm">搜尋試題、試卷或考生...</span><kbd class="font-code-sm text-code-sm bg-surface-container-highest px-space-xs rounded text-on-surface-variant">⌘K</kbd></button><div class="relative flex items-center"><button class="p-space-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded transition-colors relative" title="通知" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1 right-1 w-2 h-2 bg-tertiary-container rounded-full ring-2 ring-surface-container-lowest"></span></button></div><div class="h-5 w-[1px] bg-outline-variant/40"></div><div class="flex items-center gap-space-md"><div class="text-right hidden sm:block"><div class="font-headline-sm text-headline-sm text-on-surface leading-tight text-right">王敏行 (Admin Wang)</div><div class="font-label-sm text-label-sm text-on-surface-variant text-right">系統管理員</div></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><button class="p-space-xs text-on-surface-variant hover:text-error hover:bg-error-container/20 rounded transition-colors" title="登出系統" type="button"><span class="material-symbols-outlined text-[20px]">logout</span></button></div></div></header><aside class="fixed left-0 top-14 bottom-0 w-64 bg-surface-container-lowest border-r border-outline-variant/30 z-30 flex flex-col justify-between overflow-y-auto"><div class="p-space-md flex flex-col gap-space-sm"><nav class="flex flex-col gap-space-2xs" data-active-classes="bg-primary text-on-primary font-semibold rounded"><button class="flex items-center justify-between w-full px-space-md py-space-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded transition-colors font-body-md text-body-md" type="button"><span class="flex items-center gap-space-md"><span class="material-symbols-outlined text-[20px]">keyboard_double_arrow_left</span><span class="">收合側邊欄</span></span><kbd class="font-code-sm text-code-sm bg-surface-container-high px-space-xs rounded">[</kbd></button><div class="pt-space-xs"><div class="flex items-center justify-between px-space-md py-space-sm text-on-surface font-headline-sm text-headline-sm"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-[20px] text-primary">menu_book</span><span class="">題庫管理</span></div><span class="material-symbols-outlined text-[18px] text-on-surface-variant">expand_more</span></div><div class="pl-space-lg flex flex-col gap-space-2xs mt-space-2xs"><a class="flex items-center gap-space-sm px-space-md py-space-xs rounded font-body-sm text-body-sm text-primary hover:bg-primary-fixed/30 hover:text-on-primary-fixed-variant transition-colors" data-path="question-create" href="#"><span class="material-symbols-outlined text-[16px]">add_circle</span><span class="">+ 新增題目</span></a><div class="text-on-surface-variant font-label-sm text-label-sm px-space-md pt-space-xs">科目題庫列表</div><a class="flex items-center justify-between px-space-md py-space-xs rounded font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="question-bank-chinese" href="#"><span class="">國文 (Chinese)</span><span class="font-label-sm text-label-sm text-on-surface-variant/80">890</span></a><a class="flex items-center justify-between px-space-md py-space-xs rounded font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="question-bank-english" href="#"><span class="">英文 (English)</span><span class="font-label-sm text-label-sm text-on-surface-variant/80">1,105</span></a><a aria-current="page" class="flex items-center justify-between px-space-md py-space-xs transition-colors bg-primary text-on-primary font-semibold rounded" data-path="question-bank-math" href="#"><span class="">數學 (Math)</span><span class="font-label-sm text-label-sm px-space-xs bg-secondary-container text-on-secondary-container rounded-full">1,420題</span></a><div class="flex flex-col gap-space-2xs"><div class="flex items-center justify-between px-space-md py-space-xs font-body-sm text-body-sm text-on-surface-variant"><span class="font-medium">自然 (Science)</span><span class="material-symbols-outlined text-[14px]">expand_more</span></div><div class="pl-space-md flex flex-col gap-space-2xs"><a class="px-space-sm py-space-2xs rounded font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="question-bank-biology" href="#">生物</a><a class="px-space-sm py-space-2xs rounded font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="question-bank-physics" href="#">物理</a><a class="px-space-sm py-space-2xs rounded font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="question-bank-chemistry" href="#">化學</a><a class="px-space-sm py-space-2xs rounded font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="question-bank-astronomy" href="#">天文</a></div></div><div class="flex flex-col gap-space-2xs"><div class="flex items-center justify-between px-space-md py-space-xs font-body-sm text-body-sm text-on-surface-variant"><span class="font-medium">社會 (Social Studies)</span><span class="material-symbols-outlined text-[14px]">expand_more</span></div><div class="pl-space-md flex flex-col gap-space-2xs"><a class="px-space-sm py-space-2xs rounded font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="question-bank-civics" href="#">公民</a><a class="px-space-sm py-space-2xs rounded font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="question-bank-geography" href="#">地理</a><a class="px-space-sm py-space-2xs rounded font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="question-bank-history" href="#">歷史</a></div></div></div></div><a class="flex items-center gap-space-md px-space-md py-space-sm rounded font-body-md text-body-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="exam-papers" href="#"><span class="material-symbols-outlined text-[20px]">assignment</span><span class="">試卷管理</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded font-body-md text-body-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="system-settings" href="#"><span class="material-symbols-outlined text-[20px]">settings</span><span class="">系統設定</span></a></nav></div><div class="p-space-md border-t border-outline-variant/30 flex flex-col gap-space-sm"><div class="p-space-sm bg-surface-container-low rounded border border-outline-variant/40"><div class="flex justify-between items-center mb-space-2xs"><span class="font-label-sm text-label-sm text-on-surface-variant">題庫空間儲存</span><span class="font-label-sm text-label-sm font-semibold text-primary">68% 已使用</span></div><div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden"><div class="bg-primary h-full w-[68%] rounded-full"></div></div><div class="font-label-sm text-label-sm text-on-surface-variant/80 mt-space-2xs">6.8 GB / 10 GB 配額</div></div></div></aside><div class="pl-64"><main class="w-full pt-14 px-margin pb-margin-lg bg-surface min-h-screen"><div class="flex flex-col w-full">
+<!-- Top Breadcrumb & Live Stats Bar -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md mb-space-md">
+<div class="flex flex-col gap-space-2xs">
+<nav class="flex items-center gap-space-xs text-on-surface-variant font-label-md text-label-md">
+<a class="hover:text-primary transition-colors" href="#">首頁</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">題庫管理</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-on-surface font-medium">題目列表</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary font-semibold">數學科 (Math)</span>
+</nav>
+<div class="flex items-center gap-space-md mt-space-2xs">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">題庫管理 - 數學科</h1>
+
+</div>
+</div>
+<!-- Quick Modal Showcase Toggles (Interactive Preview Tools) -->
+<div class="flex flex-wrap items-center gap-space-sm">
+  <!-- Quick Modal Showcase Toggles (Compact Auxiliary Tool) -->
+  
+  <!-- Batch Delete Button -->
+  <button class="flex items-center gap-space-xs px-space-md py-space-xs bg-error text-on-error hover:bg-error/90 font-headline-sm text-headline-sm rounded-lg shadow-sm transition-all animate-pulse duration-700" onclick="openModal('deleteModal')" type="button">
+    <span class="material-symbols-outlined text-[18px]">delete_sweep</span>
+    <span class="">批次刪除 (2)</span>
+  </button>
+  <!-- Generate Exam Button -->
+  <button class="relative flex items-center gap-space-xs px-space-md py-space-xs bg-primary text-on-primary font-headline-sm text-headline-sm rounded-lg hover:bg-primary-container shadow-sm transition-all group" onclick="openModal('examModal')" type="button">
+    <span class="material-symbols-outlined text-[18px]">post_add</span>
+    <span class="">生成考卷</span>
+    <span class="flex items-center justify-center bg-tertiary-fixed text-on-tertiary-fixed font-code-sm text-code-sm font-bold px-1.5 py-0.5 rounded-full">
+      已選 2 題
+    </span>
+  </button>
+  <!-- Create Question Button -->
+  <button class="flex items-center gap-space-xs px-space-md py-space-xs bg-primary-container text-on-primary-container font-headline-sm text-headline-sm rounded-lg hover:bg-primary shadow-sm transition-all" type="button">
+    <span class="material-symbols-outlined text-[18px]">add</span>
+    <span class="">新增題目</span>
+  </button>
+</div>
+</div>
+<!-- Tabs Navigation -->
+<div class="flex items-center gap-space-sm border-b border-outline-variant/30 mb-space-lg">
+<button class="flex items-center gap-space-xs pb-space-sm px-space-xs font-headline-sm text-headline-sm text-primary border-b-2 border-primary font-semibold" type="button">
+<span class="">全部題目</span>
+<span class="px-space-xs py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-code-sm text-code-sm">1,420</span>
+</button>
+<button class="flex items-center gap-space-xs pb-space-sm px-space-xs font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" type="button">
+<span class="">單選題</span>
+<span class="px-space-xs py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-code-sm text-code-sm">850</span>
+</button>
+<button class="flex items-center gap-space-xs pb-space-sm px-space-xs font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" type="button">
+<span class="">多選題</span>
+<span class="px-space-xs py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-code-sm text-code-sm">380</span>
+</button>
+<button class="flex items-center gap-space-xs pb-space-sm px-space-xs font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" type="button">
+<span class="">是非題</span>
+<span class="px-space-xs py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-code-sm text-code-sm">190</span>
+</button>
+</div>
+<!-- Action Bar & Controls -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm mb-space-md flex flex-col gap-space-md">
+<div class="flex flex-col xl:flex-row xl:items-center justify-between gap-space-md">
+<!-- Left Filters -->
+<div class="flex flex-wrap items-center gap-space-sm flex-1">
+<!-- Search Field -->
+<div class="relative flex-1 min-w-[280px] max-w-[420px]">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+<input class="w-full bg-surface-container-low pl-9 pr-14 py-space-xs text-on-surface placeholder:text-on-surface-variant/70 font-body-sm text-body-sm rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all" placeholder="搜尋題目內文、選項或知識點標籤..." type="text">
+<kbd class="absolute right-2.5 top-1/2 -translate-y-1/2 font-code-sm text-code-sm bg-surface-container-highest px-space-xs py-0.5 rounded text-on-surface-variant font-medium">⌘K</kbd>
+</div>
+<!-- Question Type Dropdown -->
+<div class="relative">
+
+<span class="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-on-surface-variant">expand_more</span>
+</div>
+<!-- Difficulty Filter -->
+<div class="relative"><select class="appearance-none bg-surface-container-low text-on-surface font-body-sm text-body-sm pl-space-md pr-8 py-space-xs rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"><option>難度: 全部難度</option><option>簡單 Easy</option><option>中等 Medium</option><option>困難 Hard</option></select><span class="material-symbols-outlined pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">expand_more</span></div>
+<!-- Sort Filter -->
+<div class="relative">
+
+<span class="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-on-surface-variant">expand_more</span>
+</div>
+</div>
+<!-- Right Action Buttons -->
+<div class="flex items-center gap-space-sm self-end xl:self-center"><!-- View Column Visibility Button with Floating Popover State -->
+<div class="relative">
+<button class="flex items-center gap-space-xs px-space-md py-space-xs bg-surface-container-low hover:bg-surface-container text-on-surface font-body-sm text-body-sm rounded-lg transition-colors" onclick="toggleColumnMenu()" type="button">
+<span class="material-symbols-outlined text-[18px]">view_column</span>
+<span class="">自訂欄位</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">arrow_drop_down</span>
+</button>
+<!-- Column Visibility Popover Menu (Interactive Dropdown) -->
+<div class="absolute right-0 mt-space-xs w-64 bg-surface-container-lowest rounded-xl shadow-xl z-30 p-space-md flex flex-col gap-space-sm border border-outline-variant/30" id="columnMenu"><div class="flex items-center justify-between pb-space-xs border-b border-outline-variant/30"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-on-surface font-semibold">表格欄位設定</span><span class="font-label-sm text-label-sm text-on-surface-variant font-medium">已顯示 7/7</span></div><button type="button" onclick="toggleColumnMenu()" class="text-on-surface-variant hover:text-on-surface p-1 rounded transition-colors"><span class="material-symbols-outlined text-[18px]">close</span></button></div><div class="flex flex-col gap-space-xs max-h-64 overflow-y-auto"><label class="flex items-center justify-between p-space-xs rounded hover:bg-surface-container-low cursor-pointer border-b border-outline-variant/20 pb-space-xs"><span class="flex items-center gap-space-sm font-body-sm text-body-sm text-on-surface font-medium"><span class="material-symbols-outlined text-[18px] text-primary">check_box</span><span class="">全選所有欄位</span></span><span class="font-label-sm text-label-sm text-primary font-medium hover:underline">清空</span></label><label class="flex items-center justify-between p-space-xs rounded bg-surface-container-low/50 cursor-not-allowed"><span class="flex items-center gap-space-sm font-body-sm text-body-sm text-on-surface-variant font-medium"><span class="material-symbols-outlined text-[18px] text-primary">check_box</span><span class="">題目 ID</span></span><span class="font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed px-1.5 py-0.5 rounded font-medium">鎖定</span></label><label class="flex items-center justify-between p-space-xs rounded hover:bg-surface-container-low cursor-pointer"><span class="flex items-center gap-space-sm font-body-sm text-body-sm text-on-surface"><span class="material-symbols-outlined text-[18px] text-primary">check_box</span><span class="">題目內容摘要</span></span></label><label class="flex items-center justify-between p-space-xs rounded hover:bg-surface-container-low cursor-pointer"><span class="flex items-center gap-space-sm font-body-sm text-body-sm text-on-surface"><span class="material-symbols-outlined text-[18px] text-primary">check_box</span><span class="">難易度</span></span></label><label class="flex items-center justify-between p-space-xs rounded hover:bg-surface-container-low cursor-pointer"><span class="flex items-center gap-space-sm font-body-sm text-body-sm text-on-surface"><span class="material-symbols-outlined text-[18px] text-primary">check_box</span><span class="">配分</span></span></label><label class="flex items-center justify-between p-space-xs rounded hover:bg-surface-container-low cursor-pointer"><span class="flex items-center gap-space-sm font-body-sm text-body-sm text-on-surface"><span class="material-symbols-outlined text-[18px] text-primary">check_box</span><span class="">知識點標籤</span></span></label><label class="flex items-center justify-between p-space-xs rounded hover:bg-surface-container-low cursor-pointer"><span class="flex items-center gap-space-sm font-body-sm text-body-sm text-on-surface"><span class="material-symbols-outlined text-[18px] text-primary">check_box</span><span class="">建立 / 更新時間</span></span></label><label class="flex items-center justify-between p-space-xs rounded bg-surface-container-low/50 cursor-not-allowed"><span class="flex items-center gap-space-sm font-body-sm text-body-sm text-on-surface-variant font-medium"><span class="material-symbols-outlined text-[18px] text-primary">check_box</span><span class="">操作</span></span><span class="font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed px-1.5 py-0.5 rounded font-medium">鎖定</span></label></div><div class="pt-space-xs border-t border-outline-variant/30 flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm"><button class="text-on-surface-variant hover:text-on-surface px-space-xs py-1 rounded transition-colors" type="button">重設預設</button><div class="flex items-center gap-space-xs"><button class="px-space-sm py-1 rounded hover:bg-surface-container text-on-surface transition-colors" onclick="toggleColumnMenu()" type="button">取消</button><button class="bg-primary text-on-primary px-space-md py-1 rounded font-medium shadow-sm hover:bg-primary-container transition-colors" onclick="toggleColumnMenu()" type="button">完成套用</button></div></div></div>
+</div></div>
+</div>
+</div>
+<!-- Data Table Section -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="overflow-x-auto max-w-full relative table-scroll-container">
+<table class="w-full min-w-[1100px] text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low text-on-surface-variant font-label-md text-label-md uppercase tracking-wider select-none"><th class="py-space-md px-space-md w-12 text-center"><div class="w-4 h-4 rounded bg-primary text-on-primary flex items-center justify-center mx-auto cursor-pointer shadow-sm"><span class="material-symbols-outlined text-[14px] leading-none">check</span></div></th><th class="py-space-md px-space-sm w-44"><div class="inline-flex items-center gap-1 cursor-pointer group hover:text-primary transition-colors"><span class="">題目 ID</span><span class="inline-flex flex-col -space-y-1 text-on-surface-variant/50 group-hover:text-primary transition-colors"><span class="material-symbols-outlined text-[12px] leading-none">arrow_drop_up</span><span class="material-symbols-outlined text-[12px] leading-none">arrow_drop_down</span></span></div></th><th class="py-space-md px-space-md min-w-[340px]"><div class="inline-flex items-center gap-1 cursor-pointer group hover:text-primary transition-colors"><span class="">題目內容摘要</span><span class="inline-flex flex-col -space-y-1 text-on-surface-variant/50 group-hover:text-primary transition-colors"><span class="material-symbols-outlined text-[12px] leading-none">arrow_drop_up</span><span class="material-symbols-outlined text-[12px] leading-none">arrow_drop_down</span></span></div></th><th class="py-space-md px-space-sm w-32"><div class="inline-flex items-center gap-1 cursor-pointer group hover:text-primary transition-colors"><span class="">難易度</span><span class="inline-flex flex-col -space-y-1 text-on-surface-variant/50 group-hover:text-primary transition-colors"><span class="material-symbols-outlined text-[12px] leading-none">arrow_drop_up</span><span class="material-symbols-outlined text-[12px] leading-none">arrow_drop_down</span></span></div></th><th class="py-space-md px-space-sm w-20 text-center"><div class="inline-flex items-center justify-center gap-1 cursor-pointer group hover:text-primary transition-colors mx-auto"><span class="">配分</span><span class="inline-flex flex-col -space-y-1 text-on-surface-variant/50 group-hover:text-primary transition-colors"><span class="material-symbols-outlined text-[12px] leading-none">arrow_drop_up</span><span class="material-symbols-outlined text-[12px] leading-none">arrow_drop_down</span></span></div></th><th class="py-space-md px-space-md min-w-[200px]"><div class="inline-flex items-center gap-1 cursor-pointer group hover:text-primary transition-colors"><span class="">知識點標籤</span><span class="inline-flex flex-col -space-y-1 text-on-surface-variant/50 group-hover:text-primary transition-colors"><span class="material-symbols-outlined text-[12px] leading-none">arrow_drop_up</span><span class="material-symbols-outlined text-[12px] leading-none">arrow_drop_down</span></span></div></th><th class="py-space-md px-space-sm w-36"><div class="inline-flex items-center gap-1 cursor-pointer group text-primary font-semibold transition-colors"><span class="">建立/更新時間</span><span class="inline-flex flex-col -space-y-1"><span class="material-symbols-outlined text-[12px] leading-none text-on-surface-variant/40 group-hover:text-primary transition-colors">arrow_drop_up</span><span class="material-symbols-outlined text-[12px] leading-none text-primary">arrow_drop_down</span></span></div></th><th class="py-space-md px-space-sm min-w-[120px] text-center sticky right-0 bg-surface-container-low shadow-[-4px_0_12px_rgba(0,0,0,0.06)] z-20">操作</th></tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/15 font-body-sm text-body-sm">
+<!-- Row 1 [Selected] -->
+<tr class="bg-primary-fixed/20 hover:bg-primary-fixed/30 transition-colors group">
+<td class="py-space-sm px-space-md text-center">
+<div class="w-4 h-4 rounded bg-primary text-on-primary flex items-center justify-center mx-auto cursor-pointer">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+</td>
+<td class="py-space-sm px-space-sm font-code-sm text-code-sm text-primary font-semibold flex items-center gap-1">
+<span class="">Q-MATH-20240901</span>
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant/60 cursor-pointer" title="複製 ID">content_copy</span>
+</td>
+<td class="py-space-sm px-space-md">
+<div class="flex items-center gap-space-xs group/tip relative">
+<p class="text-on-surface line-clamp-1 max-w-xl font-body-md text-body-md">若二次函數 f(x) = ax² + bx + c 的頂點為 (2, -4) 且過點 (0, 0)，求方程式在 x=3 時之值？</p>
+<span class="material-symbols-outlined text-[16px] text-primary cursor-help">visibility</span>
+</div>
+</td>
+<td class="py-space-sm px-space-sm">
+<span class="inline-flex items-center gap-1 px-space-xs py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>中等 Medium
+              </span>
+</td>
+<td class="py-space-sm px-space-sm text-center font-headline-sm text-headline-sm font-bold text-on-surface">5分</td>
+<td class="py-space-sm px-space-md">
+<div class="flex flex-wrap items-center gap-1">
+<span class="px-space-xs py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm">二次函數</span>
+<span class="px-space-xs py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm">頂點坐標</span>
+</div>
+</td>
+<td class="py-space-sm px-space-sm font-code-sm text-code-sm text-on-surface-variant">2024-05-18 14:20</td>
+<td class="py-space-sm px-space-sm text-center sticky right-0 bg-[#eff6ff] group-hover:bg-[#dbeafe] shadow-[-4px_0_12px_rgba(0,0,0,0.06)] z-10 min-w-[120px]"><div class="flex items-center justify-center gap-1"><button class="p-1 hover:bg-surface-container-high rounded text-on-surface-variant hover:text-primary transition-colors" title="檢視題目" type="button"><span class="material-symbols-outlined text-[18px]">visibility</span></button><button class="p-1 hover:bg-surface-container-high rounded text-on-surface-variant hover:text-primary transition-colors" title="編輯題目" type="button"><span class="material-symbols-outlined text-[18px]">edit_note</span></button><button class="p-1 hover:bg-error-container rounded text-on-surface-variant hover:text-error transition-colors" onclick="openModal('deleteModal')" title="刪除題目" type="button"><span class="material-symbols-outlined text-[18px]">delete</span></button></div></td>
+</tr>
+<!-- Row 2 [Selected] -->
+<tr class="bg-primary-fixed/20 hover:bg-primary-fixed/30 transition-colors group">
+<td class="py-space-sm px-space-md text-center">
+<div class="w-4 h-4 rounded bg-primary text-on-primary flex items-center justify-center mx-auto cursor-pointer">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+</td>
+<td class="py-space-sm px-space-sm font-code-sm text-code-sm text-primary font-semibold flex items-center gap-1">
+<span class="">Q-MATH-20240902</span>
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant/60 cursor-pointer" title="複製 ID">content_copy</span>
+</td>
+<td class="py-space-sm px-space-md">
+<div class="flex items-center gap-space-xs">
+<p class="text-on-surface line-clamp-1 max-w-xl font-body-md text-body-md">空間坐標系中，平面 E: 2x - y + 2z = 6 與點 P(1, 2, 3) 之最短距離為多少？</p>
+<span class="material-symbols-outlined text-[16px] text-primary cursor-help">visibility</span>
+</div>
+</td>
+<td class="py-space-sm px-space-sm">
+<span class="inline-flex items-center gap-1 px-space-xs py-0.5 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-error animate-ping"></span>困難 Hard
+              </span>
+</td>
+<td class="py-space-sm px-space-sm text-center font-headline-sm text-headline-sm font-bold text-on-surface">8分</td>
+<td class="py-space-sm px-space-md">
+<div class="flex flex-wrap items-center gap-1">
+<span class="px-space-xs py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm">空間幾何</span>
+<span class="px-space-xs py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm">點面距離公式</span>
+</div>
+</td>
+<td class="py-space-sm px-space-sm font-code-sm text-code-sm text-on-surface-variant">2024-05-18 10:15</td>
+<td class="py-space-sm px-space-sm text-center sticky right-0 bg-[#eff6ff] group-hover:bg-[#dbeafe] shadow-[-4px_0_12px_rgba(0,0,0,0.06)] z-10 min-w-[120px]"><div class="flex items-center justify-center gap-1"><button class="p-1 hover:bg-surface-container-high rounded text-on-surface-variant hover:text-primary transition-colors" title="檢視題目" type="button"><span class="material-symbols-outlined text-[18px]">visibility</span></button><button class="p-1 hover:bg-surface-container-high rounded text-on-surface-variant hover:text-primary transition-colors" title="編輯題目" type="button"><span class="material-symbols-outlined text-[18px]">edit_note</span></button><button class="p-1 hover:bg-error-container rounded text-on-surface-variant hover:text-error transition-colors" onclick="openModal('deleteModal')" title="刪除題目" type="button"><span class="material-symbols-outlined text-[18px]">delete</span></button></div></td>
+</tr>
+<!-- Row 3 [Unselected] -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="py-space-sm px-space-md text-center">
+<div class="w-4 h-4 rounded bg-surface-container-highest border-0 cursor-pointer mx-auto"></div>
+</td>
+<td class="py-space-sm px-space-sm font-code-sm text-code-sm text-on-surface font-medium">Q-MATH-20240899</td>
+<td class="py-space-sm px-space-md">
+<div class="flex items-center gap-space-xs">
+<p class="text-on-surface line-clamp-1 max-w-xl font-body-md text-body-md">設數列 a_n 滿足 a_1 = 3, a_(n+1) = 2a_n + 1，試求第 10 項 a_10 之值。</p>
+</div>
+</td>
+<td class="py-space-sm px-space-sm">
+<span class="inline-flex items-center gap-1 px-space-xs py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>中等 Medium
+              </span>
+</td>
+<td class="py-space-sm px-space-sm text-center font-headline-sm text-headline-sm font-semibold text-on-surface">5分</td>
+<td class="py-space-sm px-space-md">
+<div class="flex flex-wrap items-center gap-1">
+<span class="px-space-xs py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm">遞迴數列</span>
+<span class="px-space-xs py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm">等比級數</span>
+</div>
+</td>
+<td class="py-space-sm px-space-sm font-code-sm text-code-sm text-on-surface-variant">2024-05-17 16:40</td>
+<td class="py-space-sm px-space-sm text-center sticky right-0 bg-surface-container-lowest group-hover:bg-surface-container-low shadow-[-4px_0_12px_rgba(0,0,0,0.06)] z-10 min-w-[120px]"><div class="flex items-center justify-center gap-1"><button class="p-1 hover:bg-surface-container-high rounded text-on-surface-variant hover:text-primary transition-colors" title="檢視題目" type="button"><span class="material-symbols-outlined text-[18px]">visibility</span></button><button class="p-1 hover:bg-surface-container-high rounded text-on-surface-variant hover:text-primary transition-colors" title="編輯題目" type="button"><span class="material-symbols-outlined text-[18px]">edit_note</span></button><button class="p-1 hover:bg-error-container rounded text-on-surface-variant hover:text-error transition-colors" onclick="openModal('deleteModal')" title="刪除題目" type="button"><span class="material-symbols-outlined text-[18px]">delete</span></button></div></td>
+</tr>
+<!-- Row 4 [Unselected] -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="py-space-sm px-space-md text-center">
+<div class="w-4 h-4 rounded bg-surface-container-highest border-0 cursor-pointer mx-auto"></div>
+</td>
+<td class="py-space-sm px-space-sm font-code-sm text-code-sm text-on-surface font-medium">Q-MATH-20240885</td>
+<td class="py-space-sm px-space-md">
+<div class="flex items-center gap-space-xs">
+<p class="text-on-surface line-clamp-1 max-w-xl font-body-md text-body-md">計算行列式 |[3, 2], [1, 4]| 之值為何？</p>
+</div>
+</td>
+<td class="py-space-sm px-space-sm">
+<span class="inline-flex items-center gap-1 px-space-xs py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>簡單 Easy
+              </span>
+</td>
+<td class="py-space-sm px-space-sm text-center font-headline-sm text-headline-sm font-semibold text-on-surface">4分</td>
+<td class="py-space-sm px-space-md">
+<div class="flex flex-wrap items-center gap-1">
+<span class="px-space-xs py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm">線性代數</span>
+<span class="px-space-xs py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm">二階行列式</span>
+</div>
+</td>
+<td class="py-space-sm px-space-sm font-code-sm text-code-sm text-on-surface-variant">2024-05-16 09:30</td>
+<td class="py-space-sm px-space-sm text-center sticky right-0 bg-surface-container-lowest group-hover:bg-surface-container-low shadow-[-4px_0_12px_rgba(0,0,0,0.06)] z-10 min-w-[120px]"><div class="flex items-center justify-center gap-1"><button class="p-1 hover:bg-surface-container-high rounded text-on-surface-variant hover:text-primary transition-colors" title="檢視題目" type="button"><span class="material-symbols-outlined text-[18px]">visibility</span></button><button class="p-1 hover:bg-surface-container-high rounded text-on-surface-variant hover:text-primary transition-colors" title="編輯題目" type="button"><span class="material-symbols-outlined text-[18px]">edit_note</span></button><button class="p-1 hover:bg-error-container rounded text-on-surface-variant hover:text-error transition-colors" onclick="openModal('deleteModal')" title="刪除題目" type="button"><span class="material-symbols-outlined text-[18px]">delete</span></button></div></td>
+</tr>
+<!-- Row 5 [Unselected] -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="py-space-sm px-space-md text-center">
+<div class="w-4 h-4 rounded bg-surface-container-highest border-0 cursor-pointer mx-auto"></div>
+</td>
+<td class="py-space-sm px-space-sm font-code-sm text-code-sm text-on-surface font-medium">Q-MATH-20240872</td>
+<td class="py-space-sm px-space-md">
+<div class="flex items-center gap-space-xs">
+<p class="text-on-surface line-clamp-1 max-w-xl font-body-md text-body-md">丟擲兩顆公正骰子，點數和為質數的機率為多少？</p>
+</div>
+</td>
+<td class="py-space-sm px-space-sm">
+<span class="inline-flex items-center gap-1 px-space-xs py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>簡單 Easy
+              </span>
+</td>
+<td class="py-space-sm px-space-sm text-center font-headline-sm text-headline-sm font-semibold text-on-surface">4分</td>
+<td class="py-space-sm px-space-md">
+<div class="flex flex-wrap items-center gap-1">
+<span class="px-space-xs py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm">古典機率</span>
+<span class="px-space-xs py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm">質數判定</span>
+</div>
+</td>
+<td class="py-space-sm px-space-sm font-code-sm text-code-sm text-on-surface-variant">2024-05-15 11:05</td>
+<td class="py-space-sm px-space-sm text-center sticky right-0 bg-surface-container-lowest group-hover:bg-surface-container-low shadow-[-4px_0_12px_rgba(0,0,0,0.06)] z-10 min-w-[120px]"><div class="flex items-center justify-center gap-1"><button class="p-1 hover:bg-surface-container-high rounded text-on-surface-variant hover:text-primary transition-colors" title="檢視題目" type="button"><span class="material-symbols-outlined text-[18px]">visibility</span></button><button class="p-1 hover:bg-surface-container-high rounded text-on-surface-variant hover:text-primary transition-colors" title="編輯題目" type="button"><span class="material-symbols-outlined text-[18px]">edit_note</span></button><button class="p-1 hover:bg-error-container rounded text-on-surface-variant hover:text-error transition-colors" onclick="openModal('deleteModal')" title="刪除題目" type="button"><span class="material-symbols-outlined text-[18px]">delete</span></button></div></td>
+</tr>
+<!-- Row 6 [Unselected] -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="py-space-sm px-space-md text-center">
+<div class="w-4 h-4 rounded bg-surface-container-highest border-0 cursor-pointer mx-auto"></div>
+</td>
+<td class="py-space-sm px-space-sm font-code-sm text-code-sm text-on-surface font-medium">Q-MATH-20240860</td>
+<td class="py-space-sm px-space-md">
+<div class="flex items-center gap-space-xs">
+<p class="text-on-surface line-clamp-1 max-w-xl font-body-md text-body-md">求多項式 f(x) = x³ - 3x² + 4 除以 (x - 2) 的餘數與商式。</p>
+</div>
+</td>
+<td class="py-space-sm px-space-sm">
+<span class="inline-flex items-center gap-1 px-space-xs py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>中等 Medium
+              </span>
+</td>
+<td class="py-space-sm px-space-sm text-center font-headline-sm text-headline-sm font-semibold text-on-surface">5分</td>
+<td class="py-space-sm px-space-md">
+<div class="flex flex-wrap items-center gap-1">
+<span class="px-space-xs py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm">綜合除法</span>
+<span class="px-space-xs py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm">餘式定理</span>
+</div>
+</td>
+<td class="py-space-sm px-space-sm font-code-sm text-code-sm text-on-surface-variant">2024-05-14 15:20</td>
+<td class="py-space-sm px-space-sm text-center sticky right-0 bg-surface-container-lowest group-hover:bg-surface-container-low shadow-[-4px_0_12px_rgba(0,0,0,0.06)] z-10 min-w-[120px]"><div class="flex items-center justify-center gap-1"><button class="p-1 hover:bg-surface-container-high rounded text-on-surface-variant hover:text-primary transition-colors" title="檢視題目" type="button"><span class="material-symbols-outlined text-[18px]">visibility</span></button><button class="p-1 hover:bg-surface-container-high rounded text-on-surface-variant hover:text-primary transition-colors" title="編輯題目" type="button"><span class="material-symbols-outlined text-[18px]">edit_note</span></button><button class="p-1 hover:bg-error-container rounded text-on-surface-variant hover:text-error transition-colors" onclick="openModal('deleteModal')" title="刪除題目" type="button"><span class="material-symbols-outlined text-[18px]">delete</span></button></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination Section -->
+<div class="p-space-md bg-surface-container-lowest border-t border-outline-variant/20 flex flex-col md:flex-row items-center justify-between gap-space-md">
+<!-- Left counter -->
+<div class="font-body-sm text-body-sm text-on-surface-variant">
+        顯示第 <span class="font-semibold text-on-surface">1</span> 至 <span class="font-semibold text-on-surface">10</span> 筆，共 <span class="font-semibold text-on-surface">1,420</span> 筆資料
+      </div>
+<!-- Middle items per page -->
+<div class="flex items-center gap-space-xs">
+<span class="font-body-sm text-body-sm text-on-surface-variant">每頁顯示:</span>
+<select class="bg-surface-container-low text-on-surface font-body-sm text-body-sm px-space-sm py-1 rounded cursor-pointer border-0 focus:ring-1 focus:ring-primary">
+<option selected="">10 筆/頁</option>
+<option>20 筆/頁</option>
+<option>50 筆/頁</option>
+</select>
+</div>
+<!-- Right page buttons -->
+<div class="flex items-center gap-space-xs">
+<button class="p-1 rounded text-on-surface-variant/50 cursor-not-allowed flex items-center" disabled="" type="button">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded bg-primary text-on-primary font-label-md text-label-md font-semibold" type="button">1</button>
+<button class="w-8 h-8 rounded hover:bg-surface-container text-on-surface font-label-md text-label-md transition-colors" type="button">2</button>
+<button class="w-8 h-8 rounded hover:bg-surface-container text-on-surface font-label-md text-label-md transition-colors" type="button">3</button>
+<span class="px-1 text-on-surface-variant font-code-sm">...</span>
+<button class="w-8 h-8 rounded hover:bg-surface-container text-on-surface font-label-md text-label-md transition-colors" type="button">142</button>
+<button class="p-1 rounded text-on-surface hover:bg-surface-container flex items-center transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+<div class="flex items-center gap-1 ml-space-sm text-on-surface-variant font-body-sm text-body-sm">
+<span class="">跳至</span>
+<input class="w-12 text-center bg-surface-container-low rounded py-0.5 text-on-surface font-code-sm text-code-sm border-0 focus:ring-1 focus:ring-primary" max="142" min="1" type="number" value="1">
+<span class="">頁</span>
+</div>
+</div>
+</div>
+</div>
+<!-- ==================== MODAL OVERLAYS (Interactive Simulation) ==================== -->
+<!-- Modal A: Batch Delete Confirmation Modal -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/40 backdrop-blur-sm p-4 hidden" id="deleteModal">
+<div class="bg-surface-container-lowest rounded-xl max-w-md w-full shadow-2xl p-space-xl flex flex-col gap-space-lg relative animate-in fade-in zoom-in-95 duration-200">
+<div class="flex items-start gap-space-md">
+<div class="w-12 h-12 rounded-full bg-error-container text-on-error-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[26px]">warning</span>
+</div>
+<div class="flex flex-col gap-space-2xs">
+<h2 class="font-headline-md text-headline-md text-on-surface font-bold">刪除確認</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+            確定要刪除選取的 <span class="font-bold text-error">2 筆題目</span> 嗎？
+          </p>
+</div>
+</div>
+<div class="p-space-md bg-surface-container-low rounded-lg font-code-sm text-code-sm text-on-surface flex flex-col gap-space-2xs border-l-4 border-error">
+<div class="text-on-surface-variant font-label-sm">包含題目編號：</div>
+<div class="font-semibold text-error">Q-MATH-20240901, Q-MATH-20240902</div>
+<div class="text-on-surface-variant/80 text-[11px] mt-1">此動作將無法復原，關聯之已發布考卷將標記提醒。</div>
+</div>
+<div class="flex items-center justify-end gap-space-sm pt-space-xs">
+<button class="px-space-md py-space-xs rounded-lg hover:bg-surface-container text-on-surface font-headline-sm text-headline-sm transition-colors" onclick="closeModal('deleteModal')" type="button">
+          取消
+        </button>
+<button class="flex items-center gap-1 px-space-lg py-space-xs rounded-lg bg-error hover:bg-error/90 text-on-error font-headline-sm text-headline-sm shadow-sm transition-colors" onclick="closeModal('deleteModal')" type="button">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+<span class="">確認刪除</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Modal B: Exam Generation Modal (Step 1) -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/40 backdrop-blur-sm p-4 hidden" id="examModal">
+<div class="bg-surface-container-lowest rounded-xl max-w-lg w-full shadow-2xl p-space-xl flex flex-col gap-space-md relative animate-in fade-in zoom-in-95 duration-200">
+<div class="flex items-center justify-between pb-space-xs border-b border-outline-variant/20">
+<div class="flex items-center gap-space-sm">
+<span class="w-8 h-8 rounded-lg bg-primary-fixed text-on-primary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">assignment_add</span>
+</span>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface font-bold">快速生成考卷</h2>
+<p class="font-label-sm text-label-sm text-primary font-semibold">已選 2 題 / 總計 13 分</p>
+</div>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface p-1 rounded" onclick="closeModal('examModal')" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Selected items mini-list preview -->
+<div class="flex flex-col gap-space-2xs">
+<span class="font-label-md text-label-md text-on-surface-variant font-medium">已選題目清單 (2)</span>
+<div class="max-h-36 overflow-y-auto bg-surface-container-low p-space-xs rounded-lg flex flex-col gap-1.5">
+<div class="p-space-xs bg-surface-container-lowest rounded shadow-xs flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-code-sm text-code-sm font-semibold text-primary">Q-MATH-20240901</span>
+<span class="font-body-sm text-body-sm text-on-surface line-clamp-1 max-w-[200px]">若二次函數 f(x) = ax² + bx + c...</span>
+</div>
+<span class="font-label-sm text-label-sm bg-secondary-container text-on-secondary-container px-1.5 rounded">5分</span>
+</div>
+<div class="p-space-xs bg-surface-container-lowest rounded shadow-xs flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-code-sm text-code-sm font-semibold text-primary">Q-MATH-20240902</span>
+<span class="font-body-sm text-body-sm text-on-surface line-clamp-1 max-w-[200px]">空間坐標系中，平面 E: 2x - y...</span>
+</div>
+<span class="font-label-sm text-label-sm bg-error-container text-on-error-container px-1.5 rounded">8分</span>
+</div>
+</div>
+</div>
+<!-- Form Inputs -->
+<div class="flex flex-col gap-space-sm">
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface font-semibold flex items-center gap-1">
+<span class="">試卷名稱</span>
+<span class="text-error">*</span>
+</label>
+<input class="w-full bg-surface-container-low text-on-surface font-body-md text-body-md px-space-md py-space-xs rounded-lg border-0 focus:ring-2 focus:ring-primary/40 focus:outline-none" type="text" value="2024年高二數學科平時測驗 (單元：函數與空間幾何)">
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface font-semibold">測驗說明 / 備註標籤</label>
+<input class="w-full bg-surface-container-low text-on-surface font-body-md text-body-md px-space-md py-space-xs rounded-lg border-0 focus:ring-2 focus:ring-primary/40 focus:outline-none" type="text" value="限時 45 分鐘，滿分 100 分">
+</div>
+</div>
+<div class="flex items-center justify-end gap-space-sm pt-space-xs">
+<button class="px-space-md py-space-xs rounded-lg hover:bg-surface-container text-on-surface font-headline-sm text-headline-sm transition-colors" onclick="closeModal('examModal')" type="button">
+          取消
+        </button>
+<button class="flex items-center gap-1 px-space-lg py-space-xs rounded-lg bg-primary hover:bg-primary-container text-on-primary font-headline-sm text-headline-sm shadow-sm transition-colors" onclick="switchModal('examModal', 'successModal')" type="button">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+<span class="">確認建立考卷</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Modal C: Creation Success Modal (Step 2) -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/40 backdrop-blur-sm p-4 hidden" id="successModal">
+<div class="bg-surface-container-lowest rounded-xl max-w-sm w-full shadow-2xl p-space-xl flex flex-col items-center text-center gap-space-md relative animate-in fade-in zoom-in-95 duration-200">
+<!-- Big Emerald Green Success Icon -->
+<div class="w-16 h-16 rounded-full bg-tertiary-fixed text-tertiary flex items-center justify-center shadow-inner">
+<span class="material-symbols-outlined text-[36px]" style="font-variation-settings: &quot;FILL&quot; 1;">check_circle</span>
+</div>
+<div class="flex flex-col gap-1">
+<h2 class="font-headline-lg text-headline-lg text-on-surface font-bold">已成功生成試卷！</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">測驗組卷完成，已自動歸檔至「試卷管理」中。</p>
+</div>
+<!-- Information Card -->
+<div class="w-full bg-surface-container-low p-space-md rounded-lg text-left flex flex-col gap-space-xs">
+<div class="flex justify-between items-center text-on-surface-variant font-label-sm text-label-sm">
+<span class="">試卷 ID:</span>
+<span class="font-code-sm text-code-sm font-bold text-primary">EXAM-2024-MATH-082</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant font-label-sm text-label-sm">
+<span class="">試卷名稱:</span>
+<span class="font-body-sm text-body-sm font-medium text-on-surface truncate max-w-[170px]" title="2024年高二數學科平時測驗">2024年高二數學科平時測驗</span>
+</div>
+</div>
+<!-- Single Action Button with Highlight Focus Ring -->
+<div class="w-full flex flex-col gap-space-2xs mt-space-xs">
+<button class="w-full py-space-xs px-space-lg rounded-lg bg-primary text-on-primary font-headline-sm text-headline-sm hover:bg-primary-container shadow-md ring-4 ring-primary/30 transition-all focus:outline-none" id="successConfirmBtn" onclick="closeModal('successModal')" type="button">
+          確認返回 (Enter)
+        </button>
+<span class="font-label-sm text-label-sm text-on-surface-variant/70">按鍵盤 Enter 鍵即可快速確認關閉</span>
+</div>
+</div>
+</div>
+<script>
+    function toggleColumnMenu() {
+      const menu = document.getElementById('columnMenu');
+      if (menu) {
+        menu.classList.toggle('hidden');
+      }
+    }
+
+    function openModal(id) {
+      const m = document.getElementById(id);
+      if (m) {
+        m.classList.remove('hidden');
+        if (id === 'successModal') {
+          const btn = document.getElementById('successConfirmBtn');
+          if (btn) btn.focus();
+        }
+      }
+    }
+
+    function closeModal(id) {
+      const m = document.getElementById(id);
+      if (m) m.classList.add('hidden');
+    }
+
+    function switchModal(closeId, openId) {
+      closeModal(closeId);
+      setTimeout(() => openModal(openId), 150);
+    }
+
+    // Keyboard listener for Enter & Esc on modals
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        ['deleteModal', 'examModal', 'successModal'].forEach(closeModal);
+        const col = document.getElementById('columnMenu');
+        if (col && !col.classList.contains('hidden')) col.classList.add('hidden');
+      } else if (e.key === 'Enter') {
+        const success = document.getElementById('successModal');
+        if (success && !success.classList.contains('hidden')) {
+          closeModal('successModal');
+        }
+      }
+    });
+  </script>
+</div></main></div>
+
+
+
+
+</body></html>

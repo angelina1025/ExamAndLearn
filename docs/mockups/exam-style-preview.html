@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<title>考試頁面風格比較</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft JhengHei", "Noto Sans TC", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+  .shell { max-width: 1240px; margin: 0 auto; padding: 0 28px 60px; }
+
+  /* ---------- header ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--bar);
+    border-bottom: var(--bar-border);
+    backdrop-filter: blur(8px);
+  }
+  .topbar-inner {
+    max-width: 1240px; margin: 0 auto; padding: 14px 28px;
+    display: flex; align-items: center; gap: 24px;
+  }
+  .exam-title { font-size: 17px; font-weight: 700; letter-spacing: .2px; }
+  .exam-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .top-mid { flex: 1; max-width: 360px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .progress-track { height: 6px; border-radius: 99px; background: var(--track); overflow: hidden; }
+  .progress-fill { height: 100%; width: 20%; background: var(--accent); border-radius: 99px; }
+  .top-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+  .timer {
+    font-variant-numeric: tabular-nums; font-weight: 700; font-size: 20px;
+    color: var(--accent); letter-spacing: 1px;
+  }
+  .timer small { display: block; font-size: 10px; font-weight: 400; letter-spacing: 0; color: var(--muted); text-align: center; }
+  .btn {
+    border: 1px solid var(--btn-border); background: var(--btn-bg); color: var(--text);
+    padding: 8px 14px; border-radius: var(--radius-btn); font-size: 13px; cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .btn-ghost { background: transparent; }
+
+  /* ---------- layout ---------- */
+  .layout { display: grid; grid-template-columns: minmax(0,1fr) 264px; gap: 24px; padding-top: 24px; }
+  .paper { display: flex; flex-direction: column; gap: 16px; }
+
+  /* ---------- question ---------- */
+  .q {
+    background: var(--card); border: 1px solid var(--card-border);
+    border-radius: var(--radius-card); padding: 20px 22px;
+    box-shadow: var(--shadow);
+    scroll-margin-top: 96px;
+  }
+  .q-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .q-no {
+    width: 30px; height: 30px; border-radius: var(--radius-badge);
+    background: var(--badge-bg); color: var(--badge-fg);
+    display: grid; place-items: center; font-weight: 700; font-size: 14px; flex: none;
+  }
+  .q-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .chip {
+    font-size: 11px; padding: 3px 8px; border-radius: 99px;
+    background: var(--chip-bg); color: var(--chip-fg); border: 1px solid var(--chip-border);
+  }
+  .chip.flag { background: var(--flag-bg); color: var(--flag-fg); border-color: var(--flag-border); cursor: pointer; }
+  .q-points { margin-left: auto; font-size: 12px; color: var(--muted); }
+  .q-prompt { font-size: 15px; line-height: 1.75; margin: 0 0 14px; }
+  .options { display: flex; flex-direction: column; gap: 8px; }
+  .opt {
+    display: flex; gap: 10px; align-items: flex-start;
+    border: 1px solid var(--opt-border); border-radius: var(--radius-opt);
+    padding: 10px 12px; font-size: 14px; line-height: 1.6;
+    background: var(--opt-bg); cursor: pointer;
+  }
+  .opt.selected { border-color: var(--accent); background: var(--opt-selected); }
+  .mark {
+    width: 20px; height: 20px; flex: none; display: grid; place-items: center;
+    border: 1.5px solid var(--mark-border); border-radius: var(--mark-radius);
+    font-size: 12px; color: #fff; margin-top: 1px;
+  }
+  .opt.selected .mark { background: var(--accent); border-color: var(--accent); }
+  .opt .key { font-weight: 700; color: var(--muted); min-width: 16px; }
+
+  /* ---------- aside ---------- */
+  .aside { position: sticky; top: 96px; align-self: start; }
+  .map-card {
+    background: var(--card); border: 1px solid var(--card-border);
+    border-radius: var(--radius-card); padding: 16px; box-shadow: var(--shadow);
+  }
+  .map-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+  .map-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
+  .num {
+    aspect-ratio: 1; display: grid; place-items: center; font-size: 12px; font-weight: 600;
+    border: 1px solid var(--num-border); border-radius: var(--radius-num);
+    background: var(--num-bg); color: var(--num-fg); cursor: pointer;
+  }
+  .num.done { background: var(--num-done-bg); color: var(--num-done-fg); border-color: var(--num-done-border); }
+  .num.flagged { background: var(--num-flag-bg); color: var(--num-flag-fg); border-color: var(--num-flag-border); }
+  .num.current { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; font-size: 11px; color: var(--muted); }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; border: 1px solid transparent; }
+  .nav-row { display: flex; gap: 8px; margin-top: 14px; }
+  .nav-row .btn { flex: 1; padding: 9px 8px; font-size: 12px; }
+  .notice { margin-top: 12px; font-size: 11px; line-height: 1.6; color: var(--muted); border-top: 1px dashed var(--card-border); padding-top: 10px; }
+
+  /* =========================================================
+     A. 簡潔學術風
+     ========================================================= */
+  body.theme-a {
+    --bg: #f6f7f9; --text: #1b2430; --muted: #6b7785;
+    --bar: rgba(255,255,255,.92); --bar-border: 1px solid #e3e7ec;
+    --card: #ffffff; --card-border: #e3e7ec; --shadow: 0 1px 2px rgba(16,24,40,.04);
+    --accent: #1f3f7a; --track: #e8ebef;
+    --radius-card: 6px; --radius-btn: 4px; --radius-opt: 4px; --radius-badge: 4px; --radius-num: 4px; --mark-radius: 50%;
+    --badge-bg: #1f3f7a; --badge-fg: #fff;
+    --chip-bg: #f1f4f8; --chip-fg: #3c4b5f; --chip-border: #e3e7ec;
+    --flag-bg: #fff8e6; --flag-fg: #96650a; --flag-border: #f0d9a0;
+    --opt-bg: #fff; --opt-border: #d9dee5; --opt-selected: #f0f4fa; --mark-border: #b6c0cc;
+    --num-bg: #fff; --num-border: #d9dee5; --num-fg: #45525f;
+    --num-done-bg: #1f3f7a; --num-done-fg: #fff; --num-done-border: #1f3f7a;
+    --num-flag-bg: #f6c344; --num-flag-fg: #4a3300; --num-flag-border: #e0ad2a;
+    --btn-bg: #fff; --btn-border: #ccd3dc;
+  }
+  body.theme-a .exam-title { font-family: "Noto Serif TC", "PMingLiU", serif; }
+  body.theme-a .q-prompt { font-family: "Noto Serif TC", "PMingLiU", serif; font-size: 15.5px; }
+  body.theme-a .q { border-left: 3px solid #1f3f7a; }
+
+  /* =========================================================
+     B. 現代 SaaS 風
+     ========================================================= */
+  body.theme-b {
+    --bg: #f4f5fb; --text: #16192b; --muted: #6f7488;
+    --bar: rgba(255,255,255,.85); --bar-border: 1px solid rgba(226,228,240,.9);
+    --card: #ffffff; --card-border: #e9eaf4; --shadow: 0 10px 30px rgba(38,43,84,.06);
+    --accent: #5b5bd6; --track: #ecebfa;
+    --radius-card: 16px; --radius-btn: 10px; --radius-opt: 12px; --radius-badge: 10px; --radius-num: 10px; --mark-radius: 6px;
+    --badge-bg: #ecebff; --badge-fg: #4a4ac4;
+    --chip-bg: #f4f3ff; --chip-fg: #5b5bd6; --chip-border: #e6e4ff;
+    --flag-bg: #fff7e8; --flag-fg: #b26b00; --flag-border: #ffe3b0;
+    --opt-bg: #fbfbfe; --opt-border: #e6e7f2; --opt-selected: #f1f0ff; --mark-border: #c9c8e8;
+    --num-bg: #f7f7fc; --num-border: #e6e7f2; --num-fg: #575c74;
+    --num-done-bg: #5b5bd6; --num-done-fg: #fff; --num-done-border: #5b5bd6;
+    --num-flag-bg: #ffc861; --num-flag-fg: #5a3a00; --num-flag-border: #f3b43f;
+    --btn-bg: #fff; --btn-border: #dedff0;
+  }
+  body.theme-b .q-no { box-shadow: 0 3px 10px rgba(91,91,214,.16); }
+  body.theme-b .timer { background: #fff; padding: 4px 12px; border-radius: 12px; border: 1px solid #e9eaf4; }
+  body.theme-b .btn-primary { box-shadow: 0 6px 16px rgba(91,91,214,.28); }
+  body.theme-b .opt:hover { border-color: #b9b8ec; }
+
+  /* =========================================================
+     C. 傳統校務系統風
+     ========================================================= */
+  body.theme-c {
+    --bg: #eef1f5; --text: #1f2937; --muted: #5b6673;
+    --bar: #2f5597; --bar-border: 1px solid #24437a;
+    --card: #fff; --card-border: #9aa8b8; --shadow: none;
+    --accent: #2f5597; --track: #d7dee8;
+    --radius-card: 0; --radius-btn: 0; --radius-opt: 0; --radius-badge: 0; --radius-num: 0; --mark-radius: 50%;
+    --badge-bg: #2f5597; --badge-fg: #fff;
+    --chip-bg: #f4f6f9; --chip-fg: #35465c; --chip-border: #b8c3d1;
+    --flag-bg: #fff4d1; --flag-fg: #7a5400; --flag-border: #d8b55a;
+    --opt-bg: #fbfcfd; --opt-border: #c3ccd7; --opt-selected: #e8eef7; --mark-border: #8fa0b4;
+    --num-bg: #fbfcfd; --num-border: #aeb9c6; --num-fg: #2d3b4c;
+    --num-done-bg: #2f5597; --num-done-fg: #fff; --num-done-border: #24437a;
+    --num-flag-bg: #e0b64a; --num-flag-fg: #3d2b00; --num-flag-border: #b8942f;
+    --btn-bg: #f7f9fb; --btn-border: #8b9aab;
+  }
+  body.theme-c .topbar-inner { color: #fff; }
+  body.theme-c .exam-sub, body.theme-c .timer small, body.theme-c .progress-label { color: #d6dfef; }
+  body.theme-c .timer { color: #ffe08a; }
+  body.theme-c .progress-track { background: #1f3d70; }
+  body.theme-c .progress-fill { background: #ffd166; }
+  body.theme-c .btn { color: #fff; background: #3f6bb5; border-color: #6f8fc4; }
+  body.theme-c .btn-ghost { background: transparent; }
+  body.theme-c .btn-primary { background: #c0392b; border-color: #a93226; }
+  body.theme-c .q-head { border-bottom: 1px solid #d5dce4; padding-bottom: 10px; }
+  body.theme-c .q { padding: 14px 16px; }
+  body.theme-c .q-prompt { font-family: "PMingLiU", "Noto Serif TC", serif; font-size: 14.5px; }
+  body.theme-c .q-points { font-size: 11px; }
+  body.theme-c .map-grid { gap: 4px; }
+  body.theme-c .num { font-size: 11px; }
+  body.theme-c .paper { gap: 8px; }
+  body.theme-c .legend { font-size: 10px; }
+
+  .switcher {
+    position: fixed; right: 16px; bottom: 16px; z-index: 50;
+    display: flex; gap: 6px; align-items: center;
+    background: #111827; padding: 6px; border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.25);
+  }
+  .switcher span { color: #9ca3af; font-size: 11px; padding: 0 4px; }
+  .switcher button {
+    border: 0; background: #374151; color: #e5e7eb; font-size: 12px;
+    padding: 6px 10px; border-radius: 6px; cursor: pointer; font-family: inherit;
+  }
+  .switcher button.active { background: #f59e0b; color: #111827; font-weight: 700; }
+</style>
+</head>
+<body class="theme-a">
+<div class="topbar">
+  <div class="topbar-inner">
+    <div>
+      <div class="exam-title">資料結構與演算法 期中測驗</div>
+      <div class="exam-sub">資工系二年級 ・ 10 題 ・ 10 分鐘</div>
+    </div>
+    <div class="top-mid">
+      <div class="progress-label"><span>作答進度</span><span>2 / 10 題</span></div>
+      <div class="progress-track"><div class="progress-fill"></div></div>
+    </div>
+    <div class="top-right">
+      <div class="timer">09:42<small>剩餘時間</small></div>
+      <button class="btn btn-ghost">暫停</button>
+      <button class="btn btn-primary">交卷</button>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+  <div class="layout">
+    <main class="paper">
+
+      <section class="q" id="q1">
+        <div class="q-head">
+          <div class="q-no">1</div>
+          <div class="q-meta">
+            <span class="chip">單選題</span>
+            <span class="chip">基礎</span>
+          </div>
+          <div class="q-points">2 分</div>
+        </div>
+        <p class="q-prompt">下列哪一種資料結構最適合實作「後進先出（LIFO）」的操作？</p>
+        <div class="options">
+          <label class="opt"><span class="mark"></span><span class="key">A</span><span>佇列（Queue）</span></label>
+          <label class="opt selected"><span class="mark">✓</span><span class="key">B</span><span>堆疊（Stack）</span></label>
+          <label class="opt"><span class="mark"></span><span class="key">C</span><span>鏈結串列（Linked List）</span></label>
+          <label class="opt"><span class="mark"></span><span class="key">D</span><span>二元搜尋樹（BST）</span></label>
+        </div>
+      </section>
+
+      <section class="q" id="q2">
+        <div class="q-head">
+          <div class="q-no">2</div>
+          <div class="q-meta">
+            <span class="chip">多選題</span>
+            <span class="chip">中等</span>
+            <span class="chip flag">★ 已標註</span>
+          </div>
+          <div class="q-points">3 分</div>
+        </div>
+        <p class="q-prompt">關於二元搜尋樹（Binary Search Tree），下列敘述哪些正確？</p>
+        <div class="options">
+          <label class="opt selected"><span class="mark">✓</span><span class="key">A</span><span>左子樹中所有節點的值皆小於根節點</span></label>
+          <label class="opt selected"><span class="mark">✓</span><span class="key">B</span><span>中序走訪（In-order）可得到遞增序列</span></label>
+          <label class="opt"><span class="mark"></span><span class="key">C</span><span>樹高必定為 O(log n)</span></label>
+          <label class="opt selected"><span class="mark">✓</span><span class="key">D</span><span>在最差情況下可能退化為鏈結串列</span></label>
+        </div>
+      </section>
+
+      <section class="q" id="q3">
+        <div class="q-head">
+          <div class="q-no">3</div>
+          <div class="q-meta">
+            <span class="chip">是非題</span>
+            <span class="chip">基礎</span>
+          </div>
+          <div class="q-points">1 分</div>
+        </div>
+        <p class="q-prompt">雜湊表（Hash Table）在理想情況下，搜尋、插入與刪除的平均時間複雜度皆為 O(1)。</p>
+        <div class="options" style="flex-direction:row">
+          <label class="opt" style="flex:1"><span class="mark"></span><span class="key">○</span><span>是（True）</span></label>
+          <label class="opt" style="flex:1"><span class="mark"></span><span class="key">×</span><span>否（False）</span></label>
+        </div>
+      </section>
+
+      <section class="q" id="q4">
+        <div class="q-head">
+          <div class="q-no">4</div>
+          <div class="q-meta">
+            <span class="chip">單選題</span>
+            <span class="chip">困難</span>
+          </div>
+          <div class="q-points">2 分</div>
+        </div>
+        <p class="q-prompt">在含有 n 個節點的完整二元樹中，樹高約為下列何者？</p>
+        <div class="options">
+          <label class="opt"><span class="mark"></span><span class="key">A</span><span>O(1)</span></label>
+          <label class="opt"><span class="mark"></span><span class="key">B</span><span>O(log n)</span></label>
+          <label class="opt"><span class="mark"></span><span class="key">C</span><span>O(n)</span></label>
+          <label class="opt"><span class="mark"></span><span class="key">D</span><span>O(n log n)</span></label>
+        </div>
+      </section>
+
+    </main>
+
+    <aside class="aside">
+      <div class="map-card">
+        <div class="map-title">題目地圖</div>
+        <div class="map-grid">
+          <div class="num done">1</div>
+          <div class="num flagged">2</div>
+          <div class="num current">3</div>
+          <div class="num">4</div>
+          <div class="num">5</div>
+          <div class="num">6</div>
+          <div class="num">7</div>
+          <div class="num">8</div>
+          <div class="num">9</div>
+          <div class="num">10</div>
+        </div>
+        <div class="legend">
+          <span><i style="background:var(--num-done-bg);border-color:var(--num-done-border)"></i>已作答</span>
+          <span><i style="background:var(--num-flag-bg);border-color:var(--num-flag-border)"></i>已標註</span>
+          <span><i style="background:var(--num-bg);border-color:var(--num-border)"></i>未作答</span>
+        </div>
+        <div class="nav-row">
+          <button class="btn">上一題</button>
+          <button class="btn">下一題</button>
+        </div>
+        <div class="notice">點選題號可跳至該題。考試暫停時，題目與計時都會停止。</div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div class="switcher">
+  <span>風格：</span>
+  <button data-theme="a" class="active">A 學術</button>
+  <button data-theme="b">B SaaS</button>
+  <button data-theme="c">C 校務</button>
+</div>
+<script>
+  const names = { a: 'A 簡潔學術風', b: 'B 現代 SaaS 風', c: 'C 傳統校務系統風' };
+  const buttons = document.querySelectorAll('.switcher button');
+
+  function applyTheme(theme) {
+    if (!names[theme]) theme = 'a';
+    document.body.className = 'theme-' + theme;
+    document.title = '考試頁面示範 - ' + names[theme];
+    buttons.forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
+    try { history.replaceState(null, '', '?theme=' + theme); } catch (e) {}
+  }
+
+  buttons.forEach(b => b.addEventListener('click', () => applyTheme(b.dataset.theme)));
+
+  const p = new URLSearchParams(location.search);
+  applyTheme(p.get('theme') || 'a');
+</script>
+</body>
+</html>

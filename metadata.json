@@ -1,0 +1,6 @@
+{
+  "name": "線上測驗管理系統 (Admin Portal)",
+  "description": "ProctorPulse 高階線上測驗與題庫管理系統，支援多學科題庫、組卷出題、考卷生命週期管理、二階段高風險防呆驗證及即時統計。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
