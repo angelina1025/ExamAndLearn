@@ -1,6 +1,8 @@
 import { Question, ExamPaper, SubjectId } from '@/types';
+import { ASSIGNED_EXAM_QUESTIONS, ASSIGNED_EXAM_PAPER } from '@/data/assignedExamQuestions';
 
 export const INITIAL_QUESTIONS: Question[] = [
+  ...ASSIGNED_EXAM_QUESTIONS,
   // --- Math questions ---
   {
     id: 'Q-MATH-20240901',
@@ -381,6 +383,7 @@ export const INITIAL_QUESTIONS: Question[] = [
 ];
 
 export const INITIAL_EXAM_PAPERS: ExamPaper[] = [
+  ASSIGNED_EXAM_PAPER,
   {
     id: 'EXAM-2024-MATH-081',
     title: '2024年高二數學期末統一測驗',

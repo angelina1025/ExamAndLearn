@@ -1,0 +1,183 @@
+{
+  "version": 3,
+  "pages404": true,
+  "appType": "app",
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "priority": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "onMatchHeaders": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/exam/result/[sessionId]",
+      "regex": "^/exam/result/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPsessionId": "nxtPsessionId"
+      },
+      "namedRegex": "^/exam/result/(?<nxtPsessionId>[^/]+?)(?:/)?$",
+      "prefetchSegmentDataRoutes": [
+        {
+          "destination": "/exam/result/[sessionId].segments/exam/result/$d$sessionId$segment",
+          "source": "^/exam/result/(?<nxtPsessionId>[^/]+?)\\.segments/exam/result/\\$d\\$sessionId(?<segment>/__PAGE__\\.segment\\.rsc|\\.segment\\.rsc)(?:/)?$",
+          "routeKeys": {
+            "nxtPsessionId": "nxtPsessionId"
+          }
+        }
+      ]
+    },
+    {
+      "page": "/exam/[examId]",
+      "regex": "^/exam/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPexamId": "nxtPexamId"
+      },
+      "namedRegex": "^/exam/(?<nxtPexamId>[^/]+?)(?:/)?$",
+      "prefetchSegmentDataRoutes": [
+        {
+          "destination": "/exam/[examId].segments/exam/$d$examId$segment",
+          "source": "^/exam/(?<nxtPexamId>[^/]+?)\\.segments/exam/\\$d\\$examId(?<segment>/__PAGE__\\.segment\\.rsc|\\.segment\\.rsc)(?:/)?$",
+          "routeKeys": {
+            "nxtPexamId": "nxtPexamId"
+          }
+        }
+      ]
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_global-error",
+      "regex": "^/_global\\-error(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_global\\-error(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/api/export",
+      "regex": "^/api/export(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/export(?:/)?$"
+    },
+    {
+      "page": "/api/sheet",
+      "regex": "^/api/sheet(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/sheet(?:/)?$"
+    },
+    {
+      "page": "/exams",
+      "regex": "^/exams(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/exams(?:/)?$"
+    },
+    {
+      "page": "/exams/select",
+      "regex": "^/exams/select(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/exams/select(?:/)?$"
+    },
+    {
+      "page": "/favicon.ico",
+      "regex": "^/favicon\\.ico(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/favicon\\.ico(?:/)?$"
+    },
+    {
+      "page": "/lobby",
+      "regex": "^/lobby(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/lobby(?:/)?$"
+    },
+    {
+      "page": "/login",
+      "regex": "^/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/login(?:/)?$"
+    },
+    {
+      "page": "/profile",
+      "regex": "^/profile(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/profile(?:/)?$"
+    },
+    {
+      "page": "/questions",
+      "regex": "^/questions(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/questions(?:/)?$"
+    },
+    {
+      "page": "/selector",
+      "regex": "^/selector(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/selector(?:/)?$"
+    },
+    {
+      "page": "/upload",
+      "regex": "^/upload(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/upload(?:/)?$"
+    },
+    {
+      "page": "/users",
+      "regex": "^/users(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/users(?:/)?$"
+    },
+    {
+      "page": "/wrong-questions",
+      "regex": "^/wrong\\-questions(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/wrong\\-questions(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments",
+    "clientParamParsing": true,
+    "dynamicRSCPrerender": true
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  },
+  "ppr": {
+    "chain": {
+      "headers": {
+        "next-resume": "1"
+      }
+    }
+  }
+}

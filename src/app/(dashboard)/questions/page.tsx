@@ -5,34 +5,34 @@ import { Question, SubjectId, SubjectFilter, QuestionType, DifficultyLevel, Colu
 import { ColumnVisibilityMenu } from '@/app/(dashboard)/questions/_components/ColumnVisibilityMenu';
 
 interface QuestionBankViewProps {
-  subjectId: SubjectFilter;
-  questions: Question[];
-  selectedQuestionIds: string[];
-  onToggleSelectQuestion: (id: string) => void;
-  onSelectAllQuestions: (ids: string[]) => void;
-  onClearSelection: () => void;
-  onOpenCreateModal: () => void;
-  onOpenExamModal: () => void;
-  onOpenBatchDeleteModal: () => void;
-  onViewQuestion: (q: Question) => void;
-  onEditQuestion: (q: Question) => void;
-  onDeleteQuestion: (q: Question) => void;
+  subjectId?: SubjectFilter;
+  questions?: Question[];
+  selectedQuestionIds?: string[];
+  onToggleSelectQuestion?: (id: string) => void;
+  onSelectAllQuestions?: (ids: string[]) => void;
+  onClearSelection?: () => void;
+  onOpenCreateModal?: () => void;
+  onOpenExamModal?: () => void;
+  onOpenBatchDeleteModal?: () => void;
+  onViewQuestion?: (q: Question) => void;
+  onEditQuestion?: (q: Question) => void;
+  onDeleteQuestion?: (q: Question) => void;
   isLoadingData?: boolean;
 }
 
 export const QuestionBankView: React.FC<QuestionBankViewProps> = ({
-  subjectId,
-  questions,
-  selectedQuestionIds,
-  onToggleSelectQuestion,
-  onSelectAllQuestions,
-  onClearSelection,
-  onOpenCreateModal,
-  onOpenExamModal,
-  onOpenBatchDeleteModal,
-  onViewQuestion,
-  onEditQuestion,
-  onDeleteQuestion,
+  subjectId = 'all',
+  questions = [],
+  selectedQuestionIds = [],
+  onToggleSelectQuestion = () => {},
+  onSelectAllQuestions = () => {},
+  onClearSelection = () => {},
+  onOpenCreateModal = () => {},
+  onOpenExamModal = () => {},
+  onOpenBatchDeleteModal = () => {},
+  onViewQuestion = () => {},
+  onEditQuestion = () => {},
+  onDeleteQuestion = () => {},
   isLoadingData,
 }) => {
   const [activeTab, setActiveTab] = useState<QuestionType>('all');

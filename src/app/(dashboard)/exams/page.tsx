@@ -5,18 +5,18 @@ import { ExamPaper, ExamColumnVisibilityState } from '@/types';
 import { ExamColumnVisibilityMenu } from '@/app/(dashboard)/exams/_components/ExamColumnVisibilityMenu';
 
 interface ExamPapersViewProps {
-  examPapers: ExamPaper[];
-  selectedExamIds: string[];
-  onToggleSelectExam: (id: string) => void;
-  onSelectAllExams: (ids: string[]) => void;
-  onClearExamSelection: () => void;
+  examPapers?: ExamPaper[];
+  selectedExamIds?: string[];
+  onToggleSelectExam?: (id: string) => void;
+  onSelectAllExams?: (ids: string[]) => void;
+  onClearExamSelection?: () => void;
   onOpenCreateExamModal?: () => void;
-  onOpenBatchDeleteModal: () => void;
-  onPreviewExam: (exam: ExamPaper) => void;
-  onDeleteSingleExam: (exam: ExamPaper) => void;
+  onOpenBatchDeleteModal?: () => void;
+  onPreviewExam?: (exam: ExamPaper) => void;
+  onDeleteSingleExam?: (exam: ExamPaper) => void;
   onExportReport?: () => void;
-  onBatchExport: () => void;
-  onPublishExams: (examIds: string[]) => void;
+  onBatchExport?: () => void;
+  onPublishExams?: (examIds: string[]) => void;
 }
 
 export interface ExamValidationReport {
@@ -26,16 +26,16 @@ export interface ExamValidationReport {
 }
 
 export const ExamPapersView: React.FC<ExamPapersViewProps> = ({
-  examPapers,
-  selectedExamIds,
-  onToggleSelectExam,
-  onSelectAllExams,
-  onClearExamSelection,
-  onOpenBatchDeleteModal,
-  onPreviewExam,
-  onDeleteSingleExam,
-  onBatchExport,
-  onPublishExams,
+  examPapers = [],
+  selectedExamIds = [],
+  onToggleSelectExam = () => {},
+  onSelectAllExams = () => {},
+  onClearExamSelection = () => {},
+  onOpenBatchDeleteModal = () => {},
+  onPreviewExam = () => {},
+  onDeleteSingleExam = () => {},
+  onBatchExport = () => {},
+  onPublishExams = () => {},
 }) => {
   // Tabs: 'draft' (草稿資料表), 'published' (公用試卷資料表), 'all' (全部資料表)
   const [activeTab, setActiveTab] = useState<'draft' | 'published' | 'all'>('draft');

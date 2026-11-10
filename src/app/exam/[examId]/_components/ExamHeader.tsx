@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import type { MouseEvent } from "react";
 import { formatTime } from "@/utils/formatters";
 import type { Exam } from "@/types/exam";
@@ -22,6 +21,12 @@ export function ExamHeader({ exam, remainingSec, answered, total, running, onPau
   function handleBack(event: MouseEvent<HTMLAnchorElement>) {
     if (!window.confirm("返回首頁？作答進度會保留。")) {
       event.preventDefault();
+      return;
+    }
+    if (typeof window !== "undefined") {
+      event.preventDefault();
+      window.history.pushState(null, "", "/");
+      window.dispatchEvent(new PopStateEvent("popstate"));
     }
   }
 
@@ -45,9 +50,9 @@ export function ExamHeader({ exam, remainingSec, answered, total, running, onPau
           </div>
 
           <div className="ml-auto flex flex-wrap items-center gap-2">
-            <Link href="/" onClick={handleBack} className="exam-btn exam-btn-onnavy">
+            <a href="/" onClick={handleBack} className="exam-btn exam-btn-onnavy">
               返回
-            </Link>
+            </a>
             <div className={`text-[22px] font-bold tabular-nums ${danger ? "timer-danger" : ""}`}>
               {formatTime(remainingSec)}
             </div>

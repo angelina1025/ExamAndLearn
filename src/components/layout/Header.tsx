@@ -1,11 +1,14 @@
+'use client';
+
 import React, { useState } from 'react';
-import { NotificationItem } from '@/types';
+import { NotificationItem, UserProfile } from '@/types';
 
 interface HeaderProps {
   onOpenSearch: () => void;
   onLogout: () => void;
   notifications: NotificationItem[];
   onMarkNotificationRead: (id: string) => void;
+  currentUser?: UserProfile | null;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -13,9 +16,25 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout,
   notifications,
   onMarkNotificationRead,
+  currentUser,
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  const displayName =
+    currentUser?.name || currentUser?.nickname || '王敏行 (Admin Wang)';
+  const roleCode = String(currentUser?.role || '').toUpperCase();
+  const isAdmin = roleCode === 'ADMIN';
+
+  const systemPortalTitle = isAdmin
+    ? '線上測驗管理系統 (Admin Portal)'
+    : '線上測驗與自主學習系統 (User Portal)';
+
+  const displayRole = currentUser
+    ? currentUser.roleName && currentUser.roleName !== currentUser.role
+      ? `${currentUser.roleName} (${currentUser.role})`
+      : String(currentUser.role)
+    : '系統管理員';
 
   return (
     <header className="fixed top-0 left-0 right-0 h-14 bg-[#ffffff]/95 backdrop-blur-md z-40 border-b border-[#c3c6d7]/30 flex items-center justify-between px-6">
@@ -26,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[16px] leading-[24px] text-[#191c1e] font-semibold tracking-tight">
-            線上測驗管理系統 (Admin Portal)
+            {systemPortalTitle}
           </span>
           <span className="text-[11px] leading-[14px] px-1.5 py-0.5 bg-[#dae2fd] text-[#131b2e] rounded border border-[#c3c6d7]/40 font-medium">
             v2.4 Pro
@@ -100,11 +119,18 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-3">
           <div className="text-right hidden sm:block">
             <div className="text-[14px] leading-tight text-[#191c1e] font-semibold">
-              王敏行 (Admin Wang)
+              {displayName}
             </div>
-            <div className="text-[11px] text-[#434655]">系統管理員</div>
+            <div className="text-[11px] text-[#004ac6] font-medium">{displayRole}</div>
           </div>
-          <div className="w-8 h-8 rounded-full bg-[#004ac6] flex items-center justify-center text-white shadow-sm" title="系統管理員帳號">
+          <div
+            className="w-8 h-8 rounded-full bg-[#004ac6] flex items-center justify-center text-white shadow-sm"
+            title={
+              currentUser?.identifier
+                ? `帳號: ${currentUser.identifier} | UUID: ${currentUser.uuid}`
+                : '系統管理員帳號'
+            }
+          >
             <span className="material-symbols-outlined text-white text-[18px]">person</span>
           </div>
           <button

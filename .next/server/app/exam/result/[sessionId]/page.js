@@ -1,0 +1,13 @@
+var R=require("../../../../chunks/ssr/[turbopack]_runtime.js")("server/app/exam/result/[sessionId]/page.js")
+R.c("server/chunks/ssr/node_modules_next_dist_esm_build_templates_app-page_07939dw0wp8p6.js")
+R.c("server/chunks/ssr/[root-of-the-server]__01c5woa6n5-9a._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__0h851raekexyy._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__1c7uxfdfwka35._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__0zbpdxsvy2y81._.js")
+R.c("server/chunks/ssr/_0qptkf4584pul._.js")
+R.c("server/chunks/ssr/node_modules_next_dist_client_components_0p8s4lhdi0ir6._.js")
+R.c("server/chunks/ssr/node_modules_next_dist_client_components_builtin_unauthorized_0l_sp0xky89qu.js")
+R.c("server/chunks/ssr/node_modules_next_dist_client_components_builtin_global-error_0q-w892nagajq.js")
+R.c("server/chunks/ssr/_next-internal_server_app_exam_result_[sessionId]_page_actions_0ssvnwm1licz0.js")
+R.m(82160)
+module.exports=R.m(82160).exports

@@ -1,13 +1,131 @@
-import { Question, ExamPaper, Exam, SheetTableSchema, ReadSpreadsheetResult, SubjectId, CategoryItem, AuditLog } from '@/types';
+import { Question, ExamPaper, Exam, SheetTableSchema, ReadSpreadsheetResult, SubjectId, CategoryItem, AuditLog, UserProfile, RoleItem, AuthLoginResult } from '@/types';
 import { assignedExam } from '@/services/mockExamData';
+import { INITIAL_QUESTIONS, INITIAL_EXAM_PAPERS } from '@/data/initialData';
 import { formatSheetTimestamp } from '@/utils/formatters';
 import { formatOptionsToJsonObject, parseSheetOptionJson, extractSpreadsheetId } from '@/utils/sheetParser';
 
 export const ASSIGNED_EXAM_ID = 'assigned-demo';
 
-export async function getAssignedExam(examId: string): Promise<Exam | null> {
-  if (examId !== ASSIGNED_EXAM_ID) return null;
-  return assignedExam;
+export async function getAssignedExam(
+  examId: string,
+  extraExams: ExamPaper[] = [],
+  extraQuestions: Question[] = []
+): Promise<Exam | null> {
+  if (examId === ASSIGNED_EXAM_ID) return assignedExam;
+
+  // 試卷查表：優先使用線上試卷 (extraExams: Google Sheet)；若離線或線上無試卷，才讀取 data 內試卷 INITIAL_EXAM_PAPERS
+  const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+  const examMap = new Map<string, ExamPaper>();
+
+  if (extraExams && extraExams.length > 0) {
+    for (const e of extraExams) {
+      if (e?.id && !examMap.has(e.id)) {
+        examMap.set(e.id, e);
+      }
+    }
+  }
+
+  // 讀取考生自選組卷 (localStorage)
+  if (typeof window !== 'undefined') {
+    try {
+      const customExams = JSON.parse(localStorage.getItem('quiz_custom_exams') || '[]');
+      for (const e of customExams) {
+        if (e?.id && !examMap.has(e.id)) {
+          examMap.set(e.id, e);
+        }
+      }
+    } catch {}
+  }
+
+  // 若線上試卷未包含該試卷，或處於離線狀態時，才讀取 data 內試卷 INITIAL_EXAM_PAPERS 備援
+  if (!examMap.has(examId) || !isOnline) {
+    for (const e of INITIAL_EXAM_PAPERS) {
+      if (e?.id && !examMap.has(e.id)) {
+        examMap.set(e.id, e);
+      }
+    }
+  }
+
+  const paper = examMap.get(examId);
+  if (!paper) return null;
+
+  // 題目資料庫查表：優先取線上題庫 (extraQuestions: 來自 Google Sheet)
+  // 若線上題庫為空或處於離線狀態時，才去讀取 data 內題庫 INITIAL_QUESTIONS
+  const questionMap = new Map<string, Question>();
+  if (extraQuestions && extraQuestions.length > 0) {
+    for (const q of extraQuestions) {
+      if (q?.id && !questionMap.has(q.id)) {
+        questionMap.set(q.id, q);
+      }
+    }
+  }
+
+  // 若線上題庫為空或處於離線狀態，才補入 data 內題庫 INITIAL_QUESTIONS 作為備援
+  if (questionMap.size === 0 || !isOnline) {
+    for (const q of INITIAL_QUESTIONS) {
+      if (q?.id && !questionMap.has(q.id)) {
+        questionMap.set(q.id, q);
+      }
+    }
+  }
+
+  // 若試卷指定的個別題目 ID 在線上未找到，亦可從 data 題庫備援補入
+  const rawQuestionIds = paper.questionIds || [];
+  const questionIds = Array.from(new Set(rawQuestionIds));
+  for (const qId of questionIds) {
+    if (!questionMap.has(qId)) {
+      const fallbackQ = INITIAL_QUESTIONS.find((item) => item.id === qId);
+      if (fallbackQ) {
+        questionMap.set(fallbackQ.id, fallbackQ);
+      }
+    }
+  }
+  let matchedQuestions: Question[] = [];
+
+  if (questionIds.length > 0) {
+    matchedQuestions = questionIds
+      .map((id) => questionMap.get(id))
+      .filter((q): q is Question => Boolean(q));
+  }
+
+  if (matchedQuestions.length === 0) {
+    const allQuestionsList = Array.from(questionMap.values());
+    matchedQuestions = allQuestionsList
+      .filter((q) => q.subjectId === paper.subjectId)
+      .slice(0, paper.questionCount || 10);
+  }
+
+  if (matchedQuestions.length === 0) {
+    matchedQuestions = Array.from(questionMap.values()).slice(0, paper.questionCount || 10);
+  }
+
+  const optionLetters = ['A', 'B', 'C', 'D', 'E'];
+  const examQuestions = matchedQuestions.map((q, idx) => {
+    const rawOptions =
+      q.options && q.options.length > 0 ? q.options : ['選項 A', '選項 B', '選項 C', '選項 D'];
+    return {
+      id: q.id || `q-${idx + 1}`,
+      test_id: q.id,
+      type: (q.type === 'multiple' ? 'multiple' : 'single') as 'single' | 'multiple' | 'boolean',
+      prompt: q.content || q.question || '',
+      options: rawOptions.map((text, oIdx) => ({
+        id: optionLetters[oIdx] || String(oIdx + 1),
+        text,
+      })),
+      points: q.points || 2,
+      answer: q.correctAnswer || q.answer,
+      explanation: q.explanation,
+    };
+  });
+
+  return {
+    id: paper.id,
+    title: paper.title,
+    subtitle: `${paper.subject} ・ ${examQuestions.length} 題 ・ ${paper.durationMinutes} 分鐘`,
+    durationSec: (paper.durationMinutes || 60) * 60,
+    passingScore: paper.passingScore || 60,
+    questions: examQuestions,
+  };
 }
 
 export { formatSheetTimestamp, formatOptionsToJsonObject, extractSpreadsheetId };
@@ -175,12 +293,13 @@ export const SUBJECT_NAME_MAP: Record<string, SubjectId> = {
   '歷史': 'history',
 };
 
-export const INITIAL_ROLES_DATA = [
-  { id: 1, code: 'ADMIN', name: '超級管理員', description: '具備系統所有試題、試卷與資料庫管理最高權限', created_at: '2024-01-01 00:00:00' },
-  { id: 2, code: 'TEACHER', name: '學科教師', description: '負責命題、編輯試題、組卷及審核試卷', created_at: '2024-01-01 00:00:00' },
-  { id: 3, code: 'EXAMINER', name: '閱卷人員', description: '負責應考名冊檢視、試卷評閱及試題作答分析', created_at: '2024-01-01 00:00:00' },
-  { id: 4, code: 'STUDENT', name: '應考學生', description: '參加線上測驗、檢視成績與個人歷史作答紀錄', created_at: '2024-01-01 00:00:00' },
-  { id: 5, code: 'GUEST', name: '訪客', description: '僅具備公開試題與範例試卷預覽之訪客權限', created_at: '2024-01-01 00:00:00' },
+export const INITIAL_ROLES_DATA: RoleItem[] = [
+  { id: 1, code: 'ADMIN', name: '管理員', description: '具備系統所有試題、試卷與資料庫管理最高權限', created_at: '2024-01-01 00:00:00' },
+  { id: 2, code: 'USER', name: '用戶', description: '一般系統用戶，可瀏覽題庫、組卷及參加線上測驗', created_at: '2024-01-01 00:00:00' },
+  { id: 3, code: 'TEACHER', name: '學科教師', description: '負責命題、編輯試題、組卷及審核試卷', created_at: '2024-01-01 00:00:00' },
+  { id: 4, code: 'EXAMINER', name: '閱卷人員', description: '負責應考名冊檢視、試卷評閱及試題作答分析', created_at: '2024-01-01 00:00:00' },
+  { id: 5, code: 'STUDENT', name: '應考學生', description: '參加線上測驗、檢視成績與個人歷史作答紀錄', created_at: '2024-01-01 00:00:00' },
+  { id: 6, code: 'GUEST', name: '訪客', description: '僅具備公開試題與範例試卷預覽之訪客權限', created_at: '2024-01-01 00:00:00' },
 ];
 
 /**
@@ -895,14 +1014,17 @@ function parseTableValuesToResult(
     auditLogs.reverse();
   }
 
+  const roles = parseRolesFromSheetRows(tableValuesMap['roles'] || []);
+  const users = parseUsersFromSheetRows(tableValuesMap['users'] || [], roles);
+
   const allExams = [...publishedExams, ...draftExams];
   const stats: Record<string, number> = {
     test_bank: questions.length,
     quiz_bank_publish: publishedExams.length,
     quiz_bank_unpublish: draftExams.length,
     categories: categories.length,
-    users: Math.max(0, (tableValuesMap['users'] || []).length - 1),
-    roles: Math.max(0, (tableValuesMap['roles'] || []).length - 1),
+    users: users.length,
+    roles: roles.length,
     log: auditLogs.length,
   };
 
@@ -914,9 +1036,394 @@ function parseTableValuesToResult(
     draftExams,
     allExams,
     categories,
+    users,
+    roles,
     auditLogs,
     stats,
     message: `成功從「${spreadsheetTitle}」讀取 ${categories.length} 個科目分類、${questions.length} 題題庫試題、${publishedExams.length} 份公用試卷、${draftExams.length} 份草稿試卷！`,
+  };
+}
+
+/**
+ * 解析 roles 資料表列資料
+ * 欄位: id, code, name, description, created_at
+ */
+export function parseRolesFromSheetRows(roleRows: any[][]): RoleItem[] {
+  if (!roleRows || roleRows.length === 0) {
+    return [...INITIAL_ROLES_DATA];
+  }
+
+  const headerRow = (roleRows[0] || []).map((h) => String(h || '').trim().toLowerCase());
+  const findIdx = (names: string[], fallback: number) => {
+    const idx = headerRow.findIndex((h) => names.includes(h));
+    return idx >= 0 ? idx : fallback;
+  };
+
+  const idxId = findIdx(['id'], 0);
+  const idxCode = findIdx(['code', 'role_code'], 1);
+  const idxName = findIdx(['name', 'role_name'], 2);
+  const idxDesc = findIdx(['description', 'desc'], 3);
+  const idxCreatedAt = findIdx(['created_at'], 4);
+
+  const roles: RoleItem[] = [];
+  for (let i = 0; i < roleRows.length; i++) {
+    const row = roleRows[i];
+    if (!row || row.length === 0) continue;
+    const rawCode = String(row[idxCode] ?? '').trim();
+    const rawName = String(row[idxName] ?? '').trim();
+    if (!rawCode && !rawName) continue;
+    if (
+      rawCode.toLowerCase() === 'code' ||
+      rawName.toLowerCase() === 'name' ||
+      String(row[idxId] ?? '').trim().toLowerCase() === 'id'
+    ) {
+      continue;
+    }
+
+    roles.push({
+      id: Number(row[idxId]) || roles.length + 1,
+      code: rawCode,
+      name: rawName || rawCode,
+      description: String(row[idxDesc] ?? '').trim(),
+      created_at: String(row[idxCreatedAt] ?? '').trim() || undefined,
+    });
+  }
+
+  return roles.length > 0 ? roles : [...INITIAL_ROLES_DATA];
+}
+
+/**
+ * 解析 users 資料表列資料並關聯 roles.code
+ * 欄位: id, uuid, status, role, name, identifier, credential, google_sheet_URL, last_login_at, created_at, updated_at
+ */
+export function parseUsersFromSheetRows(
+  userRows: any[][],
+  roles: RoleItem[] = INITIAL_ROLES_DATA
+): UserProfile[] {
+  if (!userRows || userRows.length === 0) return [];
+
+  const headerRow = (userRows[0] || []).map((h) => String(h || '').trim().toLowerCase());
+  const findIdx = (names: string[], fallback: number) => {
+    const idx = headerRow.findIndex((h) => names.includes(h));
+    return idx >= 0 ? idx : fallback;
+  };
+
+  const idxId = findIdx(['id'], 0);
+  const idxUuid = findIdx(['uuid'], 1);
+  const idxStatus = findIdx(['status'], 2);
+  const idxRole = findIdx(['role'], 3);
+  const idxName = findIdx(['name', 'nickname'], 4);
+  const idxIdentifier = findIdx(['identifier', 'account', 'username'], 5);
+  const idxCredential = findIdx(['credential', 'password'], 6);
+  const idxSheetUrl = findIdx(['google_sheet_url', 'sheet_url'], 7);
+  const idxLastLogin = findIdx(['last_login_at'], 8);
+  const idxCreatedAt = findIdx(['created_at'], 9);
+  const idxUpdatedAt = findIdx(['updated_at'], 10);
+
+  const users: UserProfile[] = [];
+  for (let i = 0; i < userRows.length; i++) {
+    const row = userRows[i];
+    if (!row || row.length === 0) continue;
+
+    const rawIdentifier = String(row[idxIdentifier] ?? '').trim();
+    const rawName = String(row[idxName] ?? '').trim();
+    const rawUuid = String(row[idxUuid] ?? '').trim();
+
+    if (!rawIdentifier && !rawName && !rawUuid) continue;
+    // Skip header row
+    if (
+      rawIdentifier.toLowerCase() === 'identifier' ||
+      String(row[idxCredential] ?? '').trim().toLowerCase() === 'credential' ||
+      rawUuid.toLowerCase() === 'uuid'
+    ) {
+      continue;
+    }
+
+    const rawStatusStr = String(row[idxStatus] ?? '').trim();
+    const parsedStatus =
+      rawStatusStr === '0'
+        ? 0
+        : rawStatusStr === '2'
+        ? 2
+        : rawStatusStr === '1'
+        ? 1
+        : Number.isFinite(Number(rawStatusStr)) && rawStatusStr !== ''
+        ? Number(rawStatusStr)
+        : 1;
+
+    const rawRoleCode = String(row[idxRole] ?? 'USER').trim() || 'USER';
+    const matchedRole =
+      roles.find((r) => r.code.toUpperCase() === rawRoleCode.toUpperCase()) ||
+      INITIAL_ROLES_DATA.find((r) => r.code.toUpperCase() === rawRoleCode.toUpperCase());
+
+    const displayName = rawName || rawIdentifier || `User #${i}`;
+
+    users.push({
+      id: Number(row[idxId]) || users.length + 1,
+      uuid: rawUuid || `usr_${i}`,
+      status: parsedStatus,
+      role: rawRoleCode,
+      roleName: matchedRole?.name || rawRoleCode,
+      roleDescription: matchedRole?.description || '',
+      name: displayName,
+      nickname: displayName,
+      identifier: rawIdentifier,
+      credential: String(row[idxCredential] ?? '').trim(),
+      google_sheet_URL: String(row[idxSheetUrl] ?? '').trim() || undefined,
+      last_login_at: String(row[idxLastLogin] ?? '').trim() || undefined,
+      created_at: String(row[idxCreatedAt] ?? '').trim() || undefined,
+      updated_at: String(row[idxUpdatedAt] ?? '').trim() || undefined,
+    });
+  }
+
+  return users;
+}
+
+/**
+ * 解析標準 CSV 字串為二維陣列 (支援引號轉義，避免 gviz JSON 將混合型態密碼/帳號轉成 null)
+ */
+function parseCsvTo2DArray(csvText: string): string[][] {
+  const rows: string[][] = [];
+  let currentRow: string[] = [];
+  let currentCell = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < csvText.length; i++) {
+    const ch = csvText[i];
+    const nextCh = csvText[i + 1];
+
+    if (inQuotes) {
+      if (ch === '"' && nextCh === '"') {
+        currentCell += '"';
+        i++;
+      } else if (ch === '"') {
+        inQuotes = false;
+      } else {
+        currentCell += ch;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ',') {
+        currentRow.push(currentCell);
+        currentCell = '';
+      } else if (ch === '\r' && nextCh === '\n') {
+        currentRow.push(currentCell);
+        rows.push(currentRow);
+        currentRow = [];
+        currentCell = '';
+        i++;
+      } else if (ch === '\n' || ch === '\r') {
+        currentRow.push(currentCell);
+        rows.push(currentRow);
+        currentRow = [];
+        currentCell = '';
+      } else {
+        currentCell += ch;
+      }
+    }
+  }
+
+  if (currentCell !== '' || currentRow.length > 0) {
+    currentRow.push(currentCell);
+    rows.push(currentRow);
+  }
+
+  return rows;
+}
+
+/**
+ * 讀取 Google Sheet 中的 users 與 roles 資料表
+ */
+export async function fetchUsersAndRolesFromSheet(
+  spreadsheetId?: string | null,
+  accessToken?: string | null
+): Promise<{ users: UserProfile[]; roles: RoleItem[] }> {
+  const targetId =
+    spreadsheetId ||
+    extractSpreadsheetId(getEnvConfiguredSpreadsheetUrl()) ||
+    (typeof window !== 'undefined' ? localStorage.getItem('google_spreadsheet_id') : null);
+
+  if (!targetId) {
+    throw new Error('尚未設定 Google Sheet 資料庫網址，請確認 .env 中的 VITE_GOOGLE_SHEET_URL 設定');
+  }
+
+  // 1. 若有 OAuth accessToken，優先透過 Google Sheets REST API 讀取
+  if (accessToken) {
+    try {
+      const res = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${targetId}/values:batchGet?ranges=${encodeURIComponent(
+          'users!A1:Z'
+        )}&ranges=${encodeURIComponent('roles!A1:Z')}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const valueRanges: any[] = data.valueRanges || [];
+        const map: Record<string, any[][]> = {};
+        valueRanges.forEach((vr) => {
+          const name = (vr.range || '').split('!')[0].replace(/['"]/g, '');
+          map[name] = vr.values || [];
+        });
+        const roles = parseRolesFromSheetRows(map['roles'] || []);
+        const users = parseUsersFromSheetRows(map['users'] || [], roles);
+        return { users, roles };
+      }
+    } catch (e) {
+      console.warn('REST API fetch users/roles fallback to gviz:', e);
+    }
+  }
+
+  // 2. 透過公開 gviz CSV 端點讀取 (避免混合數字/文字密碼被 gviz JSON 丟棄)
+  const sheetRowsMap: Record<string, string[][]> = {};
+  await Promise.all(
+    (['users', 'roles'] as const).map(async (sheetName) => {
+      try {
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${targetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(
+          sheetName
+        )}`;
+        const res = await fetch(csvUrl);
+        if (res.ok) {
+          const csvText = await res.text();
+          if (csvText && !csvText.trim().startsWith('<!DOCTYPE html')) {
+            sheetRowsMap[sheetName] = parseCsvTo2DArray(csvText);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn(`CSV fetch for ${sheetName} failed, trying JSON gviz:`, e);
+      }
+
+      // Fallback to JSON gviz
+      try {
+        const jsonUrl = `https://docs.google.com/spreadsheets/d/${targetId}/gviz/tq?tqx=out:json&headers=1&sheet=${encodeURIComponent(
+          sheetName
+        )}`;
+        const res = await fetch(jsonUrl);
+        if (!res.ok) return;
+        const text = await res.text();
+        const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]+)\);?\s*$/);
+        if (!match || !match[1]) return;
+        const json = JSON.parse(match[1]);
+        if (json.status !== 'ok' || !json.table) return;
+        const cols: string[] = (json.table.cols || []).map((c: any) =>
+          c?.label ? String(c.label).trim() : ''
+        );
+        const rows: string[][] = (json.table.rows || []).map((r: any) =>
+          (r.c || []).map((cell: any) => {
+            if (!cell) return '';
+            if (cell.f !== undefined && cell.f !== null) return String(cell.f);
+            if (cell.v !== undefined && cell.v !== null) return String(cell.v);
+            return '';
+          })
+        );
+        const hasColLabels = cols.some((c) => c !== '');
+        sheetRowsMap[sheetName] = hasColLabels ? [cols, ...rows] : rows;
+      } catch (e) {
+        console.warn(`JSON gviz fetch for ${sheetName} failed:`, e);
+      }
+    })
+  );
+
+  if (!sheetRowsMap['users'] || sheetRowsMap['users'].length === 0) {
+    throw new Error('無法讀取 Google Sheet 中的 users 資料表，請確認試算表權限或網路連線');
+  }
+
+  const roles = parseRolesFromSheetRows(sheetRowsMap['roles'] || []);
+  const users = parseUsersFromSheetRows(sheetRowsMap['users'] || [], roles);
+
+  return { users, roles };
+}
+
+/**
+ * 拿帳號 (identifier) 與密碼 (credential) 至 Google Sheet 的 users 與 roles 資料表進行驗證與角色確認
+ */
+export async function authenticateUserFromSheet(
+  identifier: string,
+  credential: string,
+  spreadsheetId?: string | null,
+  accessToken?: string | null
+): Promise<AuthLoginResult & { allRoles?: RoleItem[] }> {
+  const cleanId = identifier.trim();
+  const cleanCred = credential.trim();
+
+  if (!cleanId || !cleanCred) {
+    return {
+      success: false,
+      error: '請輸入帳號與密碼',
+    };
+  }
+
+  const { users, roles } = await fetchUsersAndRolesFromSheet(spreadsheetId, accessToken);
+
+  if (users.length === 0) {
+    return {
+      success: false,
+      error: '資料庫 users 資料表中尚無任何帳號紀錄',
+      allRoles: roles,
+    };
+  }
+
+  const matchedUser = users.find(
+    (u) => (u.identifier || '').trim() === cleanId
+  );
+
+  if (!matchedUser) {
+    return {
+      success: false,
+      error: `查無此帳號「${cleanId}」，請確認帳號是否輸入正確`,
+      allRoles: roles,
+    };
+  }
+
+  if ((matchedUser.credential || '').trim() !== cleanCred) {
+    return {
+      success: false,
+      error: '密碼輸入錯誤，請重新確認密碼',
+      allRoles: roles,
+    };
+  }
+
+  // 檢查帳號狀態: 0=停用, 1=啟用, 2=未驗證
+  if (matchedUser.status === 0) {
+    return {
+      success: false,
+      error: `帳號「${matchedUser.name || cleanId}」目前狀態為【停用 (status=0)】，無法登入系統，請聯繫管理員`,
+      allRoles: roles,
+    };
+  }
+
+  if (matchedUser.status === 2) {
+    return {
+      success: false,
+      error: `帳號「${matchedUser.name || cleanId}」目前狀態為【未驗證 (status=2)】，請先完成驗證後再登入`,
+      allRoles: roles,
+    };
+  }
+
+  const roleInfo =
+    roles.find((r) => r.code.toUpperCase() === String(matchedUser.role).toUpperCase()) ||
+    INITIAL_ROLES_DATA.find((r) => r.code.toUpperCase() === String(matchedUser.role).toUpperCase()) || {
+      id: 0,
+      code: String(matchedUser.role),
+      name: matchedUser.roleName || String(matchedUser.role),
+      description: matchedUser.roleDescription || '',
+    };
+
+  const authenticatedUser: UserProfile = {
+    ...matchedUser,
+    roleName: roleInfo.name,
+    roleDescription: roleInfo.description,
+    last_login_at: formatSheetTimestamp(),
+  };
+
+  return {
+    success: true,
+    user: authenticatedUser,
+    roleInfo,
+    allRoles: roles,
   };
 }
 
@@ -1066,6 +1573,66 @@ export async function fetchSpreadsheetStats(
   }));
 
   return { title, sheets };
+}
+
+export async function appendUserToSpreadsheet(
+  accessToken: string | null,
+  spreadsheetId: string,
+  user: UserProfile,
+  rowIndex: number
+): Promise<{ success: boolean; message: string }> {
+  const nowStr = formatSheetTimestamp();
+  const rowValues = [
+    rowIndex,
+    user.uuid,
+    user.status ?? 1,
+    user.role,
+    user.name || user.nickname,
+    user.identifier || '',
+    user.credential || '',
+    user.google_sheet_URL || '',
+    user.last_login_at || '',
+    user.created_at || nowStr,
+    user.updated_at || nowStr,
+  ];
+
+  const scriptUrl = getEnvConfiguredScriptUrl();
+  if (scriptUrl) {
+    try {
+      await postToGasScript({
+        action: 'appendRow',
+        sheetName: 'users',
+        row: rowValues,
+      });
+      return { success: true, message: `成功透過 GAS 將帳號「${user.identifier}」寫入 users 資料表！` };
+    } catch (gasErr: any) {
+      console.warn('GAS appendUser error, fallback to REST API:', gasErr);
+    }
+  }
+
+  if (!accessToken) {
+    throw new Error('未授權 Google 帳號且未配置 GAS 寫入腳本，無法寫入 users 資料表');
+  }
+
+  const range = `users!A${rowIndex + 1}:K${rowIndex + 1}`;
+  const res = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+    {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ range, values: [rowValues] }),
+    }
+  );
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `寫入 users 失敗 (${res.status})`);
+  }
+
+  return { success: true, message: `成功將帳號「${user.identifier}」寫入 Google 試算表 users 資料表！` };
 }
 
 export async function appendQuestionToSpreadsheet(

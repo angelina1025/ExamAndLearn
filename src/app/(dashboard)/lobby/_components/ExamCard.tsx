@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { MouseEvent } from "react";
 import { clearSession, loadSession } from "@/contexts/examStorage";
@@ -55,13 +54,13 @@ export function ExamCard({ exams }: { exams: Exam[] }) {
                 <span className={`exam-chip ${isCompleted ? "exam-chip-done" : ""}`}>
                   {isCompleted ? "已完成" : "未作答"}
                 </span>
-                <Link
+                <a
                   href={`/exam/${exam.id}`}
                   onClick={(event) => handleStart(event, exam)}
                   className="exam-btn exam-btn-primary text-center md:ml-auto"
                 >
                   {isCompleted ? "重新測試" : "開始考試"}
-                </Link>
+                </a>
               </div>
             </li>
           );

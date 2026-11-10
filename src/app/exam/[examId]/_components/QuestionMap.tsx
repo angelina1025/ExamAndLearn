@@ -22,7 +22,7 @@ export function QuestionMap({ questions, answers, flags, currentIndex, onNavigat
           const current = index === currentIndex;
           return (
             <button
-              key={question.id}
+              key={`${question.id}-${index}`}
               type="button"
               onClick={() => onNavigate(index)}
               className="exam-num"

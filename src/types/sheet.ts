@@ -1,6 +1,6 @@
 import { Question } from '@/types/question';
 import { ExamPaper } from '@/types/exam';
-import { AuditLog } from '@/types/user';
+import { AuditLog, UserProfile, RoleItem } from '@/types/user';
 
 export interface SheetQuestionRow {
   id: string;
@@ -48,6 +48,8 @@ export interface ReadSpreadsheetResult {
   draftExams: ExamPaper[];
   allExams: ExamPaper[];
   categories: CategoryItem[];
+  users?: UserProfile[];
+  roles?: RoleItem[];
   auditLogs: AuditLog[];
   stats: Record<string, number>;
   message: string;

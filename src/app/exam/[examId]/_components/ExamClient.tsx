@@ -28,7 +28,7 @@ export function ExamClient({ exam }: { exam: Exam }) {
       setMapOpen(false);
       const id = exam.questions[index]?.id;
       if (id) {
-        document.getElementById(`question-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        document.getElementById(`question-${id}`)?.scrollIntoView?.({ behavior: "smooth", block: "start" });
       }
     },
     [actions, exam.questions]
@@ -47,11 +47,12 @@ export function ExamClient({ exam }: { exam: Exam }) {
     restoredRef.current = true;
     const id = exam.questions[state.currentIndex]?.id;
     if (id) {
-      document.getElementById(`question-${id}`)?.scrollIntoView({ block: "start" });
+      document.getElementById(`question-${id}`)?.scrollIntoView?.({ block: "start" });
     }
   }, [ready, state.currentIndex, exam.questions]);
 
   useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (!userScrolledRef.current) return;
@@ -97,6 +98,8 @@ export function ExamClient({ exam }: { exam: Exam }) {
         answered={answered}
         total={exam.questions.length}
         autoSubmitted={state.remainingSec === 0}
+        answers={state.answers}
+        onReset={handleReset}
       />
     );
   }
@@ -130,7 +133,7 @@ export function ExamClient({ exam }: { exam: Exam }) {
           <main className="space-y-3">
             {exam.questions.map((question, index) => (
               <div
-                key={question.id}
+                key={`${question.id}-${index}`}
                 ref={(element) => {
                   refs.current[index] = element;
                 }}

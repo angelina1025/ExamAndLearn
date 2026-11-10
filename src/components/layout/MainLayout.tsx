@@ -2,15 +2,15 @@
 
 import React from 'react';
 import { Header } from '@/components/layout/Header';
-import { Sidebar } from '@/components/layout/Sidebar';
-import { NotificationItem, Question, SubjectFilter } from '@/types';
+import { Sidebar, AppPageId } from '@/components/layout/Sidebar';
+import { NotificationItem, Question, SubjectFilter, UserProfile } from '@/types';
 
 interface MainLayoutProps {
   children: React.ReactNode;
-  activePage: 'question-bank' | 'exam-papers' | 'system-settings';
+  activePage: AppPageId;
   selectedSubject: SubjectFilter;
   onSelectSubject: (id: SubjectFilter) => void;
-  onNavigate: (page: 'question-bank' | 'exam-papers' | 'system-settings') => void;
+  onNavigate: (page: AppPageId) => void;
   onOpenCreateQuestion: () => void;
   collapsedSidebar: boolean;
   onToggleCollapse: () => void;
@@ -23,6 +23,7 @@ interface MainLayoutProps {
   onLogout: () => void;
   notifications: NotificationItem[];
   onMarkNotificationRead: (id: string) => void;
+  currentUser?: UserProfile | null;
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({
@@ -43,6 +44,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   onLogout,
   notifications,
   onMarkNotificationRead,
+  currentUser,
 }) => {
   return (
     <div className="min-h-screen bg-[#f7f9fb] text-[#191c1e] font-sans antialiased">
@@ -51,6 +53,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         onLogout={onLogout}
         notifications={notifications}
         onMarkNotificationRead={onMarkNotificationRead}
+        currentUser={currentUser}
       />
 
       <Sidebar
@@ -66,6 +69,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         spreadsheetUrl={spreadsheetUrl}
         onSync={onSync}
         isSyncing={isSyncing}
+        currentUser={currentUser}
       />
 
       <div className={`${collapsedSidebar ? 'pl-16' : 'pl-64'} transition-all duration-150`}>

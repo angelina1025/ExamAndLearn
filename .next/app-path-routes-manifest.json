@@ -1,0 +1,20 @@
+{
+  "/(auth)/login/page": "/login",
+  "/(auth)/profile/page": "/profile",
+  "/(dashboard)/exams/page": "/exams",
+  "/(dashboard)/exams/select/page": "/exams/select",
+  "/(dashboard)/lobby/page": "/lobby",
+  "/(dashboard)/questions/page": "/questions",
+  "/(dashboard)/selector/page": "/selector",
+  "/(dashboard)/upload/page": "/upload",
+  "/(dashboard)/users/page": "/users",
+  "/(dashboard)/wrong-questions/page": "/wrong-questions",
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/api/export/route": "/api/export",
+  "/api/sheet/route": "/api/sheet",
+  "/exam/[examId]/page": "/exam/[examId]",
+  "/exam/result/[sessionId]/page": "/exam/result/[sessionId]",
+  "/favicon.ico/route": "/favicon.ico",
+  "/page": "/"
+}

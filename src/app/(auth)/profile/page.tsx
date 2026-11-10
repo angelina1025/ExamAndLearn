@@ -4,10 +4,10 @@ import React, { useState } from 'react';
 import { AuditLog } from '@/types';
 
 interface SystemSettingsViewProps {
-  auditLogs: AuditLog[];
+  auditLogs?: AuditLog[];
 }
 
-export const SystemSettingsView: React.FC<SystemSettingsViewProps> = ({ auditLogs }) => {
+export const SystemSettingsView: React.FC<SystemSettingsViewProps> = ({ auditLogs = [] }) => {
   const [defaultDuration, setDefaultDuration] = useState(60);
   const [passPercentage, setPassPercentage] = useState(60);
   const [enableAIProctoring, setEnableAIProctoring] = useState(true);
@@ -156,7 +156,7 @@ export const SystemSettingsView: React.FC<SystemSettingsViewProps> = ({ auditLog
             <span className="material-symbols-outlined text-[#007d55] text-[20px]">history_edu</span>
             <h2 className="text-[16px] font-bold text-[#191c1e]">系統操作安全審計日誌 (Audit Logs - 讀寫自 Google Sheet "log" 分頁)</h2>
           </div>
-          <span className="text-[11px] text-[#434655]">即時同步中 ({auditLogs.length} 筆)</span>
+          <span className="text-[11px] text-[#434655]">即時同步中 ({(auditLogs || []).length} 筆)</span>
         </div>
 
         <div className="overflow-x-auto">

@@ -1,0 +1,40 @@
+{
+  "status": 200,
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/(auth)/layout,_N_T_/(auth)/profile/layout,_N_T_/(auth)/profile/page,_N_T_/profile"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/!KGF1dGgp/profile/__PAGE__"
+  ],
+  "prefetchHints": {
+    "hints": 49216,
+    "slots": {
+      "children": {
+        "hints": 49248,
+        "slots": {
+          "children": {
+            "hints": 49248,
+            "slots": {
+              "children": {
+                "hints": 49312,
+                "slots": null
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "routeCache": {
+    "key": "/route-cache/APP_PAGE/4c8dd2735b30564ab8ce1be6727aa7fa18e1800060135a3dffdcab91def222ca/$/profile",
+    "owner": {
+      "kind": "APP_PAGE",
+      "sourceRoute": "/(auth)/profile/page"
+    },
+    "isFallback": false
+  }
+}

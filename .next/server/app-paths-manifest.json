@@ -1,0 +1,20 @@
+{
+  "/(auth)/login/page": "app/(auth)/login/page.js",
+  "/(auth)/profile/page": "app/(auth)/profile/page.js",
+  "/(dashboard)/exams/page": "app/(dashboard)/exams/page.js",
+  "/(dashboard)/exams/select/page": "app/(dashboard)/exams/select/page.js",
+  "/(dashboard)/lobby/page": "app/(dashboard)/lobby/page.js",
+  "/(dashboard)/questions/page": "app/(dashboard)/questions/page.js",
+  "/(dashboard)/selector/page": "app/(dashboard)/selector/page.js",
+  "/(dashboard)/upload/page": "app/(dashboard)/upload/page.js",
+  "/(dashboard)/users/page": "app/(dashboard)/users/page.js",
+  "/(dashboard)/wrong-questions/page": "app/(dashboard)/wrong-questions/page.js",
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/export/route": "app/api/export/route.js",
+  "/api/sheet/route": "app/api/sheet/route.js",
+  "/exam/[examId]/page": "app/exam/[examId]/page.js",
+  "/exam/result/[sessionId]/page": "app/exam/result/[sessionId]/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/page": "app/page.js"
+}
