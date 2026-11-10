@@ -1,0 +1,1 @@
+(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,16370,e=>{"use strict";var c=e.i(43476);e.s(["default",0,function({children:e}){return(0,c.jsx)("div",{className:"min-h-screen flex flex-col bg-[#f8f9fa]",children:e})}])}]);
