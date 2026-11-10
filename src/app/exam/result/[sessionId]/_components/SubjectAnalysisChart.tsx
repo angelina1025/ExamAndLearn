@@ -1,29 +1,21 @@
-'use client';
+import type { AnalysisGroup } from '@/utils/examReport';
 
-import React from 'react';
-import { SubjectAnalysisItem } from '@/types';
-
-interface SubjectAnalysisChartProps {
-  items?: SubjectAnalysisItem[];
-}
-
-export const SubjectAnalysisChart: React.FC<SubjectAnalysisChartProps> = ({ items = [] }) => {
+export function SubjectAnalysisChart({ title, items }: { title: string; items: AnalysisGroup[] }) {
   return (
-    <div className="bg-white p-5 rounded-xl border border-[#c3c6d7]/30">
-      <h3 className="text-[15px] font-bold text-[#191c1e] mb-3">各科答對率分析</h3>
-      {items.length === 0 ? (
-        <p className="text-[13px] text-[#737686]">尚無分析資料</p>
-      ) : (
-        <ul className="space-y-2 text-[13px]">
-          {items.map((item) => (
-            <li key={item.subjectId} className="flex justify-between">
-              <span>{item.subjectName}</span>
-              <span className="font-semibold">{item.accuracyRate}%</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+    <section className="rounded-xl border border-slate-200 bg-white p-5">
+      <h2 className="mb-4 font-bold text-slate-800">{title}</h2>
+      {!items.length && <p className="text-sm text-slate-500">尚無分析資料</p>}
+      <ul className="space-y-5">
+        {items.map((item) => (
+          <li key={item.name}>
+            <div className="mb-2 flex justify-between gap-3 text-sm"><span className="font-semibold">{item.name}</span><span>正確率 {item.accuracy}%</span></div>
+            <div role="meter" aria-label={`${item.name}正確率`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={item.accuracy} className="h-2 overflow-hidden rounded-full bg-slate-100">
+              <div className="h-full rounded-full bg-[#2f5597]" style={{ width: `${item.accuracy}%` }} />
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-slate-500">共 {item.total} 題 · 答對 {item.correct} · 答錯 {item.wrong} · 未作答 {item.unanswered}{item.ungraded > 0 ? ` · 無法判分 ${item.ungraded}` : ''}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
-};
-
+}

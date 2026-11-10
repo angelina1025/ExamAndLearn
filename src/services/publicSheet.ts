@@ -11,7 +11,23 @@ export async function getAssignedExam(
   extraExams: ExamPaper[] = [],
   extraQuestions: Question[] = []
 ): Promise<Exam | null> {
-  if (examId === ASSIGNED_EXAM_ID) return assignedExam;
+  if (examId === ASSIGNED_EXAM_ID) {
+    return {
+      ...assignedExam,
+      questions: assignedExam.questions.map((question) => {
+        const source = extraQuestions.find((q) => q.id === question.id)
+          || INITIAL_QUESTIONS.find((q) => q.id === question.id);
+        return {
+          ...question,
+          answer: source?.correctAnswer || source?.answer || question.answer,
+          explanation: source?.explanation || question.explanation,
+          subjectId: source?.subjectId,
+          subjectName: '計算機概論',
+          difficulty: source?.difficulty,
+        };
+      }),
+    };
+  }
 
   // 試卷查表：優先使用線上試卷 (extraExams: Google Sheet)；若離線或線上無試卷，才讀取 data 內試卷 INITIAL_EXAM_PAPERS
   const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
@@ -112,9 +128,12 @@ export async function getAssignedExam(
         id: optionLetters[oIdx] || String(oIdx + 1),
         text,
       })),
-      points: q.points || 2,
+      points: q.points ?? 2,
       answer: q.correctAnswer || q.answer,
       explanation: q.explanation,
+      subjectId: q.subjectId,
+      subjectName: q.subjectId === paper.subjectId ? paper.subject : undefined,
+      difficulty: q.difficulty,
     };
   });
 
@@ -1945,5 +1964,3 @@ export async function appendLogToSpreadsheet(
     message: `日誌 [${logEntry.id}] 已寫入 Google 試算表 log 分頁！`,
   };
 }
-
-

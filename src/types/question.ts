@@ -32,6 +32,9 @@ export interface ExamQuestion {
   points: number;
   answer?: string;
   explanation?: string;
+  subjectId?: SubjectId;
+  subjectName?: string;
+  difficulty?: DifficultyLevel;
 }
 
 export interface Question {
