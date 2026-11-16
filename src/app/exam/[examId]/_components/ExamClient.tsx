@@ -133,7 +133,7 @@ export function ExamClient({ exam }: { exam: Exam }) {
           <main className="space-y-3">
             {exam.questions.map((question, index) => (
               <div
-                key={`${question.id}-${index}`}
+                key={question.id}
                 ref={(element) => {
                   refs.current[index] = element;
                 }}

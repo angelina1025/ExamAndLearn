@@ -54,7 +54,7 @@
 .selection-card input[type="checkbox"] { width: 16px; height: 16px; margin: 4px 0 0; accent-color: #004ac6; }
 .selection-card p { margin: 0; }
 .selection-card h2 { margin: 0; font-size: 16px; line-height: 1.5; font-weight: 700; }
-.selection-card-head, .exam-selection-card > div:first-child { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.selection-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .selection-chip { display: inline-flex; margin-right: 8px; padding: 4px 10px; border-radius: 999px; background: #eceef0; color: #434655; font-size: 12px; font-weight: 650; }
 .selection-chip.subject-chip { background: #dbe1ff; color: #00174b; }
 .selection-info { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 14px; color: #565e74; font-size: 14px; }
@@ -78,5 +78,4 @@
   .selection-filters-grid { grid-template-columns: 1fr; }
   .selection-layout { grid-template-columns: 1fr; }
   .selection-summary { position: static; }
-  .exam-selection-card > div:first-child { flex-direction: column; }
 }

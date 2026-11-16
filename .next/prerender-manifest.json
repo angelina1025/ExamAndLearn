@@ -6,7 +6,7 @@
       "routeType": "page",
       "response": "complete",
       "compute": "static",
-      "htmlSize": 11822,
+      "htmlSize": 12318,
       "experimentalPPR": true,
       "experimentalBypassFor": [
         {
@@ -559,7 +559,7 @@
       "routeType": "shell",
       "response": "initial",
       "compute": "resuming",
-      "htmlSize": 2339,
+      "htmlSize": 2409,
       "experimentalBypassFor": [
         {
           "type": "header",

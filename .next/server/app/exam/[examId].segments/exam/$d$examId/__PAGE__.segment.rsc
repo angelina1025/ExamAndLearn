@@ -1,7 +1,7 @@
 1:"$Sreact.fragment"
-2:"/_next/static/chunks/3d4r51o9nqevz.js"
-3:"/_next/static/chunks/24u76bdf5cw-1.js"
-4:"/_next/static/chunks/0w8763rmgann7.js"
+2:"/_next/static/chunks/22fz6xsdbzz02.js"
+3:"/_next/static/chunks/2ychlz-a3vpti.js"
+4:"/_next/static/chunks/1ia_0iboyu5bk.js"
 5:I[44636,["$2","$3","$4"],"Providers"]
 6:I[39756,["$2","$3","$4"],"default"]
 7:I[37457,["$2","$3","$4"],"default"]
@@ -14,7 +14,7 @@
 1b:"MetadataBoundary"
 1c:I[97367,["$2","$3","$4"],"$1b"]
 1d:I[27201,["$2","$3","$4"],"IconMark"]
-:HL["/_next/static/chunks/374bd_iavtpf1.css","style"]
+:HL["/_next/static/chunks/2fdjzhp829_-r.css","style"]
 :HL["https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200","style"]
 b:X
 c:X
@@ -22,12 +22,12 @@ c:300
 f:X
 f:C
 18:X
-12:[["children",{"s":"__PAGE__","h":16546,"d":{"r":["$","$1","c",{"children":[["$","$13",null,{"fallback":["$","div",null,{"className":"grid min-h-screen place-items-center text-sm text-[#5b6673]","children":"載入作答進度…"}],"children":"$L14"}],[["$","script","script-0",{"src":"/_next/static/chunks/0t7n02uo19a78.js","async":true}]],["$","$L15",null,{"children":["$","$13",null,{"name":"Next.MetadataOutlet","children":"$@16"}]}]]}],"p":"$@17","v":"$18","s":"$c"}}]]
+12:[["children",{"s":"__PAGE__","h":16546,"d":{"r":["$","$1","c",{"children":[["$","$13",null,{"fallback":["$","div",null,{"className":"grid min-h-screen place-items-center text-sm text-[#5b6673]","children":"載入作答進度…"}],"children":"$L14"}],[["$","script","script-0",{"src":"/_next/static/chunks/3p_cjwd97n95j.js","async":true}],["$","script","script-1",{"src":"/_next/static/chunks/0aj8qiyl-ch04.js","async":true}]],["$","$L15",null,{"children":["$","$13",null,{"name":"Next.MetadataOutlet","children":"$@16"}]}]]}],"p":"$@17","v":"$18","s":"$c"}}]]
 10:[["children",{"s":{"n":"examId","t":"d","k":null,"s":["result"]},"h":16482,"d":{"r":["$","$1","c",{"children":[null,["$","$L6",null,{"parallelRouterKey":"children","template":["$","$L7",null,{}]}]]}],"p":"$@11","v":"$f","s":"$c"},"c":"$Q12"}]]
 d:[["children",{"s":"exam","h":16482,"d":{"r":["$","$1","c",{"children":[null,["$","$L6",null,{"parallelRouterKey":"children","template":["$","$L7",null,{}]}]]}],"p":"$@e","v":"$f","s":"$c"},"c":"$Q10"}]]
 1f:X
 22:X
-0:{"t":{"t":{"s":"","h":16466,"d":{"r":["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/chunks/374bd_iavtpf1.css","precedence":"next"}],["$","script","script-0",{"src":"/_next/static/chunks/3d4r51o9nqevz.js","async":true}],["$","script","script-1",{"src":"/_next/static/chunks/24u76bdf5cw-1.js","async":true}],["$","script","script-2",{"src":"/_next/static/chunks/0w8763rmgann7.js","async":true}]],["$","html",null,{"lang":"zh-TW","children":[["$","head",null,{"children":["$","link",null,{"rel":"stylesheet","href":"https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"}]}],["$","body",null,{"className":"min-h-screen bg-[#f8f9fa] text-[#191c1d] antialiased","children":["$","$L5",null,{"children":["$","$L6",null,{"parallelRouterKey":"children","template":["$","$L7",null,{}],"notFound":[["$","main",null,{"className":"grid min-h-screen place-items-center p-6","children":["$","div",null,{"className":"exam-card w-full max-w-md p-8 text-center","children":[["$","h1",null,{"className":"text-2xl font-bold","children":"找不到這份考卷"}],["$","p",null,{"className":"mt-2 text-sm text-[#5b6673]","children":"請回到首頁重新確認考卷。"}],["$","$L9",null,{"href":"/","className":"exam-btn exam-btn-primary mt-6 inline-block px-6 py-2","children":"返回首頁"}]]}]}],[]]}]}]}]]}]]}],"p":"$@a","v":"$b","s":"$c"},"c":"$Qd"},"h":{"r":["$","$1","h",{"children":[null,["$","$L1a",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]}],["$","$L1c",null,{"children":[["$","div",null,{"hidden":true,"children":["$","$13",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"QuizCMS — 數位題庫與組卷管理系統"}],["$","meta","1",{"name":"description","content":"數位題庫管理、組卷、線上測驗與錯題分析平台"}],["$","link","2",{"rel":"icon","href":"/favicon.ico?favicon.117ezoe8m31dk.ico","sizes":"48x48","type":"image/x-icon"}],["$","$L1d","3",{}]]}]}],null]}],null]}],"p":"$@1e","v":"$1f","s":"$c"}},"a":"$@20","u":"$@21","b":"pOYh-TEG8fc6iij09PqhY","r":"$22"}
+0:{"t":{"t":{"s":"","h":16466,"d":{"r":["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/chunks/2fdjzhp829_-r.css","precedence":"next"}],["$","script","script-0",{"src":"/_next/static/chunks/22fz6xsdbzz02.js","async":true}],["$","script","script-1",{"src":"/_next/static/chunks/2ychlz-a3vpti.js","async":true}],["$","script","script-2",{"src":"/_next/static/chunks/1ia_0iboyu5bk.js","async":true}]],["$","html",null,{"lang":"zh-TW","children":[["$","head",null,{"children":["$","link",null,{"rel":"stylesheet","href":"https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"}]}],["$","body",null,{"className":"min-h-screen bg-[#f8f9fa] text-[#191c1d] antialiased","children":["$","$L5",null,{"children":["$","$L6",null,{"parallelRouterKey":"children","template":["$","$L7",null,{}],"notFound":[["$","main",null,{"className":"grid min-h-screen place-items-center p-6","children":["$","div",null,{"className":"exam-card w-full max-w-md p-8 text-center","children":[["$","h1",null,{"className":"text-2xl font-bold","children":"找不到這份考卷"}],["$","p",null,{"className":"mt-2 text-sm text-[#5b6673]","children":"請回到首頁重新確認考卷。"}],["$","$L9",null,{"href":"/","className":"exam-btn exam-btn-primary mt-6 inline-block px-6 py-2","children":"返回首頁"}]]}]}],[]]}]}]}]]}]]}],"p":"$@a","v":"$b","s":"$c"},"c":"$Qd"},"h":{"r":["$","$1","h",{"children":[null,["$","$L1a",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]}],["$","$L1c",null,{"children":[["$","div",null,{"hidden":true,"children":["$","$13",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"QuizCMS — 數位題庫與組卷管理系統"}],["$","meta","1",{"name":"description","content":"數位題庫管理、組卷、線上測驗與錯題分析平台"}],["$","link","2",{"rel":"icon","href":"/favicon.ico?favicon.117ezoe8m31dk.ico","sizes":"48x48","type":"image/x-icon"}],["$","$L1d","3",{}]]}]}],null]}],null]}],"p":"$@1e","v":"$1f","s":"$c"}},"a":"$@20","u":"$@21","b":"7hm6WldoerZAXSdkeOVEJ","r":"$22"}
 16:null
 c:C
 1f:C
@@ -35,7 +35,7 @@ c:C
 18:C
 b:C
 21:true
-20:3930
+20:4017
 11:"$undefined"
 e:"$undefined"
 a:"$undefined"

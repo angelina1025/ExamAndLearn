@@ -100,7 +100,15 @@ export async function getAssignedExam(
   }
 
   const optionLetters = ['A', 'B', 'C', 'D', 'E'];
-  const examQuestions = matchedQuestions.map((q, idx) => {
+  const seenIds = new Set<string>();
+  const uniqueMatchedQuestions = matchedQuestions.filter((q) => {
+    if (!q || !q.id) return false;
+    if (seenIds.has(q.id)) return false;
+    seenIds.add(q.id);
+    return true;
+  });
+
+  const examQuestions = uniqueMatchedQuestions.map((q, idx) => {
     const rawOptions =
       q.options && q.options.length > 0 ? q.options : ['選項 A', '選項 B', '選項 C', '選項 D'];
     return {

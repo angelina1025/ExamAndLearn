@@ -150,7 +150,7 @@ export function ExamPaperSelection({
                   key={paper.id}
                   className={`selection-card exam-selection-card rounded-2xl border bg-white p-4 transition-all sm:p-5 ${selected ? 'border-[#004ac6] ring-2 ring-[#004ac6]/20 shadow-sm' : 'border-[#c3c6d7] hover:border-[#7598da]'}`}
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                     <div className="flex-1 min-w-0 pr-2">
                       <div className="mb-2 flex flex-wrap items-center gap-2 text-xs font-semibold">
                         <span className="selection-chip subject-chip rounded-full bg-[#dbe1ff] px-2.5 py-1 text-[#00174b]">{paper.subject}</span>
@@ -158,7 +158,7 @@ export function ExamPaperSelection({
                           {DIFFICULTY_LABELS[difficultyFor(paper.difficultyLv)]}難度
                         </span>
                       </div>
-                      <h2 className="text-base font-bold leading-6 text-[#191c1e] truncate">{paper.title}</h2>
+                      <h2 className="text-base font-bold leading-6 text-[#191c1e]">{paper.title}</h2>
                       <p className="mt-1 text-sm leading-6 text-[#565e74] line-clamp-2">{paper.description || '無詳細說明'}</p>
                       <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-[#565e74]">
                         <span>{paper.questionCount} 題</span>
@@ -170,7 +170,7 @@ export function ExamPaperSelection({
                       type="button"
                       onClick={() => selectPaper(paper)}
                       aria-pressed={selected}
-                      className={`shrink-0 min-w-[96px] h-10 rounded-lg px-4 py-2 text-sm font-bold transition-colors cursor-pointer ${
+                      className={`shrink-0 self-start sm:self-center min-w-[96px] h-10 rounded-lg px-4 py-2 text-sm font-bold transition-colors cursor-pointer whitespace-nowrap ${
                         selected
                           ? 'bg-[#004ac6] border border-[#004ac6] text-white shadow-sm'
                           : 'border border-[#004ac6] text-[#004ac6] bg-white hover:bg-[#eef3ff]'
