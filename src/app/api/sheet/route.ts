@@ -11,7 +11,6 @@ export async function GET(request?: Request): Promise<Response> {
     const envSheetUrl =
       process.env.GOOGLE_SHEET_URL ??
       process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL ??
-      process.env.VITE_GOOGLE_SHEET_URL ??
       '';
 
     if (!request) {
@@ -74,7 +73,6 @@ export async function POST(request: Request): Promise<Response> {
       body?.scriptUrl ||
       process.env.GOOGLE_SCRIPT_URL ||
       process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL ||
-      process.env.VITE_GOOGLE_SCRIPT_URL ||
       ''
     ).trim();
 

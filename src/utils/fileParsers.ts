@@ -1,6 +1,5 @@
 import { Question, SubjectId, DifficultyLevel } from '@/types';
 import { formatSheetTimestamp } from '@/utils/formatters';
-import { SUBJECT_TO_CATEGORY_ID } from '@/services/publicSheet';
 
 export interface RowValidationError {
   rowNumber: number; // Excel row number (e.g. 2 for first question)
@@ -597,7 +596,7 @@ export async function validateAndParseExamFile(file: File): Promise<ExamUploadVa
       validQuestions.push({
         id: `Q-${parsedSubject.toUpperCase().slice(0, 4)}-${new Date().getFullYear()}${String(Math.floor(1000 + Math.random() * 9000))}-${idx + 1}`,
         subjectId: parsedSubject,
-        categoryId: SUBJECT_TO_CATEGORY_ID[parsedSubject],
+        categoryId: undefined,
         type: parsedType,
         content: rawContent,
         difficulty: diffLevel,
@@ -648,5 +647,138 @@ export function parseCsvQuestions(csvContent: string): Partial<Question>[] {
 export async function parseQuestionsFromUpload(file: File): Promise<Question[]> {
   const result = await validateAndParseExamFile(file);
   return result.questions;
+}
+
+/**
+ * 智慧解析由測驗成果匯出的「錯題檢討 Excel (.xlsx)」
+ * 完美相容：['題號', '題目 ID', '學科', '難度', '題目', '選項', '考生答案', '正確答案', '作答結果', '配分', '得分', '解析']
+ */
+export async function parseWrongQuestionsExcel(file: File): Promise<{
+  questions: Question[];
+  wrongRecords: {
+    questionId: string;
+    prompt: string;
+    userAnswer: string;
+    correctAnswer: string;
+    explanation: string;
+    status: string;
+  }[];
+}> {
+  const ext = file.name.split('.').pop()?.toLowerCase() || '';
+  if (ext !== 'xlsx' && ext !== 'csv') {
+    throw new Error('請上傳 .xlsx 或 .csv 格式之錯題檔案');
+  }
+
+  let rows: string[][] = [];
+  if (ext === 'xlsx') {
+    const buffer = await file.arrayBuffer();
+    rows = await parseXlsxRows(buffer);
+  } else {
+    const text = await file.text();
+    rows = parseCsvRows(text);
+  }
+
+  if (rows.length <= 1) {
+    throw new Error('檔案中無任何錯題資料');
+  }
+
+  const header = rows[0].map((h) => (h || '').trim().toLowerCase());
+  const findCol = (names: string[]) =>
+    header.findIndex((h) => names.some((n) => h.includes(n.toLowerCase())));
+
+  const qIdIdx = findCol(['題目 id', '題目id', 'id', 'test_id']);
+  const promptIdx = findCol(['題目', '題幹', 'content', 'question', 'prompt']);
+  const optIdx = findCol(['選項', 'options', 'option']);
+  const actualIdx = findCol(['考生答案', '你的答案', '作答答案', 'useranswer', 'actual']);
+  const expIdx = findCol(['正確答案', '解答', 'answer', 'expected']);
+  const explIdx = findCol(['解析', '題目詳解', 'explanation']);
+  const statusIdx = findCol(['作答結果', '狀態', 'status']);
+  const subjectIdx = findCol(['學科', '科目', 'subject']);
+  const diffIdx = findCol(['難度', 'difficulty']);
+  const pointsIdx = findCol(['配分', 'points', 'score']);
+
+  if (promptIdx === -1 && optIdx === -1) {
+    const fallback = await validateAndParseExamFile(file);
+    if (!fallback.isValid) {
+      throw new Error(fallback.fileError || '無法識別該 Excel 之錯題或題庫欄位');
+    }
+    return {
+      questions: fallback.questions,
+      wrongRecords: fallback.questions.map((q) => ({
+        questionId: q.id,
+        prompt: q.content,
+        userAnswer: '未作答',
+        correctAnswer: q.correctAnswer || '',
+        explanation: q.explanation || '',
+        status: '錯誤',
+      })),
+    };
+  }
+
+  const questions: Question[] = [];
+  const wrongRecords: {
+    questionId: string;
+    prompt: string;
+    userAnswer: string;
+    correctAnswer: string;
+    explanation: string;
+    status: string;
+  }[] = [];
+
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r || r.length === 0 || !r.some((c) => (c || '').trim().length > 0)) continue;
+
+    const id = (qIdIdx !== -1 && r[qIdIdx]?.trim()) || `Q-WRONG-${Date.now().toString().slice(-4)}-${i}`;
+    const content = (promptIdx !== -1 && r[promptIdx]?.trim()) || `錯題試題 ${i}`;
+    const optRaw = (optIdx !== -1 && r[optIdx]?.trim()) || '';
+    const actual = (actualIdx !== -1 && r[actualIdx]?.trim()) || '未作答';
+    const expected = (expIdx !== -1 && r[expIdx]?.trim()) || 'A';
+    const explanation = (explIdx !== -1 && r[explIdx]?.trim()) || '';
+    const status = (statusIdx !== -1 && r[statusIdx]?.trim()) || '錯誤';
+    const rawSub = (subjectIdx !== -1 && r[subjectIdx]?.trim()) || 'math';
+    const subId = SUBJECT_PARSE_MAP[rawSub] || 'math';
+
+    let options: string[] = [];
+    if (optRaw.startsWith('[') && optRaw.endsWith(']')) {
+      try {
+        options = JSON.parse(optRaw);
+      } catch {}
+    }
+    if (!options.length) {
+      const lines = optRaw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+      options = lines.map((l) => l.replace(/^[A-Da-d1-4][.、:]\s*/, '').trim());
+    }
+    if (options.length < 2) {
+      options = ['選項 A', '選項 B', '選項 C', '選項 D'];
+    }
+
+    const qItem: Question = {
+      id,
+      subjectId: subId,
+      type: 'single',
+      content,
+      difficulty: 'medium',
+      difficultyScore: 3,
+      points: Number((pointsIdx !== -1 && r[pointsIdx]) || 5) || 5,
+      tags: ['錯題本匯入'],
+      updatedAt: formatSheetTimestamp(),
+      options,
+      correctAnswer: expected,
+      explanation,
+    };
+
+    questions.push(qItem);
+    wrongRecords.push({
+      questionId: id,
+      prompt: content,
+      userAnswer: actual,
+      correctAnswer: expected,
+      explanation,
+      status,
+    });
+  }
+
+  return { questions, wrongRecords };
 }
 

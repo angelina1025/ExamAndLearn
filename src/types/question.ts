@@ -58,6 +58,7 @@ export interface Question {
   explanation?: string; // 對應 Sheet 的 Explanation
   categoryId?: number;
   updatedBy?: number;
+  sourceScope?: 'public' | 'private';
 }
 
 export interface ColumnVisibilityState {

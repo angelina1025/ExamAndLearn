@@ -1,6 +1,7 @@
 {
   "/(auth)/login/page": "/login",
   "/(auth)/profile/page": "/profile",
+  "/(auth)/register/page": "/register",
   "/(dashboard)/exams/page": "/exams",
   "/(dashboard)/exams/select/page": "/exams/select",
   "/(dashboard)/lobby/page": "/lobby",

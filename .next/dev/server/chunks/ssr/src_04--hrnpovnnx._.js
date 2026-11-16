@@ -22,6 +22,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$29
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$selector$2f$page$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/(dashboard)/selector/page.tsx [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$wrong$2d$questions$2f$page$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/(dashboard)/wrong-questions/page.tsx [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$auth$292f$login$2f$page$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/(auth)/login/page.tsx [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$auth$292f$register$2f$page$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/(auth)/register/page.tsx [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$common$2f$TwoPhaseDeleteModal$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/common/TwoPhaseDeleteModal.tsx [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$exams$2f$_components$2f$ExamFormModal$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/(dashboard)/exams/_components/ExamFormModal.tsx [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$questions$2f$_components$2f$QuestionDetailModal$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/(dashboard)/questions/_components/QuestionDetailModal.tsx [app-ssr] (ecmascript)");
@@ -60,12 +61,14 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$googleAut
 ;
 ;
 ;
+;
 function App() {
     const [currentUser, setCurrentUser] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(()=>{
         if ("TURBOPACK compile-time truthy", 1) return null;
         //TURBOPACK unreachable
         ;
     });
+    const [authMode, setAuthMode] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])('login');
     const currentOperatorName = currentUser ? `${currentUser.name || currentUser.nickname} (${currentUser.role})` : '王敏行 (Admin Wang)';
     // 判定是否為管理員，非管理員角色一律在 else 處理為使用者
     const roleCode = String(currentUser?.role || '').toUpperCase();
@@ -83,6 +86,12 @@ function App() {
     // Users & Roles state for Account Management (table: users, table: roles)
     const [usersList, setUsersList] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([]);
     const [rolesList, setRolesList] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([]);
+    // 離線打包與雙向衝突狀態
+    const [isDownloadingOfflinePack, setIsDownloadingOfflinePack] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [conflictModalOpen, setConflictModalOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [currentConflict, setCurrentConflict] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
+    const [isResolvingConflict, setIsResolvingConflict] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [pendingRemoteData, setPendingRemoteData] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])({});
     // Google Sheets connected spreadsheet state (prioritizing .env if configured, otherwise localStorage)
     const envSheetUrl = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$publicSheet$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__["getEnvConfiguredSpreadsheetUrl"])();
     const envSheetId = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$utils$2f$sheetParser$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["extractSpreadsheetId"])(envSheetUrl);
@@ -814,12 +823,27 @@ function App() {
         showToast('已成功登出系統，請重新驗證身分。', 'info');
     };
     if (!currentUser) {
+        if (authMode === 'register') {
+            return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$auth$292f$register$2f$page$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
+                onRegisterSuccess: (newUser)=>{
+                    showToast(`帳號「${newUser.identifier}」註冊成功，歡迎使用！`, 'success');
+                    handleLoginSuccess(newUser);
+                },
+                onNavigateToLogin: ()=>setAuthMode('login'),
+                spreadsheetId: connectedSpreadsheetId || envSheetId
+            }, void 0, false, {
+                fileName: "[project]/src/App.tsx",
+                lineNumber: 912,
+                columnNumber: 9
+            }, this);
+        }
         return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$auth$292f$login$2f$page$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["LoginPage"], {
             onLoginSuccess: handleLoginSuccess,
+            onNavigateToRegister: ()=>setAuthMode('register'),
             spreadsheetId: connectedSpreadsheetId || envSheetId
         }, void 0, false, {
             fileName: "[project]/src/App.tsx",
-            lineNumber: 896,
+            lineNumber: 924,
             columnNumber: 7
         }, this);
     }
@@ -832,12 +856,12 @@ function App() {
                     exam: activeExam
                 }, void 0, false, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 908,
+                    lineNumber: 937,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 907,
+                lineNumber: 936,
                 columnNumber: 9
             }, this);
         }
@@ -850,7 +874,7 @@ function App() {
                         className: "h-9 w-9 animate-spin rounded-full border-4 border-[#2f5597] border-t-transparent"
                     }, void 0, false, {
                         fileName: "[project]/src/App.tsx",
-                        lineNumber: 915,
+                        lineNumber: 944,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -858,18 +882,18 @@ function App() {
                         children: "正在載入試卷題目與線上作答環境…"
                     }, void 0, false, {
                         fileName: "[project]/src/App.tsx",
-                        lineNumber: 916,
+                        lineNumber: 945,
                         columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 914,
+                lineNumber: 943,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/App.tsx",
-            lineNumber: 913,
+            lineNumber: 942,
             columnNumber: 7
         }, this);
     }
@@ -889,7 +913,7 @@ function App() {
                 }
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 925,
+                lineNumber: 954,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$Sidebar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Sidebar"], {
@@ -916,7 +940,7 @@ function App() {
                 currentUser: currentUser
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 938,
+                lineNumber: 967,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -947,7 +971,7 @@ function App() {
                             onPublishExams: handlePublishExams
                         }, void 0, false, {
                             fileName: "[project]/src/App.tsx",
-                            lineNumber: 970,
+                            lineNumber: 999,
                             columnNumber: 13
                         }, this),
                         activePage === 'question-bank' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$questions$2f$page$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["QuestionBankView"], {
@@ -977,14 +1001,14 @@ function App() {
                             isLoadingData: isLoadingSheetData
                         }, void 0, false, {
                             fileName: "[project]/src/App.tsx",
-                            lineNumber: 994,
+                            lineNumber: 1023,
                             columnNumber: 13
                         }, this),
                         activePage === 'system-settings' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$auth$292f$profile$2f$page$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SystemSettingsView"], {
                             auditLogs: auditLogs
                         }, void 0, false, {
                             fileName: "[project]/src/App.tsx",
-                            lineNumber: 1022,
+                            lineNumber: 1051,
                             columnNumber: 13
                         }, this),
                         activePage === 'account-manage' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$users$2f$page$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["AccountManagementView"], {
@@ -995,13 +1019,15 @@ function App() {
                             onSaveUser: handleSaveUserAccount
                         }, void 0, false, {
                             fileName: "[project]/src/App.tsx",
-                            lineNumber: 1027,
+                            lineNumber: 1056,
                             columnNumber: 13
                         }, this),
                         activePage === 'user-exam-select' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                             className: "flex flex-col gap-5 max-w-6xl mx-auto",
                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$exams$2f$select$2f$_components$2f$ExamPaperSelection$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ExamPaperSelection"], {
                                 papers: examPapers.length > 0 ? examPapers : __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$data$2f$initialData$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["INITIAL_EXAM_PAPERS"],
+                                currentUser: currentUser,
+                                onNavigate: (page)=>setActivePage(page),
                                 onStartExam: (paper)=>{
                                     setTakingExamId(paper.id);
                                     if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
@@ -1009,38 +1035,43 @@ function App() {
                                 }
                             }, void 0, false, {
                                 fileName: "[project]/src/App.tsx",
-                                lineNumber: 1039,
+                                lineNumber: 1068,
                                 columnNumber: 15
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/App.tsx",
-                            lineNumber: 1038,
+                            lineNumber: 1067,
                             columnNumber: 13
                         }, this),
                         activePage === 'user-selector' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                             className: "flex flex-col gap-5 max-w-6xl mx-auto",
                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$selector$2f$page$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
-                                questions: questions
+                                questions: questions,
+                                currentUser: currentUser,
+                                onNavigate: (page)=>setActivePage(page)
                             }, void 0, false, {
                                 fileName: "[project]/src/App.tsx",
-                                lineNumber: 1054,
+                                lineNumber: 1085,
                                 columnNumber: 15
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/App.tsx",
-                            lineNumber: 1053,
+                            lineNumber: 1084,
                             columnNumber: 13
                         }, this),
                         activePage === 'user-wrong-questions' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                             className: "flex flex-col gap-5 max-w-6xl mx-auto",
-                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$wrong$2d$questions$2f$page$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
+                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$wrong$2d$questions$2f$page$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
+                                currentUser: currentUser,
+                                onNavigate: (page)=>setActivePage(page)
+                            }, void 0, false, {
                                 fileName: "[project]/src/App.tsx",
-                                lineNumber: 1061,
+                                lineNumber: 1096,
                                 columnNumber: 15
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/App.tsx",
-                            lineNumber: 1060,
+                            lineNumber: 1095,
                             columnNumber: 13
                         }, this),
                         activePage === 'user-settings' && currentUser && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$auth$292f$profile$2f$_components$2f$UserSettingsView$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["UserSettingsView"], {
@@ -1048,18 +1079,18 @@ function App() {
                             onUpdateProfile: handleUpdateSelfProfile
                         }, void 0, false, {
                             fileName: "[project]/src/App.tsx",
-                            lineNumber: 1067,
+                            lineNumber: 1105,
                             columnNumber: 13
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/App.tsx",
-                    lineNumber: 968,
+                    lineNumber: 997,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 963,
+                lineNumber: 992,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$common$2f$TwoPhaseDeleteModal$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TwoPhaseDeleteModal"], {
@@ -1070,7 +1101,7 @@ function App() {
                 itemTypeLabel: deleteTargetType === 'exam' ? '份試卷' : '筆題目'
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 1076,
+                lineNumber: 1114,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$exams$2f$_components$2f$ExamFormModal$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ExamGenerationModal"], {
@@ -1080,7 +1111,7 @@ function App() {
                 onExamCreated: handleExamCreated
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 1085,
+                lineNumber: 1123,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$questions$2f$_components$2f$QuestionDetailModal$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["QuestionDetailModal"], {
@@ -1092,7 +1123,7 @@ function App() {
                 }
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 1095,
+                lineNumber: 1133,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$questions$2f$_components$2f$QuestionModal$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CreateQuestionModal"], {
@@ -1106,7 +1137,7 @@ function App() {
                 defaultSubjectId: selectedSubject === 'all' ? 'math' : selectedSubject
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 1105,
+                lineNumber: 1143,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$questions$2f$_components$2f$UploadExamModal$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["UploadExamModal"], {
@@ -1155,7 +1186,7 @@ function App() {
                 }
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 1117,
+                lineNumber: 1155,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$exams$2f$_components$2f$ExamPaperPreviewModal$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ExamPaperPreviewModal"], {
@@ -1165,7 +1196,7 @@ function App() {
                 onExport: handleExportSingleExam
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 1169,
+                lineNumber: 1207,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$GlobalSearchModal$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["GlobalSearchModal"], {
@@ -1184,7 +1215,7 @@ function App() {
                 }
             }, void 0, false, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 1177,
+                lineNumber: 1215,
                 columnNumber: 7
             }, this),
             toastMessage && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1195,26 +1226,26 @@ function App() {
                         children: "info"
                     }, void 0, false, {
                         fileName: "[project]/src/App.tsx",
-                        lineNumber: 1196,
+                        lineNumber: 1234,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                         children: toastMessage
                     }, void 0, false, {
                         fileName: "[project]/src/App.tsx",
-                        lineNumber: 1197,
+                        lineNumber: 1235,
                         columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/App.tsx",
-                lineNumber: 1195,
+                lineNumber: 1233,
                 columnNumber: 9
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/App.tsx",
-        lineNumber: 923,
+        lineNumber: 952,
         columnNumber: 5
     }, this);
 }

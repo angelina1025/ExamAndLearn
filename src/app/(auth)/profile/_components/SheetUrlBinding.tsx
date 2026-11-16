@@ -276,7 +276,7 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({
 
   const handleApplyEnvUrl = () => {
     if (!envConfigId || !envConfigUrl) {
-      onShowToast('環境變數 .env 中尚未填入有效之 VITE_GOOGLE_SHEET_URL', 'error');
+      onShowToast('環境變數 .env 中尚未填入有效之 NEXT_PUBLIC_GOOGLE_SHEET_URL', 'error');
       return;
     }
     onUpdateSpreadsheetConnection(envConfigId, envConfigUrl);
@@ -537,7 +537,7 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-[#191c1e] flex items-center gap-1">
               <span className="material-symbols-outlined text-[16px] text-[#004ac6]">tune</span>
-              環境變數 (VITE_GOOGLE_SHEET_URL):
+              環境變數 (NEXT_PUBLIC_GOOGLE_SHEET_URL):
             </span>
             {envConfigUrl ? (
               <span className="px-2 py-0.5 rounded-md bg-[#e8f5e9] text-[#1b5e20] font-mono text-[11px] truncate max-w-[280px] border border-[#a5d6a7]">

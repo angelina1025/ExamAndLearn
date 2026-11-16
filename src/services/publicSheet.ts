@@ -1,6 +1,5 @@
 import { Question, ExamPaper, Exam, SheetTableSchema, ReadSpreadsheetResult, SubjectId, CategoryItem, AuditLog, UserProfile, RoleItem, AuthLoginResult } from '@/types';
 import { assignedExam } from '@/services/mockExamData';
-import { INITIAL_QUESTIONS, INITIAL_EXAM_PAPERS } from '@/data/initialData';
 import { formatSheetTimestamp } from '@/utils/formatters';
 import { formatOptionsToJsonObject, parseSheetOptionJson, extractSpreadsheetId } from '@/utils/sheetParser';
 
@@ -25,7 +24,7 @@ export async function getAssignedExam(
     }
   }
 
-  // 讀取考生自選組卷 (localStorage)
+  // 讀取離線公用題庫與考生自選組卷 (localStorage)
   if (typeof window !== 'undefined') {
     try {
       const customExams = JSON.parse(localStorage.getItem('quiz_custom_exams') || '[]');
@@ -34,23 +33,22 @@ export async function getAssignedExam(
           examMap.set(e.id, e);
         }
       }
-    } catch {}
-  }
-
-  // 若線上試卷未包含該試卷，或處於離線狀態時，才讀取 data 內試卷 INITIAL_EXAM_PAPERS 備援
-  if (!examMap.has(examId) || !isOnline) {
-    for (const e of INITIAL_EXAM_PAPERS) {
-      if (e?.id && !examMap.has(e.id)) {
-        examMap.set(e.id, e);
+      const offlineCacheRaw = localStorage.getItem('offline_public_db_cache');
+      if (offlineCacheRaw) {
+        const offlineCache = JSON.parse(offlineCacheRaw);
+        for (const e of offlineCache.publishedExams || []) {
+          if (e?.id && !examMap.has(e.id)) {
+            examMap.set(e.id, e);
+          }
+        }
       }
-    }
+    } catch {}
   }
 
   const paper = examMap.get(examId);
   if (!paper) return null;
 
-  // 題目資料庫查表：優先取線上題庫 (extraQuestions: 來自 Google Sheet)
-  // 若線上題庫為空或處於離線狀態時，才去讀取 data 內題庫 INITIAL_QUESTIONS
+  // 題目資料庫查表：優先取線上題庫 (extraQuestions: 來自 Google Sheet) 或離線公用快照
   const questionMap = new Map<string, Question>();
   if (extraQuestions && extraQuestions.length > 0) {
     for (const q of extraQuestions) {
@@ -60,26 +58,28 @@ export async function getAssignedExam(
     }
   }
 
-  // 若線上題庫為空或處於離線狀態，才補入 data 內題庫 INITIAL_QUESTIONS 作為備援
-  if (questionMap.size === 0 || !isOnline) {
-    for (const q of INITIAL_QUESTIONS) {
-      if (q?.id && !questionMap.has(q.id)) {
-        questionMap.set(q.id, q);
+  // 若題庫為空，嘗試自離線公用快照與自建題庫載入
+  if (typeof window !== 'undefined') {
+    try {
+      const customQuestions = JSON.parse(localStorage.getItem('quiz_custom_questions') || '[]');
+      for (const q of customQuestions) {
+        if (q?.id && !questionMap.has(q.id)) {
+          questionMap.set(q.id, q);
+        }
       }
-    }
+      const offlineCacheRaw = localStorage.getItem('offline_public_db_cache');
+      if (offlineCacheRaw) {
+        const offlineCache = JSON.parse(offlineCacheRaw);
+        for (const q of offlineCache.questions || []) {
+          if (q?.id && !questionMap.has(q.id)) {
+            questionMap.set(q.id, q);
+          }
+        }
+      }
+    } catch {}
   }
 
-  // 若試卷指定的個別題目 ID 在線上未找到，亦可從 data 題庫備援補入
-  const rawQuestionIds = paper.questionIds || [];
-  const questionIds = Array.from(new Set(rawQuestionIds));
-  for (const qId of questionIds) {
-    if (!questionMap.has(qId)) {
-      const fallbackQ = INITIAL_QUESTIONS.find((item) => item.id === qId);
-      if (fallbackQ) {
-        questionMap.set(fallbackQ.id, fallbackQ);
-      }
-    }
-  }
+  const questionIds = Array.from(new Set(paper.questionIds || []));
   let matchedQuestions: Question[] = [];
 
   if (questionIds.length > 0) {
@@ -243,46 +243,11 @@ export const DATABASE_TABLE_SCHEMAS: Record<string, SheetTableSchema> = {
   },
 };
 
-export const INITIAL_CATEGORIES_DATA = [
-  { id: 1, categories_name: '自然領域', parent_id: 0, level: 1, sort_order: 1 },
-  { id: 2, categories_name: '社會領域', parent_id: 0, level: 1, sort_order: 2 },
-  { id: 3, categories_name: '數學科', parent_id: 0, level: 2, sort_order: 3 },
-  { id: 4, categories_name: '國文科', parent_id: 0, level: 2, sort_order: 4 },
-  { id: 5, categories_name: '英文科', parent_id: 0, level: 2, sort_order: 5 },
-  { id: 6, categories_name: '物理', parent_id: 1, level: 2, sort_order: 6 },
-  { id: 7, categories_name: '化學', parent_id: 1, level: 2, sort_order: 7 },
-  { id: 8, categories_name: '生物', parent_id: 1, level: 2, sort_order: 8 },
-  { id: 9, categories_name: '天文', parent_id: 1, level: 2, sort_order: 9 },
-  { id: 10, categories_name: '公民', parent_id: 2, level: 2, sort_order: 10 },
-  { id: 11, categories_name: '地理', parent_id: 2, level: 2, sort_order: 11 },
-  { id: 12, categories_name: '歷史', parent_id: 2, level: 2, sort_order: 12 },
-];
+export const INITIAL_CATEGORIES_DATA: any[] = [];
 
-export const SUBJECT_TO_CATEGORY_ID: Record<string, number> = {
-  math: 3,
-  chinese: 4,
-  english: 5,
-  physics: 6,
-  chemistry: 7,
-  biology: 8,
-  astronomy: 9,
-  civics: 10,
-  geography: 11,
-  history: 12,
-};
+export const SUBJECT_TO_CATEGORY_ID: Record<string, number> = {};
 
-export const CATEGORY_ID_TO_SUBJECT: Record<number, SubjectId> = {
-  3: 'math',
-  4: 'chinese',
-  5: 'english',
-  6: 'physics',
-  7: 'chemistry',
-  8: 'biology',
-  9: 'astronomy',
-  10: 'civics',
-  11: 'geography',
-  12: 'history',
-};
+export const CATEGORY_ID_TO_SUBJECT: Record<number, SubjectId> = {};
 
 export const SUBJECT_NAME_MAP: Record<string, SubjectId> = {
   '數學': 'math',
@@ -312,24 +277,67 @@ export const INITIAL_ROLES_DATA: RoleItem[] = [
 
 /**
  * Get public spreadsheet URL configured in .env.local / .env
- * Supports VITE_PUBLIC_GOOGLE_SHEET_URL and fallback VITE_GOOGLE_SHEET_URL
+ * Supports NEXT_PUBLIC_GOOGLE_SHEET_URL and fallback GOOGLE_SHEET_URL
  */
 export function getEnvConfiguredSpreadsheetUrl(): string {
-  const env = (import.meta as any).env;
-  return (env?.VITE_PUBLIC_GOOGLE_SHEET_URL || env?.VITE_GOOGLE_SHEET_URL || '').trim();
+  const metaEnv = typeof import.meta !== 'undefined' ? (import.meta as any).env : undefined;
+  const procEnv = typeof process !== 'undefined' ? process.env : undefined;
+  return (
+    procEnv?.NEXT_PUBLIC_GOOGLE_SHEET_URL ||
+    procEnv?.VITE_GOOGLE_SHEET_URL ||
+    procEnv?.GOOGLE_SHEET_URL ||
+    metaEnv?.NEXT_PUBLIC_GOOGLE_SHEET_URL ||
+    metaEnv?.VITE_PUBLIC_GOOGLE_SHEET_URL ||
+    metaEnv?.VITE_GOOGLE_SHEET_URL ||
+    ''
+  ).trim();
 }
 
 export function getEnvConfiguredScriptUrl(): string {
-  const env = (import.meta as any).env;
-  return (env?.VITE_GOOGLE_SCRIPT_URL || '').trim();
+  const metaEnv = typeof import.meta !== 'undefined' ? (import.meta as any).env : undefined;
+  const procEnv = typeof process !== 'undefined' ? process.env : undefined;
+  return (
+    procEnv?.NEXT_PUBLIC_GOOGLE_SCRIPT_URL ||
+    procEnv?.VITE_GOOGLE_SCRIPT_URL ||
+    procEnv?.GOOGLE_SCRIPT_URL ||
+    metaEnv?.NEXT_PUBLIC_GOOGLE_SCRIPT_URL ||
+    metaEnv?.VITE_GOOGLE_SCRIPT_URL ||
+    metaEnv?.GOOGLE_SCRIPT_URL ||
+    ''
+  ).trim();
 }
 
 export async function postToGasScript(payload: Record<string, any>): Promise<any> {
   const scriptUrl = getEnvConfiguredScriptUrl();
   if (!scriptUrl) {
-    throw new Error('尚未設定 VITE_GOOGLE_SCRIPT_URL，請在 .env 中填入 Google Apps Script 部署網址');
+    throw new Error('尚未設定 NEXT_PUBLIC_GOOGLE_SCRIPT_URL，請在 .env 中填入 Google Apps Script 部署網址');
   }
 
+  // 1. 在瀏覽器端優先透過 Next.js BFF API (/api/sheet) 轉發，解決跨網域 CORS 與 302 重新導向問題
+  if (typeof window !== 'undefined') {
+    try {
+      const bffRes = await fetch('/api/sheet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ payload, scriptUrl }),
+      });
+      if (bffRes.ok) {
+        const bffData = await bffRes.json();
+        if (bffData.success !== false) {
+          return bffData.data ?? bffData;
+        }
+        if (bffData.error) {
+          throw new Error(bffData.error);
+        }
+      }
+    } catch (bffErr: any) {
+      console.warn('BFF /api/sheet proxy failed, attempting direct fetch:', bffErr);
+    }
+  }
+
+  // 2. 伺服器端或直接 fetch GAS 端點
   const res = await fetch(scriptUrl, {
     method: 'POST',
     headers: {
@@ -445,8 +453,8 @@ function generateBatchValues(
       'usr_9f8a1b2c',
       1,
       'ADMIN',
-      '王敏行 (Admin Wang)',
-      'admin_wang',
+      '管理員 (Admin)',
+      'admin',
       '$2b$12$e8Yj62kM1sPqWz0...',
       spreadsheetUrl,
       nowStr,
@@ -491,7 +499,7 @@ function generateBatchValues(
   const testBankRows: any[][] = [
     testBankHeaders,
     ...questions.map((q, idx) => {
-      const categoryId = q.categoryId || SUBJECT_TO_CATEGORY_ID[q.subjectId] || 3;
+      const categoryId = q.categoryId || 0;
       const optionsStr = formatOptionsToJsonObject(q.options || q.optionsMap);
       const diffScore = q.difficultyScore ?? (q.difficulty === 'hard' ? 4 : q.difficulty === 'medium' ? 3 : 2);
       return [
@@ -515,7 +523,6 @@ function generateBatchValues(
   const categoryHeaders = DATABASE_TABLE_SCHEMAS.categories.columns.map((c) => c.label);
   const categoryRows: any[][] = [
     categoryHeaders,
-    ...INITIAL_CATEGORIES_DATA.map((c) => [c.id, c.categories_name, c.parent_id, c.level, c.sort_order]),
   ];
 
   const publishedExams = exams.filter((e) => e.status === 'published');
@@ -1003,7 +1010,7 @@ function parseTableValuesToResult(
       const logId = String(row[1] || row[0] || `#LOG-${i}`).trim();
       const action = String(row[2] || '').trim();
       const target = String(row[3] || '').trim();
-      const operator = String(row[4] || '王敏行 (Admin Wang)').trim();
+      const operator = String(row[4] || '').trim();
       const timestamp = String(row[5] || '').trim();
       const rawStatus = String(row[6] || 'success').trim().toLowerCase();
       const status: 'success' | 'warning' | 'error' =
@@ -1253,7 +1260,7 @@ export async function fetchUsersAndRolesFromSheet(
     (typeof window !== 'undefined' ? localStorage.getItem('google_spreadsheet_id') : null);
 
   if (!targetId) {
-    throw new Error('尚未設定 Google Sheet 資料庫網址，請確認 .env 中的 VITE_GOOGLE_SHEET_URL 設定');
+    throw new Error('尚未設定 Google Sheet 資料庫網址，請確認 .env 中的 NEXT_PUBLIC_GOOGLE_SHEET_URL 設定');
   }
 
   // 1. 若有 OAuth accessToken，優先透過 Google Sheets REST API 讀取
@@ -1335,14 +1342,32 @@ export async function fetchUsersAndRolesFromSheet(
     })
   );
 
-  if (!sheetRowsMap['users'] || sheetRowsMap['users'].length === 0) {
-    throw new Error('無法讀取 Google Sheet 中的 users 資料表，請確認試算表權限或網路連線');
+  if (sheetRowsMap['users'] && sheetRowsMap['users'].length > 0) {
+    const roles = parseRolesFromSheetRows(sheetRowsMap['roles'] || []);
+    const users = parseUsersFromSheetRows(sheetRowsMap['users'] || [], roles);
+    return { users, roles };
   }
 
-  const roles = parseRolesFromSheetRows(sheetRowsMap['roles'] || []);
-  const users = parseUsersFromSheetRows(sheetRowsMap['users'] || [], roles);
+  // 3. 只有當線上 Google Sheet 完全斷線/離線時，才降級至本地離線快照
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem('quiz_registered_users');
+      if (raw) {
+        const localUsers = JSON.parse(raw);
+        if (Array.isArray(localUsers) && localUsers.length > 0) {
+          return {
+            users: localUsers,
+            roles: [
+              { id: 1, code: 'ADMIN', name: '管理員', description: '系統完整管理權限' },
+              { id: 2, code: 'USER', name: '一般用戶', description: '應考學生' },
+            ],
+          };
+        }
+      }
+    } catch {}
+  }
 
-  return { users, roles };
+  throw new Error('無法讀取 Google Sheet 中的 users 資料表，請確認試算表權限或網路連線');
 }
 
 /**
@@ -1480,7 +1505,7 @@ export async function readPublicSpreadsheetViaGviz(
 
   const hasData = Object.values(tableValuesMap).some((rows) => rows && rows.length > 0);
   if (!hasData) {
-    throw new Error('無法讀取試算表內容，請確認 VITE_GOOGLE_SHEET_URL 正確且已開啟「知道連結的任何人皆可檢視」權限，或先完成 Google 帳號授權。');
+    throw new Error('無法讀取試算表內容，請確認 NEXT_PUBLIC_GOOGLE_SHEET_URL 正確且已開啟「知道連結的任何人皆可檢視」權限，或先完成 Google 帳號授權。');
   }
 
   return parseTableValuesToResult(tableValuesMap, 'Google 試算表 (.env)');
@@ -1610,7 +1635,9 @@ export async function appendUserToSpreadsheet(
       await postToGasScript({
         action: 'appendRow',
         sheetName: 'users',
+        headers: DATABASE_TABLE_SCHEMAS.users.columns.map((c) => c.label),
         row: rowValues,
+        rowValues,
       });
       return { success: true, message: `成功透過 GAS 將帳號「${user.identifier}」寫入 users 資料表！` };
     } catch (gasErr: any) {
@@ -1650,7 +1677,7 @@ export async function appendQuestionToSpreadsheet(
   rowIndex: number,
   userId: number = 1
 ): Promise<{ success: boolean; message: string }> {
-  const categoryId = question.categoryId || SUBJECT_TO_CATEGORY_ID[question.subjectId] || 3;
+  const categoryId = question.categoryId || 0;
   const optionsStr = formatOptionsToJsonObject(question.options || question.optionsMap);
   const diffScore = question.difficultyScore ?? (question.difficulty === 'hard' ? 4 : question.difficulty === 'medium' ? 3 : 2);
   const tagsStr = question.tags.join(', ');
@@ -1689,7 +1716,7 @@ export async function appendQuestionToSpreadsheet(
   }
 
   if (!accessToken) {
-    throw new Error('請在 .env 設定 VITE_GOOGLE_SCRIPT_URL 以免登入直接寫入試算表');
+    throw new Error('請在 .env 設定 NEXT_PUBLIC_GOOGLE_SCRIPT_URL 以免登入直接寫入試算表');
   }
 
   await ensureSpreadsheetTablesExist(accessToken, spreadsheetId);
@@ -1756,7 +1783,7 @@ export async function appendExamToSpreadsheet(
   }
 
   if (!accessToken) {
-    throw new Error('請在 .env 設定 VITE_GOOGLE_SCRIPT_URL 以免登入直接寫入試算表');
+    throw new Error('請在 .env 設定 NEXT_PUBLIC_GOOGLE_SCRIPT_URL 以免登入直接寫入試算表');
   }
 
   await ensureSpreadsheetTablesExist(accessToken, spreadsheetId);
@@ -1840,7 +1867,7 @@ export async function syncExamsOnlyToSpreadsheet(
   }
 
   if (!accessToken) {
-    throw new Error('請在 .env 設定 VITE_GOOGLE_SCRIPT_URL 以免登入直接更新試算表');
+    throw new Error('請在 .env 設定 NEXT_PUBLIC_GOOGLE_SCRIPT_URL 以免登入直接更新試算表');
   }
 
   try {

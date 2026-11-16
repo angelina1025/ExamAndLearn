@@ -17,6 +17,7 @@ import { ExamPaperSelection } from '@/app/(dashboard)/exams/select/_components/E
 import QuestionSelectorPage from '@/app/(dashboard)/selector/page';
 import WrongQuestionsPage from '@/app/(dashboard)/wrong-questions/page';
 import { LoginPage } from '@/app/(auth)/login/page';
+import RegisterPage from '@/app/(auth)/register/page';
 import { TwoPhaseDeleteModal, DeleteItem } from '@/components/common/TwoPhaseDeleteModal';
 import { ExamGenerationModal } from '@/app/(dashboard)/exams/_components/ExamFormModal';
 import { QuestionDetailModal } from '@/app/(dashboard)/questions/_components/QuestionDetailModal';
@@ -24,7 +25,6 @@ import { CreateQuestionModal } from '@/app/(dashboard)/questions/_components/Que
 import { UploadExamModal } from '@/app/(dashboard)/questions/_components/UploadExamModal';
 import { ExamPaperPreviewModal } from '@/app/(dashboard)/exams/_components/ExamPaperPreviewModal';
 import { GlobalSearchModal } from '@/components/layout/GlobalSearchModal';
-import { INITIAL_QUESTIONS, INITIAL_EXAM_PAPERS } from '@/data/initialData';
 import { Question, ExamPaper, Exam, SubjectId, SubjectFilter, AuditLog, NotificationItem, CategoryItem, UserProfile, RoleItem } from '@/types';
 import { ExamClient } from '@/app/exam/[examId]/_components/ExamClient';
 import {
@@ -40,11 +40,13 @@ import {
   syncExamsOnlyToSpreadsheet,
   deleteRowsFromSpreadsheetViaGas,
   formatSheetTimestamp,
-  INITIAL_CATEGORIES_DATA,
   appendUserToSpreadsheet,
   getAssignedExam,
 } from '@/services/publicSheet';
 import { getAccessToken, googleSignIn, initAuth } from '@/services/googleAuth';
+import { downloadFullOfflinePack } from '@/services/excelDatabaseExport';
+import { SyncConflictModal, ConflictDetails } from '@/components/common/SyncConflictModal';
+import { readUserPrivateSheet, syncPersonalDataToUserSheet } from '@/services/userSheet';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
@@ -56,9 +58,10 @@ export default function App() {
       return null;
     }
   });
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const currentOperatorName = currentUser
     ? `${currentUser.name || currentUser.nickname} (${currentUser.role})`
-    : '王敏行 (Admin Wang)';
+    : '未登入訪客';
 
   // 判定是否為管理員，非管理員角色一律在 else 處理為使用者
   const roleCode = String(currentUser?.role || '').toUpperCase();
@@ -79,6 +82,16 @@ export default function App() {
   // Users & Roles state for Account Management (table: users, table: roles)
   const [usersList, setUsersList] = useState<UserProfile[]>([]);
   const [rolesList, setRolesList] = useState<RoleItem[]>([]);
+
+  // 離線打包與雙向衝突狀態
+  const [isDownloadingOfflinePack, setIsDownloadingOfflinePack] = useState(false);
+  const [conflictModalOpen, setConflictModalOpen] = useState(false);
+  const [currentConflict, setCurrentConflict] = useState<ConflictDetails | null>(null);
+  const [isResolvingConflict, setIsResolvingConflict] = useState(false);
+  const [pendingRemoteData, setPendingRemoteData] = useState<{
+    personal?: { questions: Question[]; exams: ExamPaper[] };
+    public?: { questions: Question[]; exams: ExamPaper[]; categories: CategoryItem[] };
+  }>({});
 
   // Google Sheets connected spreadsheet state (prioritizing .env if configured, otherwise localStorage)
   const envSheetUrl = getEnvConfiguredSpreadsheetUrl();
@@ -149,116 +162,286 @@ export default function App() {
     }
   };
 
-  const handleFetchSpreadsheetData = async (silent: boolean = false) => {
-    const targetUrl = envSheetUrl || connectedSpreadsheetUrl;
-    const targetId = envSheetId || connectedSpreadsheetId;
+  const handleDownloadOfflinePack = async () => {
+    setIsDownloadingOfflinePack(true);
+    try {
+      showToast('正在打包公用題庫 (唯讀) 與個人題庫 (可編) Excel 檔案...', 'info');
 
-    if (!targetId) {
-      setHasSyncedSheet(false);
-      if (!silent) showToast('未設定 Google 試算表 ID，請確認 .env 或試算表連結', 'warning');
-      return;
+      let personalQuestions: Question[] = [];
+      let personalExams: ExamPaper[] = [];
+      if (typeof window !== 'undefined') {
+        try {
+          personalQuestions = JSON.parse(localStorage.getItem('quiz_custom_questions') || '[]');
+          personalExams = JSON.parse(localStorage.getItem('quiz_custom_exams') || '[]');
+        } catch {}
+      }
+
+      await downloadFullOfflinePack({
+        publicData: {
+          categories: categories,
+          questions: questions,
+          publishedExams: examPapers,
+          roles: rolesList,
+          auditLogs: auditLogs,
+        },
+        personalData: {
+          questions: personalQuestions,
+          exams: personalExams,
+        },
+        currentUser: currentUser,
+      });
+
+      showToast('🎉 離線版本下載完成！已打包「公用題庫 (唯讀)」與「個人題庫 (可編)」兩份 Excel。', 'success');
+    } catch (err: any) {
+      console.error('Download offline pack error:', err);
+      showToast(`下載離線版本失敗: ${err.message || '未知錯誤'}`, 'error');
+    } finally {
+      setIsDownloadingOfflinePack(false);
     }
+  };
 
+  /**
+   * 雙向連線同步與衝突比對：
+   * 1. 個人題庫比對 (若有綁定個人 Google Sheet)
+   * 2. 公用題庫比對
+   */
+  const handleBidirectionalSync = async (silent: boolean = false) => {
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       setIsOnline(false);
       setHasSyncedSheet(false);
-      // 離線狀態：優先降級讀取本地 data 內題庫與試卷
-      setQuestions((prev) => (prev.length > 0 ? prev : INITIAL_QUESTIONS));
-      setExamPapers((prev) => (prev.length > 0 ? prev : INITIAL_EXAM_PAPERS));
-      if (!silent) showToast('目前網路處於斷線狀態，已載入本地離線題庫', 'info');
+      if (!silent) showToast('目前處於離線狀態，無法進行線上同步與比對', 'warning');
       return;
     }
 
-    const token = await getAccessToken();
+    const targetUrl = envSheetUrl || connectedSpreadsheetUrl;
+    const targetId = envSheetId || connectedSpreadsheetId;
+    let token = await getAccessToken();
 
     setIsLoadingSheetData(true);
     try {
-      const result = await readAllTablesFromSpreadsheet(token, targetId);
-      setCategories(result.categories);
-      // 優先取線上題庫 (Google Sheet)；若線上為空或離線才讀取 data 內題庫
-      if (result.questions && result.questions.length > 0) {
-        setQuestions(result.questions);
-      } else {
-        setQuestions((prev) => (prev.length > 0 ? prev : INITIAL_QUESTIONS));
+      // 1. 個人題庫比對 (若有綁定個人 Google Sheet)
+      if (currentUser?.google_sheet_URL) {
+        if (!token && !silent) {
+          try {
+            const signRes = await googleSignIn();
+            token = signRes?.accessToken || null;
+          } catch {}
+        }
+
+        if (token) {
+          try {
+            const remotePersonal = await readUserPrivateSheet(token, currentUser.google_sheet_URL);
+            const remoteQuestions = remotePersonal.questions || [];
+            const remoteExams = remotePersonal.publishedExams || [];
+
+            let localQuestions: Question[] = [];
+            let localExams: ExamPaper[] = [];
+            if (typeof window !== 'undefined') {
+              try {
+                localQuestions = JSON.parse(localStorage.getItem('quiz_custom_questions') || '[]');
+                localExams = JSON.parse(localStorage.getItem('quiz_custom_exams') || '[]');
+              } catch {}
+            }
+
+            const isQuestionsMatch =
+              localQuestions.length === remoteQuestions.length &&
+              JSON.stringify(localQuestions.map((q) => q.id).sort()) ===
+                JSON.stringify(remoteQuestions.map((q) => q.id).sort());
+
+            const isExamsMatch =
+              localExams.length === remoteExams.length &&
+              JSON.stringify(localExams.map((e) => e.id).sort()) ===
+                JSON.stringify(remoteExams.map((e) => e.id).sort());
+
+            if (!isQuestionsMatch || !isExamsMatch) {
+              // 發現差異！彈出個人題庫衝突對話框
+              setPendingRemoteData((prev) => ({
+                ...prev,
+                personal: { questions: remoteQuestions, exams: remoteExams },
+              }));
+              setCurrentConflict({
+                type: 'personal',
+                title: '個人題庫雙向比對衝突',
+                localSummary: {
+                  questionCount: localQuestions.length,
+                  examCount: localExams.length,
+                },
+                remoteSummary: {
+                  questionCount: remoteQuestions.length,
+                  examCount: remoteExams.length,
+                },
+              });
+              setConflictModalOpen(true);
+              return;
+            }
+          } catch (pErr) {
+            console.warn('Compare personal sheet error:', pErr);
+          }
+        }
       }
 
-      if (result.allExams && result.allExams.length > 0) {
-        setExamPapers(result.allExams);
-      } else {
-        setExamPapers((prev) => (prev.length > 0 ? prev : INITIAL_EXAM_PAPERS));
+      // 2. 公用題庫比對
+      if (!targetId) {
+        if (!silent) showToast('未設定公用 Google 試算表 ID', 'warning');
+        return;
       }
-      setAuditLogs(result.auditLogs);
-      if (result.users && result.users.length > 0) setUsersList(result.users);
-      if (result.roles && result.roles.length > 0) setRolesList(result.roles);
-      setHasSyncedSheet(true);
+
+      const remotePublic = await readAllTablesFromSpreadsheet(token, targetId);
       setIsOnline(true);
+      setHasSyncedSheet(true);
+
+      // 比對公用題庫線上 vs 本地
+      const isPublicMatch =
+        remotePublic.questions.length === questions.length &&
+        remotePublic.allExams.length === examPapers.length;
+
+      if (!isPublicMatch && questions.length > 0 && !silent) {
+        // 線上與本地公用題庫不同，詢問是否更新本地公用題庫
+        setPendingRemoteData((prev) => ({
+          ...prev,
+          public: {
+            questions: remotePublic.questions,
+            exams: remotePublic.allExams,
+            categories: remotePublic.categories,
+          },
+        }));
+        setCurrentConflict({
+          type: 'public',
+          title: '公用題庫線上版本更新確認',
+          localSummary: {
+            questionCount: questions.length,
+            examCount: examPapers.length,
+          },
+          remoteSummary: {
+            questionCount: remotePublic.questions.length,
+            examCount: remotePublic.allExams.length,
+          },
+        });
+        setConflictModalOpen(true);
+        return;
+      }
+
+      // 若一致或初次靜默加載，直接更新最新線上資料
+      setCategories(remotePublic.categories);
+      if (remotePublic.questions?.length > 0) setQuestions(remotePublic.questions);
+      if (remotePublic.allExams?.length > 0) setExamPapers(remotePublic.allExams);
+      setAuditLogs(remotePublic.auditLogs);
+      if (remotePublic.users?.length > 0) setUsersList(remotePublic.users);
+      if (remotePublic.roles?.length > 0) setRolesList(remotePublic.roles);
       handleUpdateSpreadsheetConnection(targetId, targetUrl);
 
       if (!silent) {
-        showToast(
-          `成功同步公用資料庫：載入 ${result.categories.length} 個科目、${result.questions.length} 題試題、${result.allExams.length} 份試卷與 ${result.auditLogs.length} 筆日誌！`,
-          'success'
-        );
+        showToast('✅ 公用與個人資料庫比對完成，資料已同步至最新狀態！', 'success');
       }
     } catch (err: any) {
-      console.error('Fetch spreadsheet data error:', err);
-      // If public read failed and user hasn't signed in yet, prompt Google Sign-in when not silent
-      if (!token && !silent) {
-        try {
-          showToast('正在開啟 Google 授權視窗，請允許讀取試算表...', 'info');
-          const signRes = await googleSignIn();
-          const newToken = signRes?.accessToken || null;
-          if (newToken) {
-            const result = await readAllTablesFromSpreadsheet(newToken, targetId);
-            setCategories(result.categories);
-            if (result.questions && result.questions.length > 0) {
-              setQuestions(result.questions);
-            } else {
-              setQuestions((prev) => (prev.length > 0 ? prev : INITIAL_QUESTIONS));
-            }
-            if (result.allExams && result.allExams.length > 0) {
-              setExamPapers(result.allExams);
-            } else {
-              setExamPapers((prev) => (prev.length > 0 ? prev : INITIAL_EXAM_PAPERS));
-            }
-            setAuditLogs(result.auditLogs);
-            setHasSyncedSheet(true);
-            setIsOnline(true);
-            handleUpdateSpreadsheetConnection(targetId, targetUrl);
-            showToast(
-              `成功同步公用資料庫：載入 ${result.categories.length} 個科目、${result.questions.length} 題試題、${result.allExams.length} 份試卷與 ${result.auditLogs.length} 筆日誌！`,
-              'success'
-            );
-            return;
-          }
-        } catch (authErr: any) {
-          console.error('Google Sign-in error:', authErr);
-        }
-      }
-      // 讀取線上題庫失敗時，自動降級讀取 data 內題庫備援
-      setQuestions((prev) => (prev.length > 0 ? prev : INITIAL_QUESTIONS));
-      setExamPapers((prev) => (prev.length > 0 ? prev : INITIAL_EXAM_PAPERS));
-      setHasSyncedSheet(false);
+      console.error('Bidirectional sync error:', err);
       if (!silent) {
-        showToast(`讀取試算表失敗: ${err.message || '請確認試算表架構或權限'}，已切換讀取本地題庫`, 'warning');
+        showToast(`連線比對失敗: ${err.message || '請確認試算表網址或權限'}`, 'error');
       }
     } finally {
       setIsLoadingSheetData(false);
     }
   };
 
+  const handleResolvePersonalConflict = async (choice: 'local' | 'remote', updateTarget: boolean) => {
+    setIsResolvingConflict(true);
+    try {
+      if (choice === 'local') {
+        // 以本地為主
+        if (updateTarget && currentUser?.google_sheet_URL) {
+          const token = await getAccessToken();
+          if (!token) throw new Error('請先完成 Google 帳號授權以更新個人試算表');
+          let localQuestions: Question[] = [];
+          let localExams: ExamPaper[] = [];
+          try {
+            localQuestions = JSON.parse(localStorage.getItem('quiz_custom_questions') || '[]');
+            localExams = JSON.parse(localStorage.getItem('quiz_custom_exams') || '[]');
+          } catch {}
+          await syncPersonalDataToUserSheet(token, currentUser.google_sheet_URL, localQuestions, localExams);
+          showToast('✅ 已成功將本地個人題庫同步更新至線上個人 Google Sheet！', 'success');
+        } else {
+          showToast('已確認以本地個人題庫為主（未更新線上試算表）。', 'info');
+        }
+      } else {
+        // 以線上為主
+        if (updateTarget && pendingRemoteData.personal) {
+          localStorage.setItem('quiz_custom_questions', JSON.stringify(pendingRemoteData.personal.questions));
+          localStorage.setItem('quiz_custom_exams', JSON.stringify(pendingRemoteData.personal.exams));
+          showToast('✅ 已從個人 Google Sheet 更新覆蓋本地題庫資料！', 'success');
+        } else {
+          showToast('已確認以線上個人資料為主。', 'info');
+        }
+      }
+      setConflictModalOpen(false);
+      setCurrentConflict(null);
+    } catch (err: any) {
+      alert(`衝突處理失敗：${err.message || '未知錯誤'}`);
+    } finally {
+      setIsResolvingConflict(false);
+    }
+  };
+
+  const handleResolvePublicConflict = async (shouldUpdateLocal: boolean) => {
+    setIsResolvingConflict(true);
+    try {
+      if (shouldUpdateLocal && pendingRemoteData.public) {
+        setQuestions(pendingRemoteData.public.questions);
+        setExamPapers(pendingRemoteData.public.exams);
+        setCategories(pendingRemoteData.public.categories);
+        // 更新本地離線快取
+        try {
+          localStorage.setItem(
+            'offline_public_db_cache',
+            JSON.stringify({
+              questions: pendingRemoteData.public.questions,
+              publishedExams: pendingRemoteData.public.exams,
+              categories: pendingRemoteData.public.categories,
+              downloadedAt: new Date().toISOString(),
+            })
+          );
+        } catch {}
+        showToast('✅ 本地公用題庫已更新至線上最新版本！', 'success');
+      } else {
+        showToast('已保留本機現有公用題庫版本。', 'info');
+      }
+      setConflictModalOpen(false);
+      setCurrentConflict(null);
+    } finally {
+      setIsResolvingConflict(false);
+    }
+  };
+
+  const handleFetchSpreadsheetData = async (silent: boolean = false) => {
+    await handleBidirectionalSync(silent);
+  };
+
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
-      handleFetchSpreadsheetData(true);
+      handleBidirectionalSync(true);
     };
     const handleOffline = () => {
       setIsOnline(false);
       setHasSyncedSheet(false);
-      // 網路斷線時自動切換至 local data 題庫備援
-      setQuestions((prev) => (prev.length > 0 ? prev : INITIAL_QUESTIONS));
-      setExamPapers((prev) => (prev.length > 0 ? prev : INITIAL_EXAM_PAPERS));
-      showToast('偵測到網路連線中斷，已自動切換讀取本地離線題庫 (data)', 'warning');
+      // 網路斷線時自動切換至 local 離線題庫快照備援
+      try {
+        const cached = localStorage.getItem('offline_public_db_cache');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed.questions?.length > 0) setQuestions(parsed.questions);
+          if (parsed.publishedExams?.length > 0) setExamPapers(parsed.publishedExams);
+          if (parsed.categories?.length > 0) setCategories(parsed.categories);
+        } else {
+          setQuestions([]);
+          setExamPapers([]);
+          setCategories([]);
+        }
+      } catch {
+        setQuestions([]);
+        setExamPapers([]);
+        setCategories([]);
+      }
+      showToast('偵測到網路斷線，已切換至本地離線題庫 (公用唯讀，個人可編)', 'warning');
     };
 
     window.addEventListener('online', handleOnline);
@@ -267,7 +450,7 @@ export default function App() {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [questions.length, examPapers.length]);
 
   useEffect(() => {
     const unsubscribe = initAuth((_user, token) => {
@@ -293,7 +476,7 @@ export default function App() {
 
       if (!targetId || !targetUrl) {
         setHasSyncedSheet(false);
-        showToast('未設定 Google 試算表網址，請在 .env 中填寫 VITE_GOOGLE_SHEET_URL', 'warning');
+        showToast('未設定 Google 試算表網址，請在 .env 中填寫 NEXT_PUBLIC_GOOGLE_SHEET_URL', 'warning');
         setIsReconnectingSheets(false);
         return;
       }
@@ -369,8 +552,8 @@ export default function App() {
         return;
       }
 
-      const questionsToSync = questions.length > 0 ? questions : INITIAL_QUESTIONS;
-      const examsToSync = examPapers.length > 0 ? examPapers : INITIAL_EXAM_PAPERS;
+      const questionsToSync = questions;
+      const examsToSync = examPapers;
 
       const now = formatSheetTimestamp();
       const newLogId = `#LOG-SYNC-${Date.now().toString().slice(-4)}`;
@@ -378,7 +561,7 @@ export default function App() {
         id: newLogId,
         action: '題庫試卷完整同步至 Google 試算表',
         target: `test_bank (${questionsToSync.length} 題), 試卷 (${examsToSync.length} 份)`,
-        operator: '王敏行 (Admin Wang)',
+        operator: currentOperatorName,
         timestamp: now,
         status: 'success',
       };
@@ -387,7 +570,6 @@ export default function App() {
       showToast('正在將題目與考卷資料寫入 Google 試算表 (test_bank)...', 'info');
       const result = await syncAllToSpreadsheet(token, targetId, targetUrl, questionsToSync, examsToSync, logsToSync);
 
-      setCategories(INITIAL_CATEGORIES_DATA);
       setQuestions(questionsToSync);
       setExamPapers(examsToSync);
       setAuditLogs(logsToSync);
@@ -518,12 +700,20 @@ export default function App() {
 
   // Delete modal trigger handlers
   const handleOpenBatchDeleteExams = () => {
+    if (!isOnline) {
+      showToast('離線模式下公用試卷為唯讀狀態，無法進行刪除操作！', 'warning');
+      return;
+    }
     setDeleteTargetType('exam');
     setSingleItemToDelete(null);
     setIsTwoPhaseDeleteOpen(true);
   };
 
   const handleOpenSingleDeleteExam = (exam: ExamPaper) => {
+    if (!isOnline && exam.sourceScope !== 'private') {
+      showToast('離線模式下公用試卷為唯讀狀態，無法刪除！', 'warning');
+      return;
+    }
     setDeleteTargetType('exam');
     setSingleItemToDelete({
       id: exam.id,
@@ -534,12 +724,20 @@ export default function App() {
   };
 
   const handleOpenBatchDeleteQuestions = () => {
+    if (!isOnline) {
+      showToast('離線模式下公用題庫為唯讀狀態，無法進行批次刪除！', 'warning');
+      return;
+    }
     setDeleteTargetType('question');
     setSingleItemToDelete(null);
     setIsTwoPhaseDeleteOpen(true);
   };
 
   const handleOpenSingleDeleteQuestion = (q: Question) => {
+    if (!isOnline && q.sourceScope !== 'private') {
+      showToast('離線模式下公用試題為唯讀狀態，無法刪除！', 'warning');
+      return;
+    }
     setDeleteTargetType('question');
     setSingleItemToDelete({
       id: q.id,
@@ -576,7 +774,7 @@ export default function App() {
         id: newLogId,
         action: singleItemToDelete ? `單一試卷移除` : `批次試卷刪除`,
         target: idsToRemove.join(', '),
-        operator: '王敏行 (Admin Wang)',
+        operator: currentOperatorName,
         timestamp: now,
         status: 'warning',
       };
@@ -601,7 +799,7 @@ export default function App() {
         id: newLogId,
         action: singleItemToDelete ? `題目刪除` : `批次題目刪除`,
         target: idsToRemove.join(', '),
-        operator: '王敏行 (Admin Wang)',
+        operator: currentOperatorName,
         timestamp: now,
         status: 'warning',
       };
@@ -633,7 +831,7 @@ export default function App() {
       id: newLogId,
       action: `試卷正式發布 (草稿資料表轉移至公用試卷資料表)`,
       target: examIds.join(', '),
-      operator: '王敏行 (Admin Wang)',
+      operator: currentOperatorName,
       timestamp: now,
       status: 'success',
     };
@@ -671,7 +869,7 @@ export default function App() {
       id: `#LOG-${Date.now().toString().slice(-6)}`,
       action: `題庫組卷建立試卷 [${newExam.id}] (${newExam.status === 'published' ? '發布' : '草稿'})`,
       target: `${newExam.title} (${targetTableName})`,
-      operator: '王敏行 (Admin Wang)',
+      operator: currentOperatorName,
       timestamp: now,
       status: 'success',
     };
@@ -699,12 +897,12 @@ export default function App() {
         showToast(`✅ 考卷 ${newExam.id} 已成功寫入 Google 試算表「${targetTableName}」與 log 分頁！`, 'success');
       } else {
         await recordAuditLog(logEntry);
-        showToast(`考卷 ${newExam.id} 已建立，但尚未設定 VITE_GOOGLE_SCRIPT_URL，未能寫入雲端`, 'warning');
+        showToast(`考卷 ${newExam.id} 已建立，但尚未設定 NEXT_PUBLIC_GOOGLE_SCRIPT_URL，未能寫入雲端`, 'warning');
       }
     } catch (err: any) {
       console.error('Error appending exam to Google Sheets:', err);
       await recordAuditLog(logEntry);
-      showToast(`寫入 Google 試算表失敗: ${err.message || '請確認 VITE_GOOGLE_SCRIPT_URL 設定'}`, 'error');
+      showToast(`寫入 Google 試算表失敗: ${err.message || '請確認 NEXT_PUBLIC_GOOGLE_SCRIPT_URL 設定'}`, 'error');
     }
   };
 
@@ -727,7 +925,7 @@ export default function App() {
       id: `#LOG-${Date.now().toString().slice(-6)}`,
       action: '新增/更新試題並寫入 Google 試算表',
       target: `${q.id} (test_bank)`,
-      operator: '王敏行 (Admin Wang)',
+      operator: currentOperatorName,
       timestamp: now,
       status: 'success',
     };
@@ -755,12 +953,12 @@ export default function App() {
         showToast(`✅ 題目 ${q.id} 已成功寫入 Google 試算表 test_bank 與 log 資料表！`, 'success');
       } else {
         await recordAuditLog(logEntry);
-        showToast(`題目 ${q.id} 已建立，但尚未設定 VITE_GOOGLE_SCRIPT_URL，未能寫入雲端`, 'warning');
+        showToast(`題目 ${q.id} 已建立，但尚未設定 NEXT_PUBLIC_GOOGLE_SCRIPT_URL，未能寫入雲端`, 'warning');
       }
     } catch (err: any) {
       console.error('Error appending question to Google Sheets:', err);
       await recordAuditLog(logEntry);
-      showToast(`寫入 Google 試算表失敗: ${err.message || '請確認 VITE_GOOGLE_SCRIPT_URL 設定'}`, 'error');
+      showToast(`寫入 Google 試算表失敗: ${err.message || '請確認 NEXT_PUBLIC_GOOGLE_SCRIPT_URL 設定'}`, 'error');
     }
   };
 
@@ -858,7 +1056,7 @@ export default function App() {
           showToast(`✅ 帳號「${targetUser.identifier}」已成功寫入 Google 試算表 users 資料表！`, 'success');
         } else {
           await recordAuditLog(logEntry);
-          showToast(`帳號「${targetUser.identifier}」已於前端建立，但尚未設定 VITE_GOOGLE_SCRIPT_URL，未能寫入雲端`, 'warning');
+          showToast(`帳號「${targetUser.identifier}」已於前端建立，但尚未設定 NEXT_PUBLIC_GOOGLE_SCRIPT_URL，未能寫入雲端`, 'warning');
         }
       } catch (err: any) {
         console.error('Error appending user to Google Sheets:', err);
@@ -892,9 +1090,23 @@ export default function App() {
   };
 
   if (!currentUser) {
+    if (authMode === 'register') {
+      return (
+        <RegisterPage
+          onRegisterSuccess={(newUser) => {
+            showToast(`帳號「${newUser.identifier}」註冊成功，歡迎使用！`, 'success');
+            handleLoginSuccess(newUser);
+          }}
+          onNavigateToLogin={() => setAuthMode('login')}
+          spreadsheetId={connectedSpreadsheetId || envSheetId}
+        />
+      );
+    }
+
     return (
       <LoginPage
         onLoginSuccess={handleLoginSuccess}
+        onNavigateToRegister={() => setAuthMode('register')}
         spreadsheetId={connectedSpreadsheetId || envSheetId}
       />
     );
@@ -954,9 +1166,12 @@ export default function App() {
         categories={categories}
         isSheetsConnected={isOnline && hasSyncedSheet && !!connectedSpreadsheetId}
         spreadsheetUrl={connectedSpreadsheetUrl}
-        onSync={() => handleFetchSpreadsheetData(false)}
+        onSync={() => handleBidirectionalSync(false)}
         isSyncing={isLoadingSheetData}
         currentUser={currentUser}
+        onDownloadOfflinePack={handleDownloadOfflinePack}
+        isDownloadingOfflinePack={isDownloadingOfflinePack}
+        isOnline={isOnline}
       />
 
       {/* Main Content Viewport */}
@@ -1037,7 +1252,9 @@ export default function App() {
           {activePage === 'user-exam-select' && (
             <div className="flex flex-col gap-5 max-w-6xl mx-auto">
               <ExamPaperSelection
-                papers={examPapers.length > 0 ? examPapers : INITIAL_EXAM_PAPERS}
+                papers={examPapers}
+                currentUser={currentUser}
+                onNavigate={(page) => setActivePage(page as AppPageId)}
                 onStartExam={(paper) => {
                   setTakingExamId(paper.id);
                   if (typeof window !== 'undefined') {
@@ -1051,14 +1268,21 @@ export default function App() {
           {/* 使用者介面：2. 題目選擇頁面 (自選與公用題庫) */}
           {activePage === 'user-selector' && (
             <div className="flex flex-col gap-5 max-w-6xl mx-auto">
-              <QuestionSelectorPage questions={questions} />
+              <QuestionSelectorPage
+                questions={questions}
+                currentUser={currentUser}
+                onNavigate={(page) => setActivePage(page as AppPageId)}
+              />
             </div>
           )}
 
           {/* 使用者介面：3. 錯題匯入頁面 (歷年弱點趨勢分析) */}
           {activePage === 'user-wrong-questions' && (
             <div className="flex flex-col gap-5 max-w-6xl mx-auto">
-              <WrongQuestionsPage />
+              <WrongQuestionsPage
+                currentUser={currentUser}
+                onNavigate={(page) => setActivePage(page as AppPageId)}
+              />
             </div>
           )}
 
@@ -1188,6 +1412,19 @@ export default function App() {
           setActivePage('exam-papers');
           setPreviewingExam(exam);
         }}
+      />
+
+      {/* 雙向比對衝突處理彈窗 */}
+      <SyncConflictModal
+        isOpen={conflictModalOpen}
+        conflict={currentConflict}
+        onClose={() => {
+          setConflictModalOpen(false);
+          setCurrentConflict(null);
+        }}
+        onResolvePersonalConflict={handleResolvePersonalConflict}
+        onResolvePublicConflict={handleResolvePublicConflict}
+        isProcessing={isResolvingConflict}
       />
 
       {/* Floating Toast Notification */}

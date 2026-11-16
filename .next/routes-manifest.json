@@ -131,6 +131,12 @@
       "namedRegex": "^/questions(?:/)?$"
     },
     {
+      "page": "/register",
+      "regex": "^/register(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/register(?:/)?$"
+    },
+    {
       "page": "/selector",
       "regex": "^/selector(?:/)?$",
       "routeKeys": {},

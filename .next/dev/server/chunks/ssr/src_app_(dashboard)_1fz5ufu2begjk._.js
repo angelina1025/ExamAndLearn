@@ -4139,7 +4139,9 @@ __turbopack_context__.s([
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react-jsx-dev-runtime.js [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$contexts$2f$examStorage$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/contexts/examStorage.ts [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$common$2f$SheetBindGuardModal$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/common/SheetBindGuardModal.tsx [app-ssr] (ecmascript)");
 'use client';
+;
 ;
 ;
 ;
@@ -4165,7 +4167,13 @@ const DIFFICULTY_LABELS = {
     medium: '中等',
     hard: '困難'
 };
-function ExamPaperSelection({ papers, onStartExam }) {
+function ExamPaperSelection({ papers, onStartExam, currentUser, onNavigate }) {
+    const [paperTab, setPaperTab] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(()=>{
+        if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
+        ;
+        return 'public';
+    });
+    const [isGuardModalOpen, setIsGuardModalOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
     const [search, setSearch] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])('');
     const [subject, setSubject] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])('all');
     const [difficulty, setDifficulty] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])('all');
@@ -4190,6 +4198,18 @@ function ExamPaperSelection({ papers, onStartExam }) {
     }, [
         papers
     ]);
+    const handleTabChange = (newTab)=>{
+        if (newTab === 'private') {
+            const hasBoundSheet = Boolean(currentUser?.google_sheet_URL && currentUser.google_sheet_URL.trim() !== '');
+            if (!hasBoundSheet) {
+                setIsGuardModalOpen(true);
+                return;
+            }
+        }
+        setPaperTab(newTab);
+        if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
+        ;
+    };
     const subjects = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useMemo"])(()=>[
             ...new Set(allPapers.map((paper)=>paper.subjectId))
         ], [
@@ -4198,6 +4218,9 @@ function ExamPaperSelection({ papers, onStartExam }) {
     const filteredPapers = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useMemo"])(()=>{
         const keyword = search.trim().toLocaleLowerCase();
         return allPapers.filter((paper)=>{
+            const isPrivate = paper.id.startsWith('CUSTOM-') || paper.sourceScope === 'private';
+            if (paperTab === 'public' && isPrivate) return false;
+            if (paperTab === 'private' && !isPrivate) return false;
             const matchesSearch = !keyword || paper.title.toLocaleLowerCase().includes(keyword) || paper.description.toLocaleLowerCase().includes(keyword);
             const matchesDifficulty = difficulty === 'all' || difficultyFor(paper.difficultyLv) === difficulty;
             return matchesSearch && (subject === 'all' || paper.subjectId === subject) && matchesDifficulty;
@@ -4206,7 +4229,8 @@ function ExamPaperSelection({ papers, onStartExam }) {
         allPapers,
         search,
         subject,
-        difficulty
+        difficulty,
+        paperTab
     ]);
     const selectedPaper = allPapers.find((paper)=>paper.id === selectedPaperId) ?? null;
     function selectPaper(paper) {
@@ -4215,525 +4239,594 @@ function ExamPaperSelection({ papers, onStartExam }) {
     }
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("main", {
         className: "selection-page min-h-screen bg-surface px-4 py-6 sm:px-6 sm:py-10",
-        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-            className: "selection-container mx-auto max-w-6xl",
-            children: [
-                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("header", {
-                    className: "selection-header mb-6",
-                    children: [
-                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                            className: "text-xs font-bold tracking-[0.18em] text-primary",
-                            children: "EXAM AND LEARN"
-                        }, void 0, false, {
-                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                            lineNumber: 92,
-                            columnNumber: 11
-                        }, this),
-                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
-                            className: "mt-2 text-2xl font-bold text-on-surface sm:text-3xl",
-                            children: "選擇試卷"
-                        }, void 0, false, {
-                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                            lineNumber: 93,
-                            columnNumber: 11
-                        }, this),
-                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                            className: "mt-2 text-sm leading-6 text-on-surface-variant",
-                            children: "挑選一份已發布的試卷，查看題數、配分和作答時間。"
-                        }, void 0, false, {
-                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                            lineNumber: 94,
-                            columnNumber: 11
-                        }, this)
-                    ]
-                }, void 0, true, {
-                    fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                    lineNumber: 91,
-                    columnNumber: 9
-                }, this),
-                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("section", {
-                    className: "selection-filters mb-5 rounded-2xl border border-outline-variant bg-white p-4 sm:p-5",
-                    "aria-label": "試卷篩選",
-                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                        className: "selection-filters-grid grid gap-3 md:grid-cols-[minmax(220px,1fr)_180px_160px]",
+        children: [
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$common$2f$SheetBindGuardModal$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SheetBindGuardModal"], {
+                isOpen: isGuardModalOpen,
+                onClose: ()=>setIsGuardModalOpen(false),
+                onGoToPublicExams: ()=>{
+                    setIsGuardModalOpen(false);
+                    setPaperTab('public');
+                    if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
+                    ;
+                },
+                onGoToSettings: ()=>{
+                    setIsGuardModalOpen(false);
+                    if (onNavigate) {
+                        onNavigate('user-settings');
+                    } else if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
+                    ;
+                }
+            }, void 0, false, {
+                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                lineNumber: 124,
+                columnNumber: 7
+            }, this),
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                className: "selection-container mx-auto max-w-6xl",
+                children: [
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("header", {
+                        className: "selection-header mb-6",
                         children: [
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                className: "text-sm font-semibold text-on-surface-variant",
-                                children: [
-                                    "搜尋試卷",
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                                        type: "search",
-                                        value: search,
-                                        onChange: (event)=>setSearch(event.target.value),
-                                        placeholder: "輸入試卷名稱或說明",
-                                        className: "mt-2 min-h-11 w-full rounded-lg border border-outline-variant px-3 font-normal text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                                    }, void 0, false, {
-                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                        lineNumber: 101,
-                                        columnNumber: 15
-                                    }, this)
-                                ]
-                            }, void 0, true, {
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                className: "text-xs font-bold tracking-[0.18em] text-primary",
+                                children: "EXAM AND LEARN"
+                            }, void 0, false, {
                                 fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                lineNumber: 99,
-                                columnNumber: 13
+                                lineNumber: 146,
+                                columnNumber: 11
                             }, this),
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                className: "text-sm font-semibold text-on-surface-variant",
-                                children: [
-                                    "科目",
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
-                                        value: subject,
-                                        onChange: (event)=>setSubject(event.target.value),
-                                        className: "mt-2 min-h-11 w-full rounded-lg border border-outline-variant bg-white px-3 font-normal text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20",
-                                        children: [
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
-                                                value: "all",
-                                                children: "所有科目"
-                                            }, void 0, false, {
-                                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                lineNumber: 116,
-                                                columnNumber: 17
-                                            }, this),
-                                            subjects.map((item)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
-                                                    value: item,
-                                                    children: SUBJECT_LABELS[item]
-                                                }, item, false, {
-                                                    fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                    lineNumber: 117,
-                                                    columnNumber: 41
-                                                }, this))
-                                        ]
-                                    }, void 0, true, {
-                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                        lineNumber: 111,
-                                        columnNumber: 15
-                                    }, this)
-                                ]
-                            }, void 0, true, {
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
+                                className: "mt-2 text-2xl font-bold text-on-surface sm:text-3xl",
+                                children: "選擇試卷"
+                            }, void 0, false, {
                                 fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                lineNumber: 109,
-                                columnNumber: 13
+                                lineNumber: 147,
+                                columnNumber: 11
                             }, this),
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                className: "text-sm font-semibold text-on-surface-variant",
-                                children: [
-                                    "難度",
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
-                                        value: difficulty,
-                                        onChange: (event)=>setDifficulty(event.target.value),
-                                        className: "mt-2 min-h-11 w-full rounded-lg border border-outline-variant bg-white px-3 font-normal text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20",
-                                        children: [
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
-                                                value: "all",
-                                                children: "所有難度"
-                                            }, void 0, false, {
-                                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                lineNumber: 127,
-                                                columnNumber: 17
-                                            }, this),
-                                            Object.entries(DIFFICULTY_LABELS).map(([value, label])=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
-                                                    value: value,
-                                                    children: label
-                                                }, value, false, {
-                                                    fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                    lineNumber: 129,
-                                                    columnNumber: 19
-                                                }, this))
-                                        ]
-                                    }, void 0, true, {
-                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                        lineNumber: 122,
-                                        columnNumber: 15
-                                    }, this)
-                                ]
-                            }, void 0, true, {
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                className: "mt-2 text-sm leading-6 text-on-surface-variant",
+                                children: "挑選一份已發布的試卷，查看題數、配分和作答時間。"
+                            }, void 0, false, {
                                 fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                lineNumber: 120,
-                                columnNumber: 13
+                                lineNumber: 148,
+                                columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                        lineNumber: 98,
-                        columnNumber: 11
-                    }, this)
-                }, void 0, false, {
-                    fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                    lineNumber: 97,
-                    columnNumber: 9
-                }, this),
-                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                    className: "selection-layout grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]",
-                    children: [
-                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("section", {
-                            className: "selection-list space-y-3",
-                            "aria-label": "已發布試卷",
+                        lineNumber: 145,
+                        columnNumber: 9
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-outline-variant/60 pb-3",
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "inline-flex rounded-xl bg-[#f2f4f6] p-1 border border-[#c3c6d7]/30",
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                        type: "button",
+                                        onClick: ()=>handleTabChange('public'),
+                                        className: `px-5 py-2 rounded-lg text-sm font-bold transition-all ${paperTab === 'public' ? 'bg-white text-[#004ac6] shadow-sm' : 'text-[#434655] hover:text-[#191c1d]'}`,
+                                        children: "公用試卷"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                        lineNumber: 154,
+                                        columnNumber: 13
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                        type: "button",
+                                        onClick: ()=>handleTabChange('private'),
+                                        className: `px-5 py-2 rounded-lg text-sm font-bold transition-all ${paperTab === 'private' ? 'bg-white text-[#004ac6] shadow-sm' : 'text-[#434655] hover:text-[#191c1d]'}`,
+                                        children: "私人試卷"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                        lineNumber: 165,
+                                        columnNumber: 13
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                lineNumber: 153,
+                                columnNumber: 11
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "text-xs text-[#565e74]",
+                                children: paperTab === 'public' ? '提供公用標準模考與各科歷屆考卷，隨選即測。' : '展示由您挑選題目組成的自選考卷或綁定 Google Sheet 的專屬試卷。'
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                lineNumber: 177,
+                                columnNumber: 11
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                        lineNumber: 152,
+                        columnNumber: 9
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("section", {
+                        className: "selection-filters mb-5 rounded-2xl border border-outline-variant bg-white p-4 sm:p-5",
+                        "aria-label": "試卷篩選",
+                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: "selection-filters-grid grid gap-3 md:grid-cols-[minmax(220px,1fr)_180px_160px]",
                             children: [
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "flex items-center justify-between px-1 text-sm text-on-surface-variant",
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                    className: "text-sm font-semibold text-on-surface-variant",
                                     children: [
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                            children: "已發布試卷"
+                                        "搜尋試卷",
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                            type: "search",
+                                            value: search,
+                                            onChange: (event)=>setSearch(event.target.value),
+                                            placeholder: "輸入試卷名稱或說明",
+                                            className: "mt-2 min-h-11 w-full rounded-lg border border-outline-variant px-3 font-normal text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                            lineNumber: 139,
-                                            columnNumber: 15
-                                        }, this),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                            children: [
-                                                filteredPapers.length,
-                                                " 份"
-                                            ]
-                                        }, void 0, true, {
-                                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                            lineNumber: 140,
+                                            lineNumber: 188,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                    lineNumber: 138,
+                                    lineNumber: 186,
                                     columnNumber: 13
                                 }, this),
-                                filteredPapers.length === 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "selection-empty rounded-2xl border border-dashed border-outline-variant bg-white p-10 text-center text-sm text-on-surface-variant",
-                                    children: "找不到符合條件的試卷，請調整搜尋或篩選條件。"
-                                }, void 0, false, {
-                                    fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                    lineNumber: 143,
-                                    columnNumber: 15
-                                }, this) : filteredPapers.map((paper)=>{
-                                    const selected = paper.id === selectedPaperId;
-                                    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("article", {
-                                        className: `selection-card exam-selection-card rounded-2xl border bg-white p-4 transition-all sm:p-5 ${selected ? 'border-[#004ac6] ring-2 ring-[#004ac6]/20 shadow-sm' : 'border-[#c3c6d7] hover:border-[#7598da]'}`,
-                                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                            className: "flex items-start justify-between gap-4",
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                    className: "text-sm font-semibold text-on-surface-variant",
+                                    children: [
+                                        "科目",
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
+                                            value: subject,
+                                            onChange: (event)=>setSubject(event.target.value),
+                                            className: "mt-2 min-h-11 w-full rounded-lg border border-outline-variant bg-white px-3 font-normal text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20",
                                             children: [
-                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                    className: "flex-1 min-w-0 pr-2",
-                                                    children: [
-                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                            className: "mb-2 flex flex-wrap items-center gap-2 text-xs font-semibold",
-                                                            children: [
-                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                                    className: "selection-chip subject-chip rounded-full bg-[#dbe1ff] px-2.5 py-1 text-[#00174b]",
-                                                                    children: paper.subject
-                                                                }, void 0, false, {
-                                                                    fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                                    lineNumber: 156,
-                                                                    columnNumber: 25
-                                                                }, this),
-                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                                    className: "selection-chip rounded-full bg-[#eceef0] px-2.5 py-1 text-[#434655]",
-                                                                    children: [
-                                                                        DIFFICULTY_LABELS[difficultyFor(paper.difficultyLv)],
-                                                                        "難度"
-                                                                    ]
-                                                                }, void 0, true, {
-                                                                    fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                                    lineNumber: 157,
-                                                                    columnNumber: 25
-                                                                }, this)
-                                                            ]
-                                                        }, void 0, true, {
-                                                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                            lineNumber: 155,
-                                                            columnNumber: 23
-                                                        }, this),
-                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
-                                                            className: "text-base font-bold leading-6 text-[#191c1e] truncate",
-                                                            children: paper.title
-                                                        }, void 0, false, {
-                                                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                            lineNumber: 161,
-                                                            columnNumber: 23
-                                                        }, this),
-                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                            className: "mt-1 text-sm leading-6 text-[#565e74] line-clamp-2",
-                                                            children: paper.description || '無詳細說明'
-                                                        }, void 0, false, {
-                                                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                            lineNumber: 162,
-                                                            columnNumber: 23
-                                                        }, this),
-                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                            className: "mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-[#565e74]",
-                                                            children: [
-                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                                    children: [
-                                                                        paper.questionCount,
-                                                                        " 題"
-                                                                    ]
-                                                                }, void 0, true, {
-                                                                    fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                                    lineNumber: 164,
-                                                                    columnNumber: 25
-                                                                }, this),
-                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                                    children: [
-                                                                        paper.totalScore,
-                                                                        " 分"
-                                                                    ]
-                                                                }, void 0, true, {
-                                                                    fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                                    lineNumber: 165,
-                                                                    columnNumber: 25
-                                                                }, this),
-                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                                    children: [
-                                                                        paper.durationMinutes,
-                                                                        " 分鐘"
-                                                                    ]
-                                                                }, void 0, true, {
-                                                                    fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                                    lineNumber: 166,
-                                                                    columnNumber: 25
-                                                                }, this)
-                                                            ]
-                                                        }, void 0, true, {
-                                                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                            lineNumber: 163,
-                                                            columnNumber: 23
-                                                        }, this)
-                                                    ]
-                                                }, void 0, true, {
-                                                    fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                    lineNumber: 154,
-                                                    columnNumber: 21
-                                                }, this),
-                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
-                                                    type: "button",
-                                                    onClick: ()=>selectPaper(paper),
-                                                    "aria-pressed": selected,
-                                                    className: `shrink-0 min-w-[96px] h-10 rounded-lg px-4 py-2 text-sm font-bold transition-colors cursor-pointer ${selected ? 'bg-[#004ac6] border border-[#004ac6] text-white shadow-sm' : 'border border-[#004ac6] text-[#004ac6] bg-white hover:bg-[#eef3ff]'}`,
-                                                    children: selected ? '已選擇' : '選擇試卷'
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
+                                                    value: "all",
+                                                    children: "所有科目"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                    lineNumber: 169,
-                                                    columnNumber: 21
-                                                }, this)
+                                                    lineNumber: 203,
+                                                    columnNumber: 17
+                                                }, this),
+                                                subjects.map((item)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
+                                                        value: item,
+                                                        children: SUBJECT_LABELS[item]
+                                                    }, item, false, {
+                                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                        lineNumber: 204,
+                                                        columnNumber: 41
+                                                    }, this))
                                             ]
                                         }, void 0, true, {
-                                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                            lineNumber: 153,
-                                            columnNumber: 19
-                                        }, this)
-                                    }, paper.id, false, {
-                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                        lineNumber: 149,
-                                        columnNumber: 17
-                                    }, this);
-                                })
-                            ]
-                        }, void 0, true, {
-                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                            lineNumber: 137,
-                            columnNumber: 11
-                        }, this),
-                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("aside", {
-                            className: "selection-summary rounded-2xl border border-outline-variant bg-white p-5 lg:sticky lg:top-5",
-                            children: [
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
-                                    className: "text-base font-bold text-on-surface",
-                                    children: "試卷摘要"
-                                }, void 0, false, {
-                                    fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                    lineNumber: 188,
-                                    columnNumber: 13
-                                }, this),
-                                selectedPaper ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
-                                    children: [
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                            className: "mt-4 font-semibold leading-6 text-on-surface",
-                                            children: selectedPaper.title
-                                        }, void 0, false, {
-                                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                            lineNumber: 191,
-                                            columnNumber: 17
-                                        }, this),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("dl", {
-                                            className: "mt-4 space-y-2 text-sm text-on-surface-variant",
-                                            children: [
-                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                    className: "flex justify-between gap-3",
-                                                    children: [
-                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("dt", {
-                                                            children: "科目"
-                                                        }, void 0, false, {
-                                                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                            lineNumber: 193,
-                                                            columnNumber: 63
-                                                        }, this),
-                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("dd", {
-                                                            children: selectedPaper.subject
-                                                        }, void 0, false, {
-                                                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                            lineNumber: 193,
-                                                            columnNumber: 74
-                                                        }, this)
-                                                    ]
-                                                }, void 0, true, {
-                                                    fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                    lineNumber: 193,
-                                                    columnNumber: 19
-                                                }, this),
-                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                    className: "flex justify-between gap-3",
-                                                    children: [
-                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("dt", {
-                                                            children: "題數"
-                                                        }, void 0, false, {
-                                                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                            lineNumber: 194,
-                                                            columnNumber: 63
-                                                        }, this),
-                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("dd", {
-                                                            children: [
-                                                                selectedPaper.questionCount,
-                                                                " 題"
-                                                            ]
-                                                        }, void 0, true, {
-                                                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                            lineNumber: 194,
-                                                            columnNumber: 74
-                                                        }, this)
-                                                    ]
-                                                }, void 0, true, {
-                                                    fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                    lineNumber: 194,
-                                                    columnNumber: 19
-                                                }, this),
-                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                    className: "flex justify-between gap-3",
-                                                    children: [
-                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("dt", {
-                                                            children: "總分"
-                                                        }, void 0, false, {
-                                                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                            lineNumber: 195,
-                                                            columnNumber: 63
-                                                        }, this),
-                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("dd", {
-                                                            children: [
-                                                                selectedPaper.totalScore,
-                                                                " 分"
-                                                            ]
-                                                        }, void 0, true, {
-                                                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                            lineNumber: 195,
-                                                            columnNumber: 74
-                                                        }, this)
-                                                    ]
-                                                }, void 0, true, {
-                                                    fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                    lineNumber: 195,
-                                                    columnNumber: 19
-                                                }, this),
-                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                    className: "flex justify-between gap-3",
-                                                    children: [
-                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("dt", {
-                                                            children: "作答時間"
-                                                        }, void 0, false, {
-                                                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                            lineNumber: 196,
-                                                            columnNumber: 63
-                                                        }, this),
-                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("dd", {
-                                                            children: [
-                                                                selectedPaper.durationMinutes,
-                                                                " 分鐘"
-                                                            ]
-                                                        }, void 0, true, {
-                                                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                            lineNumber: 196,
-                                                            columnNumber: 76
-                                                        }, this)
-                                                    ]
-                                                }, void 0, true, {
-                                                    fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                                    lineNumber: 196,
-                                                    columnNumber: 19
-                                                }, this)
-                                            ]
-                                        }, void 0, true, {
-                                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                            lineNumber: 192,
-                                            columnNumber: 17
-                                        }, this),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
-                                            type: "button",
-                                            onClick: ()=>{
-                                                const isCompleted = ("TURBOPACK compile-time value", "undefined") !== 'undefined' && selectedPaper && (()=>{
-                                                    try {
-                                                        const raw = localStorage.getItem(`exam-session:v1:${selectedPaper.id}`);
-                                                        if (!raw) return false;
-                                                        const parsed = JSON.parse(raw);
-                                                        return parsed.status === 'submitted' || parsed.deadline && parsed.deadline < Date.now();
-                                                    } catch  {
-                                                        return false;
-                                                    }
-                                                })();
-                                                if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
-                                                ;
-                                                if (onStartExam) {
-                                                    onStartExam(selectedPaper);
-                                                    return;
-                                                }
-                                                if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
-                                                ;
-                                            },
-                                            className: "selection-button primary mt-5 min-h-11 w-full rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-primary-container transition-colors shadow-sm",
-                                            children: "開始測驗"
-                                        }, void 0, false, {
                                             fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
                                             lineNumber: 198,
-                                            columnNumber: 17
-                                        }, this),
-                                        notice && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                            role: "status",
-                                            className: "mt-3 rounded-lg bg-primary-fixed px-3 py-3 text-sm leading-5 text-on-primary-fixed",
-                                            children: notice
-                                        }, void 0, false, {
-                                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                            lineNumber: 231,
-                                            columnNumber: 28
+                                            columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                    lineNumber: 190,
-                                    columnNumber: 15
-                                }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                    className: "mt-3 text-sm leading-6 text-on-surface-variant",
-                                    children: "選擇一份試卷後，這裡會顯示作答資訊。"
-                                }, void 0, false, {
+                                    lineNumber: 196,
+                                    columnNumber: 13
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                    className: "text-sm font-semibold text-on-surface-variant",
+                                    children: [
+                                        "難度",
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
+                                            value: difficulty,
+                                            onChange: (event)=>setDifficulty(event.target.value),
+                                            className: "mt-2 min-h-11 w-full rounded-lg border border-outline-variant bg-white px-3 font-normal text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20",
+                                            children: [
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
+                                                    value: "all",
+                                                    children: "所有難度"
+                                                }, void 0, false, {
+                                                    fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                    lineNumber: 214,
+                                                    columnNumber: 17
+                                                }, this),
+                                                Object.entries(DIFFICULTY_LABELS).map(([value, label])=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
+                                                        value: value,
+                                                        children: label
+                                                    }, value, false, {
+                                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                        lineNumber: 216,
+                                                        columnNumber: 19
+                                                    }, this))
+                                            ]
+                                        }, void 0, true, {
+                                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                            lineNumber: 209,
+                                            columnNumber: 15
+                                        }, this)
+                                    ]
+                                }, void 0, true, {
                                     fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                                    lineNumber: 234,
-                                    columnNumber: 15
+                                    lineNumber: 207,
+                                    columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                            lineNumber: 187,
+                            lineNumber: 185,
                             columnNumber: 11
                         }, this)
-                    ]
-                }, void 0, true, {
-                    fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-                    lineNumber: 136,
-                    columnNumber: 9
-                }, this)
-            ]
-        }, void 0, true, {
-            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-            lineNumber: 90,
-            columnNumber: 7
-        }, this)
-    }, void 0, false, {
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                        lineNumber: 184,
+                        columnNumber: 9
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "selection-layout grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]",
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("section", {
+                                className: "selection-list space-y-3",
+                                "aria-label": "已發布試卷",
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "flex items-center justify-between px-1 text-sm text-on-surface-variant",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                children: "已發布試卷"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                lineNumber: 226,
+                                                columnNumber: 15
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                children: [
+                                                    filteredPapers.length,
+                                                    " 份"
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                lineNumber: 227,
+                                                columnNumber: 15
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                        lineNumber: 225,
+                                        columnNumber: 13
+                                    }, this),
+                                    filteredPapers.length === 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "selection-empty rounded-2xl border border-dashed border-outline-variant bg-white p-10 text-center text-sm text-on-surface-variant",
+                                        children: paperTab === 'private' ? '目前尚無符合條件的私人試卷。您可以前往「題目選擇頁面」挑選題目組卷，或在個人 Google Sheet 中新增試卷。' : '找不到符合條件的公用試卷，請調整搜尋或篩選條件。'
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                        lineNumber: 230,
+                                        columnNumber: 15
+                                    }, this) : filteredPapers.map((paper)=>{
+                                        const selected = paper.id === selectedPaperId;
+                                        return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("article", {
+                                            className: `selection-card exam-selection-card rounded-2xl border bg-white p-4 transition-all sm:p-5 ${selected ? 'border-[#004ac6] ring-2 ring-[#004ac6]/20 shadow-sm' : 'border-[#c3c6d7] hover:border-[#7598da]'}`,
+                                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                className: "flex flex-col sm:flex-row sm:items-start justify-between gap-4",
+                                                children: [
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        className: "flex-1 min-w-0 pr-2",
+                                                        children: [
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                className: "mb-2 flex flex-wrap items-center gap-2 text-xs font-semibold",
+                                                                children: [
+                                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                                        className: "selection-chip subject-chip rounded-full bg-[#dbe1ff] px-2.5 py-1 text-[#00174b]",
+                                                                        children: paper.subject
+                                                                    }, void 0, false, {
+                                                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                                        lineNumber: 245,
+                                                                        columnNumber: 25
+                                                                    }, this),
+                                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                                        className: "selection-chip rounded-full bg-[#eceef0] px-2.5 py-1 text-[#434655]",
+                                                                        children: [
+                                                                            DIFFICULTY_LABELS[difficultyFor(paper.difficultyLv)],
+                                                                            "難度"
+                                                                        ]
+                                                                    }, void 0, true, {
+                                                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                                        lineNumber: 246,
+                                                                        columnNumber: 25
+                                                                    }, this)
+                                                                ]
+                                                            }, void 0, true, {
+                                                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                                lineNumber: 244,
+                                                                columnNumber: 23
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
+                                                                className: "text-base font-bold leading-6 text-[#191c1e]",
+                                                                children: paper.title
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                                lineNumber: 250,
+                                                                columnNumber: 23
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                className: "mt-1 text-sm leading-6 text-[#565e74] line-clamp-2",
+                                                                children: paper.description || '無詳細說明'
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                                lineNumber: 251,
+                                                                columnNumber: 23
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                className: "mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-[#565e74]",
+                                                                children: [
+                                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                                        children: [
+                                                                            paper.questionCount,
+                                                                            " 題"
+                                                                        ]
+                                                                    }, void 0, true, {
+                                                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                                        lineNumber: 253,
+                                                                        columnNumber: 25
+                                                                    }, this),
+                                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                                        children: [
+                                                                            paper.totalScore,
+                                                                            " 分"
+                                                                        ]
+                                                                    }, void 0, true, {
+                                                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                                        lineNumber: 254,
+                                                                        columnNumber: 25
+                                                                    }, this),
+                                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                                        children: [
+                                                                            paper.durationMinutes,
+                                                                            " 分鐘"
+                                                                        ]
+                                                                    }, void 0, true, {
+                                                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                                        lineNumber: 255,
+                                                                        columnNumber: 25
+                                                                    }, this)
+                                                                ]
+                                                            }, void 0, true, {
+                                                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                                lineNumber: 252,
+                                                                columnNumber: 23
+                                                            }, this)
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                        lineNumber: 243,
+                                                        columnNumber: 21
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                                        type: "button",
+                                                        onClick: ()=>selectPaper(paper),
+                                                        "aria-pressed": selected,
+                                                        className: `shrink-0 self-start sm:self-center min-w-[96px] h-10 rounded-lg px-4 py-2 text-sm font-bold transition-colors cursor-pointer whitespace-nowrap ${selected ? 'bg-[#004ac6] border border-[#004ac6] text-white shadow-sm' : 'border border-[#004ac6] text-[#004ac6] bg-white hover:bg-[#eef3ff]'}`,
+                                                        children: selected ? '已選擇' : '選擇試卷'
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                        lineNumber: 258,
+                                                        columnNumber: 21
+                                                    }, this)
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                lineNumber: 242,
+                                                columnNumber: 19
+                                            }, this)
+                                        }, paper.id, false, {
+                                            fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                            lineNumber: 238,
+                                            columnNumber: 17
+                                        }, this);
+                                    })
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                lineNumber: 224,
+                                columnNumber: 11
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("aside", {
+                                className: "selection-summary rounded-2xl border border-outline-variant bg-white p-5 lg:sticky lg:top-5",
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
+                                        className: "text-base font-bold text-on-surface",
+                                        children: "試卷摘要"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                        lineNumber: 277,
+                                        columnNumber: 13
+                                    }, this),
+                                    selectedPaper ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                className: "mt-4 font-semibold leading-6 text-on-surface",
+                                                children: selectedPaper.title
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                lineNumber: 280,
+                                                columnNumber: 17
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("dl", {
+                                                className: "mt-4 space-y-2 text-sm text-on-surface-variant",
+                                                children: [
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        className: "flex justify-between gap-3",
+                                                        children: [
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("dt", {
+                                                                children: "科目"
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                                lineNumber: 282,
+                                                                columnNumber: 63
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("dd", {
+                                                                children: selectedPaper.subject
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                                lineNumber: 282,
+                                                                columnNumber: 74
+                                                            }, this)
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                        lineNumber: 282,
+                                                        columnNumber: 19
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        className: "flex justify-between gap-3",
+                                                        children: [
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("dt", {
+                                                                children: "題數"
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                                lineNumber: 283,
+                                                                columnNumber: 63
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("dd", {
+                                                                children: [
+                                                                    selectedPaper.questionCount,
+                                                                    " 題"
+                                                                ]
+                                                            }, void 0, true, {
+                                                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                                lineNumber: 283,
+                                                                columnNumber: 74
+                                                            }, this)
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                        lineNumber: 283,
+                                                        columnNumber: 19
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        className: "flex justify-between gap-3",
+                                                        children: [
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("dt", {
+                                                                children: "總分"
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                                lineNumber: 284,
+                                                                columnNumber: 63
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("dd", {
+                                                                children: [
+                                                                    selectedPaper.totalScore,
+                                                                    " 分"
+                                                                ]
+                                                            }, void 0, true, {
+                                                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                                lineNumber: 284,
+                                                                columnNumber: 74
+                                                            }, this)
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                        lineNumber: 284,
+                                                        columnNumber: 19
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        className: "flex justify-between gap-3",
+                                                        children: [
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("dt", {
+                                                                children: "作答時間"
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                                lineNumber: 285,
+                                                                columnNumber: 63
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("dd", {
+                                                                children: [
+                                                                    selectedPaper.durationMinutes,
+                                                                    " 分鐘"
+                                                                ]
+                                                            }, void 0, true, {
+                                                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                                lineNumber: 285,
+                                                                columnNumber: 76
+                                                            }, this)
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                        lineNumber: 285,
+                                                        columnNumber: 19
+                                                    }, this)
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                lineNumber: 281,
+                                                columnNumber: 17
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                                type: "button",
+                                                onClick: ()=>{
+                                                    const isCompleted = ("TURBOPACK compile-time value", "undefined") !== 'undefined' && selectedPaper && (()=>{
+                                                        try {
+                                                            const raw = localStorage.getItem(`exam-session:v1:${selectedPaper.id}`);
+                                                            if (!raw) return false;
+                                                            const parsed = JSON.parse(raw);
+                                                            return parsed.status === 'submitted' || parsed.deadline && parsed.deadline < Date.now();
+                                                        } catch  {
+                                                            return false;
+                                                        }
+                                                    })();
+                                                    if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
+                                                    ;
+                                                    if (onStartExam) {
+                                                        onStartExam(selectedPaper);
+                                                        return;
+                                                    }
+                                                    if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
+                                                    ;
+                                                },
+                                                className: "selection-button primary mt-5 min-h-11 w-full rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-primary-container transition-colors shadow-sm",
+                                                children: "開始測驗"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                lineNumber: 287,
+                                                columnNumber: 17
+                                            }, this),
+                                            notice && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                role: "status",
+                                                className: "mt-3 rounded-lg bg-primary-fixed px-3 py-3 text-sm leading-5 text-on-primary-fixed",
+                                                children: notice
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                                lineNumber: 320,
+                                                columnNumber: 28
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                        lineNumber: 279,
+                                        columnNumber: 15
+                                    }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                        className: "mt-3 text-sm leading-6 text-on-surface-variant",
+                                        children: "選擇一份試卷後，這裡會顯示作答資訊。"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                        lineNumber: 323,
+                                        columnNumber: 15
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                                lineNumber: 276,
+                                columnNumber: 11
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                        lineNumber: 223,
+                        columnNumber: 9
+                    }, this)
+                ]
+            }, void 0, true, {
+                fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
+                lineNumber: 144,
+                columnNumber: 7
+            }, this)
+        ]
+    }, void 0, true, {
         fileName: "[project]/src/app/(dashboard)/exams/select/_components/ExamPaperSelection.tsx",
-        lineNumber: 89,
+        lineNumber: 122,
         columnNumber: 5
     }, this);
 }
@@ -8822,6 +8915,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$data$2f$initialData$2
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$selector$2f$_components$2f$SourceTab$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/(dashboard)/selector/_components/SourceTab.tsx [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$selector$2f$_components$2f$QuestionPickerList$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/(dashboard)/selector/_components/QuestionPickerList.tsx [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$selector$2f$_components$2f$AssemblySummaryBar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/(dashboard)/selector/_components/AssemblySummaryBar.tsx [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$common$2f$SheetBindGuardModal$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/common/SheetBindGuardModal.tsx [app-ssr] (ecmascript)");
 'use client';
 ;
 ;
@@ -8829,12 +8923,45 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$29
 ;
 ;
 ;
-function QuestionSelectorPage({ questions: propQuestions } = {}) {
+;
+function QuestionSelectorPage({ questions: propQuestions, currentUser, onNavigate } = {}) {
+    const user = currentUser ?? (()=>{
+        if ("TURBOPACK compile-time truthy", 1) return null;
+        //TURBOPACK unreachable
+        ;
+    })();
+    const hasBoundSheet = Boolean(user?.google_sheet_URL && user.google_sheet_URL.trim() !== '');
+    const [isGuardModalOpen, setIsGuardModalOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(!hasBoundSheet);
     const [source, setSource] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])('public');
     // 優先取線上題庫 (Google Sheet)；若離線或線上無資料，才去讀取 data 內題庫 INITIAL_QUESTIONS
     const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
     const questions = propQuestions && propQuestions.length > 0 ? propQuestions : !isOnline || !propQuestions || propQuestions.length === 0 ? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$data$2f$initialData$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["INITIAL_QUESTIONS"] : [];
     const [selectedIds, setSelectedIds] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([]);
+    const handleGoToPublicExams = ()=>{
+        setIsGuardModalOpen(false);
+        if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
+        ;
+        if (onNavigate) {
+            onNavigate('user-exam-select');
+        } else if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
+        ;
+    };
+    const handleGoToSettings = ()=>{
+        setIsGuardModalOpen(false);
+        if (onNavigate) {
+            onNavigate('user-settings');
+        } else if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
+        ;
+    };
+    const handleSourceChange = (newSource)=>{
+        if (newSource === 'private') {
+            if (!hasBoundSheet) {
+                setIsGuardModalOpen(true);
+                return;
+            }
+        }
+        setSource(newSource);
+    };
     const handleToggle = (id)=>{
         setSelectedIds((prev)=>prev.includes(id) ? prev.filter((item)=>item !== id) : [
                 ...prev,
@@ -8843,6 +8970,10 @@ function QuestionSelectorPage({ questions: propQuestions } = {}) {
     };
     const selectedQuestions = questions.filter((q)=>selectedIds.includes(q.id));
     const handleConfirmAssemble = ()=>{
+        if (!hasBoundSheet) {
+            setIsGuardModalOpen(true);
+            return;
+        }
         if (selectedQuestions.length === 0) return;
         const newId = `CUSTOM-${Date.now().toString().slice(-6)}`;
         const newPaper = {
@@ -8857,7 +8988,8 @@ function QuestionSelectorPage({ questions: propQuestions } = {}) {
             durationMinutes: Math.max(10, selectedQuestions.reduce((s, q)=>s + (q.time ?? 1), 0)),
             createdAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
             status: 'published',
-            questionIds: selectedIds
+            questionIds: selectedIds,
+            sourceScope: 'private'
         };
         if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
         ;
@@ -8865,6 +8997,95 @@ function QuestionSelectorPage({ questions: propQuestions } = {}) {
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "p-6 max-w-6xl mx-auto flex flex-col gap-5",
         children: [
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$common$2f$SheetBindGuardModal$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SheetBindGuardModal"], {
+                isOpen: isGuardModalOpen,
+                onClose: ()=>setIsGuardModalOpen(false),
+                onGoToPublicExams: handleGoToPublicExams,
+                onGoToSettings: handleGoToSettings
+            }, void 0, false, {
+                fileName: "[project]/src/app/(dashboard)/selector/page.tsx",
+                lineNumber: 130,
+                columnNumber: 7
+            }, this),
+            !hasBoundSheet && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                className: "rounded-xl border border-amber-200 bg-amber-50/80 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3",
+                children: [
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "flex items-center gap-3",
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                className: "material-symbols-outlined text-amber-600 text-[24px]",
+                                children: "warning"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/(dashboard)/selector/page.tsx",
+                                lineNumber: 140,
+                                columnNumber: 13
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                        className: "text-sm font-bold text-amber-900",
+                                        children: "未綁定個人 Google Sheet"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/(dashboard)/selector/page.tsx",
+                                        lineNumber: 142,
+                                        columnNumber: 15
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                        className: "text-xs text-amber-700 mt-0.5",
+                                        children: "自組考卷需存放於個人 Google Sheet。若未綁定，自選考卷將無處存放。"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/(dashboard)/selector/page.tsx",
+                                        lineNumber: 143,
+                                        columnNumber: 15
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/(dashboard)/selector/page.tsx",
+                                lineNumber: 141,
+                                columnNumber: 13
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/src/app/(dashboard)/selector/page.tsx",
+                        lineNumber: 139,
+                        columnNumber: 11
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "flex items-center gap-2 w-full sm:w-auto",
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                type: "button",
+                                onClick: handleGoToPublicExams,
+                                className: "px-3 py-1.5 rounded-lg text-xs font-bold border border-amber-300 text-amber-900 hover:bg-amber-100 transition-colors cursor-pointer",
+                                children: "直接選公用考卷"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/(dashboard)/selector/page.tsx",
+                                lineNumber: 149,
+                                columnNumber: 13
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                type: "button",
+                                onClick: handleGoToSettings,
+                                className: "px-3 py-1.5 rounded-lg text-xs font-bold bg-[#004ac6] text-white hover:bg-[#003da6] transition-colors cursor-pointer shadow-xs",
+                                children: "前往綁定"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/(dashboard)/selector/page.tsx",
+                                lineNumber: 156,
+                                columnNumber: 13
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/src/app/(dashboard)/selector/page.tsx",
+                        lineNumber: 148,
+                        columnNumber: 11
+                    }, this)
+                ]
+            }, void 0, true, {
+                fileName: "[project]/src/app/(dashboard)/selector/page.tsx",
+                lineNumber: 138,
+                columnNumber: 9
+            }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "flex items-center justify-between",
                 children: [
@@ -8875,7 +9096,7 @@ function QuestionSelectorPage({ questions: propQuestions } = {}) {
                                 children: "題目選擇與組卷"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(dashboard)/selector/page.tsx",
-                                lineNumber: 76,
+                                lineNumber: 169,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -8883,27 +9104,27 @@ function QuestionSelectorPage({ questions: propQuestions } = {}) {
                                 children: "從公用或私人題庫挑選題目，快速組合成新考卷"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(dashboard)/selector/page.tsx",
-                                lineNumber: 77,
+                                lineNumber: 170,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(dashboard)/selector/page.tsx",
-                        lineNumber: 75,
+                        lineNumber: 168,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$selector$2f$_components$2f$SourceTab$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SourceTab"], {
                         activeSource: source,
-                        onChange: setSource
+                        onChange: handleSourceChange
                     }, void 0, false, {
                         fileName: "[project]/src/app/(dashboard)/selector/page.tsx",
-                        lineNumber: 81,
+                        lineNumber: 174,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/(dashboard)/selector/page.tsx",
-                lineNumber: 74,
+                lineNumber: 167,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$selector$2f$_components$2f$AssemblySummaryBar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["AssemblySummaryBar"], {
@@ -8912,7 +9133,7 @@ function QuestionSelectorPage({ questions: propQuestions } = {}) {
                 onConfirmAssemble: handleConfirmAssemble
             }, void 0, false, {
                 fileName: "[project]/src/app/(dashboard)/selector/page.tsx",
-                lineNumber: 84,
+                lineNumber: 177,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$selector$2f$_components$2f$QuestionPickerList$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["QuestionPickerList"], {
@@ -8921,13 +9142,13 @@ function QuestionSelectorPage({ questions: propQuestions } = {}) {
                 onToggleQuestion: handleToggle
             }, void 0, false, {
                 fileName: "[project]/src/app/(dashboard)/selector/page.tsx",
-                lineNumber: 90,
+                lineNumber: 183,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/(dashboard)/selector/page.tsx",
-        lineNumber: 73,
+        lineNumber: 128,
         columnNumber: 5
     }, this);
 }
@@ -10046,63 +10267,246 @@ __turbopack_context__.s([
     ()=>ImportUploader
 ]);
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react-jsx-dev-runtime.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
 'use client';
 ;
-const ImportUploader = ({ onImportFile })=>{
+;
+const ImportUploader = ({ currentUser, onImportFile, onNavigate })=>{
+    const [syncStatus, setSyncStatus] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])('');
+    const user = currentUser ?? (()=>{
+        if ("TURBOPACK compile-time truthy", 1) return null;
+        //TURBOPACK unreachable
+        ;
+    })();
+    const hasBoundSheet = Boolean(user?.google_sheet_URL && user.google_sheet_URL.trim() !== '');
+    const handleGoogleSheetImportClick = ()=>{
+        if (!hasBoundSheet) {
+            if (window.confirm('未綁定個人 Google Sheet，無法從雲端試算表匯入錯題。\n系統目前僅提供 Excel (.xlsx) 上傳方式。\n\n是否立即前往設定頁面進行綁定？')) {
+                if (onNavigate) {
+                    onNavigate('user-settings');
+                } else if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
+                ;
+            }
+            return;
+        }
+        setSyncStatus('正在從個人 Google Sheet 同步錯題紀錄…');
+        setTimeout(()=>{
+            setSyncStatus('已完成從個人試算表讀取錯題資料。');
+        }, 1200);
+    };
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-        className: "bg-white rounded-xl border border-[#c3c6d7]/40 p-5 flex items-center justify-between",
+        className: "bg-white rounded-2xl border border-[#c3c6d7]/40 p-6 flex flex-col gap-4",
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
-                        className: "text-sm font-bold text-[#191c1d]",
+                        className: "text-base font-bold text-[#191c1d]",
                         children: "匯入歷史測驗紀錄 / 錯題本"
                     }, void 0, false, {
                         fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
-                        lineNumber: 13,
+                        lineNumber: 56,
                         columnNumber: 9
                     }, ("TURBOPACK compile-time value", void 0)),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                        className: "text-xs text-[#737686] mt-0.5",
-                        children: "上傳測驗結果檔案以彙整歷次易錯知識點"
+                        className: "text-xs text-[#737686] mt-1",
+                        children: "上傳或同步測驗結果檔案，以彙整歷次易錯知識點並進行弱點分析。"
                     }, void 0, false, {
                         fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
-                        lineNumber: 14,
+                        lineNumber: 57,
                         columnNumber: 9
                     }, ("TURBOPACK compile-time value", void 0))
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
-                lineNumber: 12,
+                lineNumber: 55,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
-            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                className: "px-4 py-2 rounded-lg text-xs font-bold bg-[#f2f4f6] text-[#191c1d] hover:bg-[#e5e8eb] cursor-pointer",
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                className: "grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2",
                 children: [
-                    "選擇紀錄檔",
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                        type: "file",
-                        accept: ".json,.csv,.xlsx",
-                        onChange: (e)=>{
-                            const f = e.target.files?.[0];
-                            if (f) onImportFile?.(f);
-                        },
-                        className: "hidden"
-                    }, void 0, false, {
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "rounded-xl border border-[#c3c6d7]/50 p-4 bg-slate-50 flex flex-col justify-between",
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "flex items-center gap-2 mb-1.5",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: "material-symbols-outlined text-green-700 text-[20px]",
+                                                children: "description"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
+                                                lineNumber: 67,
+                                                columnNumber: 15
+                                            }, ("TURBOPACK compile-time value", void 0)),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h4", {
+                                                className: "text-sm font-bold text-[#191c1d]",
+                                                children: "Excel (.xlsx) 檔案上傳"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
+                                                lineNumber: 68,
+                                                columnNumber: 15
+                                            }, ("TURBOPACK compile-time value", void 0))
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
+                                        lineNumber: 66,
+                                        columnNumber: 13
+                                    }, ("TURBOPACK compile-time value", void 0)),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                        className: "text-xs text-[#565e74] leading-relaxed",
+                                        children: "支援上傳由測驗結果匯出的錯題紀錄 Excel 檔，隨選即傳、離線可用。"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
+                                        lineNumber: 70,
+                                        columnNumber: 13
+                                    }, ("TURBOPACK compile-time value", void 0))
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
+                                lineNumber: 65,
+                                columnNumber: 11
+                            }, ("TURBOPACK compile-time value", void 0)),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "mt-4",
+                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                    className: "inline-flex items-center justify-center px-4 py-2 rounded-lg text-xs font-bold bg-[#004ac6] text-white hover:bg-[#003da6] transition-colors cursor-pointer shadow-xs w-full sm:w-auto",
+                                    children: [
+                                        "上傳 Excel (.xlsx)",
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                            type: "file",
+                                            accept: ".xlsx",
+                                            onChange: (e)=>{
+                                                const f = e.target.files?.[0];
+                                                if (f) onImportFile?.(f);
+                                            },
+                                            className: "hidden"
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
+                                            lineNumber: 77,
+                                            columnNumber: 15
+                                        }, ("TURBOPACK compile-time value", void 0))
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
+                                    lineNumber: 75,
+                                    columnNumber: 13
+                                }, ("TURBOPACK compile-time value", void 0))
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
+                                lineNumber: 74,
+                                columnNumber: 11
+                            }, ("TURBOPACK compile-time value", void 0))
+                        ]
+                    }, void 0, true, {
                         fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
-                        lineNumber: 20,
+                        lineNumber: 64,
+                        columnNumber: 9
+                    }, ("TURBOPACK compile-time value", void 0)),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: `rounded-xl border p-4 flex flex-col justify-between transition-colors ${hasBoundSheet ? 'border-[#c3c6d7]/50 bg-slate-50' : 'border-dashed border-slate-300 bg-slate-100/60'}`,
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "flex items-center gap-2 mb-1.5",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: `material-symbols-outlined text-[20px] ${hasBoundSheet ? 'text-blue-700' : 'text-slate-400'}`,
+                                                children: "table_chart"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
+                                                lineNumber: 100,
+                                                columnNumber: 15
+                                            }, ("TURBOPACK compile-time value", void 0)),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h4", {
+                                                className: "text-sm font-bold text-[#191c1d]",
+                                                children: "Google Sheets 雲端匯入"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
+                                                lineNumber: 103,
+                                                columnNumber: 15
+                                            }, ("TURBOPACK compile-time value", void 0)),
+                                            !hasBoundSheet && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: "text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold",
+                                                children: "未綁定"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
+                                                lineNumber: 105,
+                                                columnNumber: 17
+                                            }, ("TURBOPACK compile-time value", void 0))
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
+                                        lineNumber: 99,
+                                        columnNumber: 13
+                                    }, ("TURBOPACK compile-time value", void 0)),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                        className: "text-xs text-[#565e74] leading-relaxed",
+                                        children: hasBoundSheet ? '直接從您已綁定的個人 Google Sheet 同步錯題與作答履歷。' : '未綁定個人 Google Sheet，系統不提供此上傳方式（僅提供 Excel 上傳）。'
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
+                                        lineNumber: 110,
+                                        columnNumber: 13
+                                    }, ("TURBOPACK compile-time value", void 0))
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
+                                lineNumber: 98,
+                                columnNumber: 11
+                            }, ("TURBOPACK compile-time value", void 0)),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "mt-4",
+                                children: hasBoundSheet ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                    type: "button",
+                                    onClick: handleGoogleSheetImportClick,
+                                    className: "px-4 py-2 rounded-lg text-xs font-bold border border-[#004ac6] text-[#004ac6] bg-white hover:bg-blue-50 transition-colors cursor-pointer w-full sm:w-auto",
+                                    children: "從 Google Sheets 匯入錯題"
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
+                                    lineNumber: 118,
+                                    columnNumber: 15
+                                }, ("TURBOPACK compile-time value", void 0)) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                    type: "button",
+                                    onClick: handleGoogleSheetImportClick,
+                                    className: "px-4 py-2 rounded-lg text-xs font-bold border border-slate-300 text-slate-400 bg-slate-200/50 hover:bg-slate-200 cursor-not-allowed w-full sm:w-auto",
+                                    title: "未綁定 Google Sheets，不提供此匯入方式",
+                                    children: "未提供（未綁定試算表）"
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
+                                    lineNumber: 126,
+                                    columnNumber: 15
+                                }, ("TURBOPACK compile-time value", void 0))
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
+                                lineNumber: 116,
+                                columnNumber: 11
+                            }, ("TURBOPACK compile-time value", void 0))
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
+                        lineNumber: 91,
                         columnNumber: 9
                     }, ("TURBOPACK compile-time value", void 0))
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
-                lineNumber: 18,
+                lineNumber: 62,
                 columnNumber: 7
+            }, ("TURBOPACK compile-time value", void 0)),
+            syncStatus && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                className: "text-xs text-primary font-medium mt-1",
+                children: syncStatus
+            }, void 0, false, {
+                fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
+                lineNumber: 140,
+                columnNumber: 9
             }, ("TURBOPACK compile-time value", void 0))
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx",
-        lineNumber: 11,
+        lineNumber: 54,
         columnNumber: 5
     }, ("TURBOPACK compile-time value", void 0));
 };
@@ -10248,15 +10652,89 @@ __turbopack_context__.s([
     ()=>WrongQuestionsPage
 ]);
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react-jsx-dev-runtime.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$wrong$2d$questions$2f$_components$2f$ImportUploader$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/(dashboard)/wrong-questions/_components/ImportUploader.tsx [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$wrong$2d$questions$2f$_components$2f$TrendStatsChart$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/(dashboard)/wrong-questions/_components/TrendStatsChart.tsx [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$wrong$2d$questions$2f$_components$2f$RetestActionCard$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/(dashboard)/wrong-questions/_components/RetestActionCard.tsx [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$utils$2f$fileParsers$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/utils/fileParsers.ts [app-ssr] (ecmascript)");
 'use client';
 ;
 ;
 ;
 ;
-function WrongQuestionsPage() {
+;
+;
+function WrongQuestionsPage({ currentUser, onNavigate } = {}) {
+    const [wrongQuestions, setWrongQuestions] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([]);
+    const [importMessage, setImportMessage] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])('');
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
+        if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
+        ;
+    }, []);
+    const handleImportFile = async (file)=>{
+        try {
+            setImportMessage(`正在解析檔案「${file.name}」...`);
+            const { questions, wrongRecords } = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$utils$2f$fileParsers$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["parseWrongQuestionsExcel"])(file);
+            if (questions.length === 0) {
+                alert('檔案中未找到任何有效之錯題資料，請確認檔案格式是否正確。');
+                setImportMessage('');
+                return;
+            }
+            setWrongQuestions((prev)=>{
+                const combined = [
+                    ...questions,
+                    ...prev
+                ];
+                const map = new Map();
+                combined.forEach((q)=>map.set(q.id, q));
+                const unique = Array.from(map.values());
+                try {
+                    localStorage.setItem('quiz_wrong_questions_book', JSON.stringify(unique));
+                } catch  {}
+                return unique;
+            });
+            setImportMessage(`✅ 成功匯入 ${questions.length} 道錯題！已自動收錄至錯題本中。`);
+            alert(`🎉 成功匯入 ${questions.length} 題錯題！\n您可於上方直接點擊「開始錯題重測」進行二次練習。`);
+        } catch (err) {
+            alert(`匯入錯題檔案失敗：${err?.message || '未知錯誤'}`);
+            setImportMessage('');
+        }
+    };
+    const handleStartRetest = ()=>{
+        if (wrongQuestions.length === 0) {
+            alert('目前錯題本中尚無試題，請先上傳成果匯出的錯題 Excel 檔！');
+            return;
+        }
+        const newId = `RETEST-${Date.now().toString().slice(-6)}`;
+        const newPaper = {
+            id: newId,
+            title: `錯題二次重測練習卷 (${wrongQuestions.length} 題)`,
+            description: `由歷史錯題本匯入之弱點強化測驗`,
+            subject: wrongQuestions[0]?.subjectId || '綜合',
+            subjectId: wrongQuestions[0]?.subjectId || 'math',
+            difficultyLv: 3,
+            questionCount: wrongQuestions.length,
+            totalScore: wrongQuestions.reduce((s, q)=>s + (q.points || 5), 0),
+            durationMinutes: Math.max(10, wrongQuestions.length * 2),
+            createdAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
+            status: 'published',
+            questionIds: wrongQuestions.map((q)=>q.id),
+            sourceScope: 'private'
+        };
+        if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
+        ;
+        if (window.confirm(`🎉 已為您成功生成專屬錯題試卷「${newPaper.title}」！\n共 ${wrongQuestions.length} 題，總分 ${newPaper.totalScore} 分。\n\n是否立即前往開始測驗？`)) {
+            window.location.href = `/exam/${newPaper.id}`;
+        }
+    };
+    const handleClearWrongBook = ()=>{
+        if (window.confirm('確定要清空目前收錄的錯題本嗎？')) {
+            setWrongQuestions([]);
+            if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
+            ;
+            setImportMessage('已清空錯題本。');
+        }
+    };
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "p-6 max-w-5xl mx-auto flex flex-col gap-5",
         children: [
@@ -10267,46 +10745,209 @@ function WrongQuestionsPage() {
                         children: "錯題本與弱點分析"
                     }, void 0, false, {
                         fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
-                        lineNumber: 12,
+                        lineNumber: 120,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                         className: "text-xs text-[#434655] mt-1",
-                        children: "追蹤歷次測驗答錯題目，針對弱項進行二次重測"
+                        children: "支援匯入測驗成果匯出之「錯題檢討 Excel (.xlsx)」，自動彙整易錯題目並可一鍵重測"
                     }, void 0, false, {
                         fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
-                        lineNumber: 13,
+                        lineNumber: 121,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
-                lineNumber: 11,
+                lineNumber: 119,
                 columnNumber: 7
             }, this),
+            importMessage && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                className: "p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-800 font-medium flex items-center justify-between",
+                children: [
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                        children: importMessage
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
+                        lineNumber: 128,
+                        columnNumber: 11
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                        onClick: ()=>setImportMessage(''),
+                        className: "text-blue-500 hover:text-blue-700 font-bold ml-2 cursor-pointer",
+                        type: "button",
+                        children: "✕"
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
+                        lineNumber: 129,
+                        columnNumber: 11
+                    }, this)
+                ]
+            }, void 0, true, {
+                fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
+                lineNumber: 127,
+                columnNumber: 9
+            }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$wrong$2d$questions$2f$_components$2f$RetestActionCard$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["RetestActionCard"], {
-                wrongQuestionCount: 0
+                wrongQuestionCount: wrongQuestions.length,
+                onStartRetest: handleStartRetest
             }, void 0, false, {
                 fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
-                lineNumber: 17,
+                lineNumber: 140,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$wrong$2d$questions$2f$_components$2f$TrendStatsChart$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TrendStatsChart"], {
                 items: []
             }, void 0, false, {
                 fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
-                lineNumber: 18,
+                lineNumber: 145,
                 columnNumber: 7
             }, this),
-            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$wrong$2d$questions$2f$_components$2f$ImportUploader$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ImportUploader"], {}, void 0, false, {
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$dashboard$292f$wrong$2d$questions$2f$_components$2f$ImportUploader$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ImportUploader"], {
+                currentUser: currentUser,
+                onNavigate: onNavigate,
+                onImportFile: handleImportFile
+            }, void 0, false, {
                 fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
-                lineNumber: 19,
+                lineNumber: 148,
                 columnNumber: 7
+            }, this),
+            wrongQuestions.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                className: "bg-white rounded-2xl border border-[#c3c6d7]/40 p-6 flex flex-col gap-4",
+                children: [
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "flex items-center justify-between",
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                                        className: "text-base font-bold text-[#191c1d]",
+                                        children: [
+                                            "已收錄待複習錯題清單 (",
+                                            wrongQuestions.length,
+                                            " 題)"
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
+                                        lineNumber: 159,
+                                        columnNumber: 15
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                        className: "text-xs text-[#737686] mt-0.5",
+                                        children: "可逐題檢視題目與正解，或點擊上方「開始錯題重測」進行加強訓練"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
+                                        lineNumber: 162,
+                                        columnNumber: 15
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
+                                lineNumber: 158,
+                                columnNumber: 13
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                onClick: handleClearWrongBook,
+                                type: "button",
+                                className: "text-xs text-red-600 hover:text-red-800 font-semibold px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-50 transition-colors cursor-pointer",
+                                children: "清空錯題本"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
+                                lineNumber: 166,
+                                columnNumber: 13
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
+                        lineNumber: 157,
+                        columnNumber: 11
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "divide-y divide-gray-100 max-h-96 overflow-y-auto pr-1",
+                        children: wrongQuestions.map((q, idx)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "py-3 text-xs flex flex-col gap-1.5",
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "flex items-center justify-between",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: "font-bold text-gray-900",
+                                                children: [
+                                                    "第 ",
+                                                    idx + 1,
+                                                    " 題 (",
+                                                    q.subjectId || '綜合',
+                                                    ")"
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
+                                                lineNumber: 179,
+                                                columnNumber: 19
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: "px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[11px]",
+                                                children: [
+                                                    "正解：",
+                                                    q.correctAnswer
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
+                                                lineNumber: 182,
+                                                columnNumber: 19
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
+                                        lineNumber: 178,
+                                        columnNumber: 17
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                        className: "text-gray-800 font-medium leading-relaxed",
+                                        children: q.content
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
+                                        lineNumber: 186,
+                                        columnNumber: 17
+                                    }, this),
+                                    q.explanation && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "p-2 bg-gray-50 rounded-lg text-gray-600 text-[11px] leading-relaxed",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: "font-bold text-gray-700",
+                                                children: "解析："
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
+                                                lineNumber: 189,
+                                                columnNumber: 21
+                                            }, this),
+                                            q.explanation
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
+                                        lineNumber: 188,
+                                        columnNumber: 19
+                                    }, this)
+                                ]
+                            }, q.id || idx, true, {
+                                fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
+                                lineNumber: 177,
+                                columnNumber: 15
+                            }, this))
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
+                        lineNumber: 175,
+                        columnNumber: 11
+                    }, this)
+                ]
+            }, void 0, true, {
+                fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
+                lineNumber: 156,
+                columnNumber: 9
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/(dashboard)/wrong-questions/page.tsx",
-        lineNumber: 10,
+        lineNumber: 118,
         columnNumber: 5
     }, this);
 }

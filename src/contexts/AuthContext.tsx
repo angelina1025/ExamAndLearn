@@ -22,14 +22,14 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(() => ({
-    uuid: 'usr_9f8a1b2c',
-    nickname: '王敏行 (Admin Wang)',
-    role: 'ADMIN',
-    google_sheet_URL:
-      (typeof window !== 'undefined' ? localStorage.getItem('google_spreadsheet_url') : null) ||
-      getEnvConfiguredSpreadsheetUrl(),
-  }));
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const saved = sessionStorage.getItem('exam_logged_in_user');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return null;
+  });
 
   useEffect(() => {
     const unsubscribe = initAuth(

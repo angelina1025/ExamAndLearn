@@ -193,7 +193,7 @@ function ExamClient({ exam }) {
                                                 lineNumber: 141,
                                                 columnNumber: 17
                                             }, this)
-                                        }, `${question.id}-${index}`, false, {
+                                        }, question.id, false, {
                                             fileName: "[project]/src/app/exam/[examId]/_components/ExamClient.tsx",
                                             lineNumber: 135,
                                             columnNumber: 15
@@ -1223,12 +1223,24 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$resultExp
 ;
 ;
 ;
+function getLoggedInUserSheetUrl() {
+    if ("TURBOPACK compile-time truthy", 1) return null;
+    //TURBOPACK unreachable
+    ;
+}
 function ExportActions({ items, title }) {
     const [busy, setBusy] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
     const [message, setMessage] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])('');
     const [sheetUrl, setSheetUrl] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])('');
     async function handleExport(target) {
         if (busy || !items.length) return;
+        if (target === 'google') {
+            const boundSheet = getLoggedInUserSheetUrl();
+            if (!boundSheet) {
+                window.alert('尚未綁定個人 Google Sheet，無法匯出儲存至雲端試算表。請先至設定頁面進行綁定！');
+                return;
+            }
+        }
         setBusy(true);
         setMessage('');
         setSheetUrl('');
@@ -1259,7 +1271,7 @@ function ExportActions({ items, title }) {
                 children: "錯題下載"
             }, void 0, false, {
                 fileName: "[project]/src/app/exam/result/[sessionId]/_components/ExportActions.tsx",
-                lineNumber: 37,
+                lineNumber: 60,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1271,7 +1283,7 @@ function ExportActions({ items, title }) {
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/exam/result/[sessionId]/_components/ExportActions.tsx",
-                lineNumber: 38,
+                lineNumber: 61,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1284,7 +1296,7 @@ function ExportActions({ items, title }) {
                         children: "下載錯題 Excel (.xlsx)"
                     }, void 0, false, {
                         fileName: "[project]/src/app/exam/result/[sessionId]/_components/ExportActions.tsx",
-                        lineNumber: 40,
+                        lineNumber: 63,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1294,13 +1306,13 @@ function ExportActions({ items, title }) {
                         children: "匯出錯題至 Google Sheets"
                     }, void 0, false, {
                         fileName: "[project]/src/app/exam/result/[sessionId]/_components/ExportActions.tsx",
-                        lineNumber: 41,
+                        lineNumber: 64,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/exam/result/[sessionId]/_components/ExportActions.tsx",
-                lineNumber: 39,
+                lineNumber: 62,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1308,7 +1320,7 @@ function ExportActions({ items, title }) {
                 children: "Google 匯出需登入並授權，會在你的帳號建立新試算表，不修改共用題庫。"
             }, void 0, false, {
                 fileName: "[project]/src/app/exam/result/[sessionId]/_components/ExportActions.tsx",
-                lineNumber: 43,
+                lineNumber: 66,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1317,7 +1329,7 @@ function ExportActions({ items, title }) {
                 children: busy ? '正在匯出，請稍候…' : message
             }, void 0, false, {
                 fileName: "[project]/src/app/exam/result/[sessionId]/_components/ExportActions.tsx",
-                lineNumber: 44,
+                lineNumber: 67,
                 columnNumber: 7
             }, this),
             sheetUrl && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("a", {
@@ -1328,13 +1340,13 @@ function ExportActions({ items, title }) {
                 children: "開啟已匯出的 Google 試算表"
             }, void 0, false, {
                 fileName: "[project]/src/app/exam/result/[sessionId]/_components/ExportActions.tsx",
-                lineNumber: 45,
+                lineNumber: 68,
                 columnNumber: 20
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/exam/result/[sessionId]/_components/ExportActions.tsx",
-        lineNumber: 36,
+        lineNumber: 59,
         columnNumber: 5
     }, this);
 }

@@ -2306,6 +2306,7 @@ __turbopack_context__.s([
     "syncExamsOnlyToSpreadsheet",
     ()=>syncExamsOnlyToSpreadsheet
 ]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = /*#__PURE__*/ __turbopack_context__.i("[project]/node_modules/next/dist/build/polyfills/process.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$mockExamData$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/services/mockExamData.ts [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$data$2f$initialData$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/data/initialData.ts [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$utils$2f$formatters$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/src/utils/formatters.ts [app-client] (ecmascript) <locals>");
@@ -2410,7 +2411,14 @@ async function getAssignedExam(examId, extraExams = [], extraQuestions = []) {
         'D',
         'E'
     ];
-    const examQuestions = matchedQuestions.map((q, idx)=>{
+    const seenIds = new Set();
+    const uniqueMatchedQuestions = matchedQuestions.filter((q)=>{
+        if (!q || !q.id) return false;
+        if (seenIds.has(q.id)) return false;
+        seenIds.add(q.id);
+        return true;
+    });
+    const examQuestions = uniqueMatchedQuestions.map((q, idx)=>{
         const rawOptions = q.options && q.options.length > 0 ? q.options : [
             '選項 A',
             '選項 B',
@@ -2951,18 +2959,47 @@ const INITIAL_ROLES_DATA = [
     }
 ];
 function getEnvConfiguredSpreadsheetUrl() {
-    const env = __TURBOPACK__import$2e$meta__.env;
-    return (env?.VITE_PUBLIC_GOOGLE_SHEET_URL || env?.VITE_GOOGLE_SHEET_URL || '').trim();
+    const metaEnv = ("TURBOPACK compile-time truthy", 1) ? __TURBOPACK__import$2e$meta__.env : "TURBOPACK unreachable";
+    const procEnv = typeof __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"] !== 'undefined' ? __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].env : undefined;
+    return (procEnv?.NEXT_PUBLIC_GOOGLE_SHEET_URL || procEnv?.VITE_GOOGLE_SHEET_URL || procEnv?.GOOGLE_SHEET_URL || metaEnv?.NEXT_PUBLIC_GOOGLE_SHEET_URL || metaEnv?.VITE_PUBLIC_GOOGLE_SHEET_URL || metaEnv?.VITE_GOOGLE_SHEET_URL || '').trim();
 }
 function getEnvConfiguredScriptUrl() {
-    const env = __TURBOPACK__import$2e$meta__.env;
-    return (env?.VITE_GOOGLE_SCRIPT_URL || '').trim();
+    const metaEnv = ("TURBOPACK compile-time truthy", 1) ? __TURBOPACK__import$2e$meta__.env : "TURBOPACK unreachable";
+    const procEnv = typeof __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"] !== 'undefined' ? __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].env : undefined;
+    return (procEnv?.NEXT_PUBLIC_GOOGLE_SCRIPT_URL || procEnv?.VITE_GOOGLE_SCRIPT_URL || procEnv?.GOOGLE_SCRIPT_URL || metaEnv?.NEXT_PUBLIC_GOOGLE_SCRIPT_URL || metaEnv?.VITE_GOOGLE_SCRIPT_URL || metaEnv?.GOOGLE_SCRIPT_URL || '').trim();
 }
 async function postToGasScript(payload) {
     const scriptUrl = getEnvConfiguredScriptUrl();
     if (!scriptUrl) {
         throw new Error('尚未設定 VITE_GOOGLE_SCRIPT_URL，請在 .env 中填入 Google Apps Script 部署網址');
     }
+    // 1. 在瀏覽器端優先透過 Next.js BFF API (/api/sheet) 轉發，解決跨網域 CORS 與 302 重新導向問題
+    if ("TURBOPACK compile-time truthy", 1) {
+        try {
+            const bffRes = await fetch('/api/sheet', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    payload,
+                    scriptUrl
+                })
+            });
+            if (bffRes.ok) {
+                const bffData = await bffRes.json();
+                if (bffData.success !== false) {
+                    return bffData.data ?? bffData;
+                }
+                if (bffData.error) {
+                    throw new Error(bffData.error);
+                }
+            }
+        } catch (bffErr) {
+            console.warn('BFF /api/sheet proxy failed, attempting direct fetch:', bffErr);
+        }
+    }
+    // 2. 伺服器端或直接 fetch GAS 端點
     const res = await fetch(scriptUrl, {
         method: 'POST',
         headers: {
@@ -3930,15 +3967,43 @@ async function fetchUsersAndRolesFromSheet(spreadsheetId, accessToken) {
             console.warn(`JSON gviz fetch for ${sheetName} failed:`, e);
         }
     }));
-    if (!sheetRowsMap['users'] || sheetRowsMap['users'].length === 0) {
-        throw new Error('無法讀取 Google Sheet 中的 users 資料表，請確認試算表權限或網路連線');
+    if (sheetRowsMap['users'] && sheetRowsMap['users'].length > 0) {
+        const roles = parseRolesFromSheetRows(sheetRowsMap['roles'] || []);
+        const users = parseUsersFromSheetRows(sheetRowsMap['users'] || [], roles);
+        return {
+            users,
+            roles
+        };
     }
-    const roles = parseRolesFromSheetRows(sheetRowsMap['roles'] || []);
-    const users = parseUsersFromSheetRows(sheetRowsMap['users'] || [], roles);
-    return {
-        users,
-        roles
-    };
+    // 3. 只有當線上 Google Sheet 完全斷線/離線時，才降級至本地離線快照
+    if ("TURBOPACK compile-time truthy", 1) {
+        try {
+            const raw = localStorage.getItem('quiz_registered_users');
+            if (raw) {
+                const localUsers = JSON.parse(raw);
+                if (Array.isArray(localUsers) && localUsers.length > 0) {
+                    return {
+                        users: localUsers,
+                        roles: [
+                            {
+                                id: 1,
+                                code: 'ADMIN',
+                                name: '管理員',
+                                description: '系統完整管理權限'
+                            },
+                            {
+                                id: 2,
+                                code: 'USER',
+                                name: '一般用戶',
+                                description: '應考學生'
+                            }
+                        ]
+                    };
+                }
+            }
+        } catch  {}
+    }
+    throw new Error('無法讀取 Google Sheet 中的 users 資料表，請確認試算表權限或網路連線');
 }
 async function authenticateUserFromSheet(identifier, credential, spreadsheetId, accessToken) {
     const cleanId = identifier.trim();
@@ -4154,7 +4219,9 @@ async function appendUserToSpreadsheet(accessToken, spreadsheetId, user, rowInde
             await postToGasScript({
                 action: 'appendRow',
                 sheetName: 'users',
-                row: rowValues
+                headers: DATABASE_TABLE_SCHEMAS.users.columns.map((c)=>c.label),
+                row: rowValues,
+                rowValues
             });
             return {
                 success: true,

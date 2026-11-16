@@ -30,25 +30,10 @@ interface SidebarProps {
   onSync?: () => void;
   isSyncing?: boolean;
   currentUser?: UserProfile | null;
+  onDownloadOfflinePack?: () => void;
+  isDownloadingOfflinePack?: boolean;
+  isOnline?: boolean;
 }
-
-const SUBJECT_DISPLAY_LABEL: Record<string, string> = {
-  chinese: '國文 (Chinese)',
-  english: '英文 (English)',
-  math: '數學 (Math)',
-  biology: '生物',
-  physics: '物理',
-  chemistry: '化學',
-  astronomy: '天文',
-  civics: '公民',
-  geography: '地理',
-  history: '歷史',
-};
-
-const DOMAIN_DISPLAY_LABEL: Record<string, string> = {
-  '自然領域': '自然 (Science)',
-  '社會領域': '社會 (Social Studies)',
-};
 
 function resolveCategorySubjectId(cat: CategoryItem): SubjectId | undefined {
   return CATEGORY_ID_TO_SUBJECT[cat.id] || SUBJECT_NAME_MAP[cat.categories_name];
@@ -70,6 +55,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSync,
   isSyncing,
   currentUser,
+  onDownloadOfflinePack,
+  isDownloadingOfflinePack = false,
+  isOnline = true,
 }) => {
   const [expandedGroupIds, setExpandedGroupIds] = useState<Record<number, boolean>>({ 1: true, 2: true });
   const [questionBankOpen, setQuestionBankOpen] = useState(false);
@@ -307,7 +295,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     {topLevelCategories.map((topCat) => {
                       const children = getChildCategories(topCat.id);
                       const isExpanded = expandedGroupIds[topCat.id] ?? true;
-                      const domainName = DOMAIN_DISPLAY_LABEL[topCat.categories_name] || topCat.categories_name;
+                      const domainName = topCat.categories_name;
 
                       return (
                         <div key={topCat.id} className="flex flex-col gap-0.5">
@@ -367,7 +355,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                     }`}
                                   type="button"
                                 >
-                                  <span>{SUBJECT_DISPLAY_LABEL[subId] || topCat.categories_name}</span>
+                                  <span>{topCat.categories_name}</span>
                                   <span className="text-[10px] font-mono">{count}</span>
                                 </button>
                               );
@@ -502,48 +490,78 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-[#191c1e]">
               <span className="material-symbols-outlined text-[18px] text-[#0f9d58]">table_chart</span>
-              <span>公用資料庫</span>
+              <span>題庫資料庫</span>
             </div>
 
-            {isSheetsConnected ? (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#e8f5e9] text-[#2e7d32] border border-[#a5d6a7] text-[11px] font-medium shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#0f9d58] animate-pulse"></span>
-                <span>已連線</span>
-              </span>
+            {isOnline ? (
+              isSheetsConnected ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#e8f5e9] text-[#2e7d32] border border-[#a5d6a7] text-[11px] font-medium shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#0f9d58] animate-pulse"></span>
+                  <span>已連線</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ffdad6]/70 text-[#ba1a1a] border border-[#ffb4ab] text-[11px] font-medium shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#ba1a1a]"></span>
+                  <span>未連線</span>
+                </span>
+              )
             ) : (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ffdad6]/70 text-[#ba1a1a] border border-[#ffb4ab] text-[11px] font-medium shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#ba1a1a]"></span>
-                <span>未連線</span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-bold shrink-0">
+                <span className="material-symbols-outlined text-[12px]">wifi_off</span>
+                <span>離線模式</span>
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-1.5">
-            {onSync && (
+          {!isOnline && (
+            <div className="text-[11px] text-amber-800 bg-amber-50/80 p-2 rounded-lg border border-amber-200/60 leading-tight">
+              公用題庫唯讀，個人題庫可編輯
+            </div>
+          )}
+
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-1.5">
+              {onSync && (
+                <button
+                  onClick={onSync}
+                  disabled={isSyncing}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-[#004ac6] hover:bg-[#003da6] text-white text-[12px] font-semibold rounded-lg shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+                  title={isSheetsConnected ? '比對並同步 Google 試算表最新資料' : '連線並比對 Google 試算表資料'}
+                  type="button"
+                >
+                  <span className={`material-symbols-outlined text-[14px] ${isSyncing ? 'animate-spin' : ''}`}>
+                    sync
+                  </span>
+                  <span>{isSyncing ? '比對中...' : isSheetsConnected ? '連線比對' : '連線同步'}</span>
+                </button>
+              )}
+
+              {isSheetsConnected && spreadsheetUrl && (
+                <a
+                  href={spreadsheetUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="p-1.5 text-[#434655] hover:text-[#004ac6] bg-white hover:bg-[#eceef0] border border-[#c3c6d7]/50 rounded-lg transition-colors flex items-center justify-center shrink-0"
+                  title="在 Google 試算表開啟 (另開新分頁)"
+                >
+                  <span className="material-symbols-outlined text-[16px]">open_in_new</span>
+                </a>
+              )}
+            </div>
+
+            {onDownloadOfflinePack && (
               <button
-                onClick={onSync}
-                disabled={isSyncing}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-[#004ac6] hover:bg-[#003da6] text-white text-[12px] font-semibold rounded-lg shadow-2xs transition-all cursor-pointer disabled:opacity-50"
-                title={isSheetsConnected ? '同步 Google 試算表最新資料' : '連線並同步 Google 試算表資料'}
+                onClick={onDownloadOfflinePack}
+                disabled={isDownloadingOfflinePack}
+                className="w-full inline-flex items-center justify-center gap-1.5 px-2 py-1.5 bg-white hover:bg-[#f0f4ff] text-[#004ac6] border border-[#004ac6]/30 text-[11px] font-bold rounded-lg transition-all cursor-pointer disabled:opacity-50"
+                title="打包下載公用題庫 (唯讀) 與個人題庫 (可編) 兩份 Excel"
                 type="button"
               >
-                <span className={`material-symbols-outlined text-[14px] ${isSyncing ? 'animate-spin' : ''}`}>
-                  sync
+                <span className={`material-symbols-outlined text-[14px] ${isDownloadingOfflinePack ? 'animate-bounce' : ''}`}>
+                  cloud_download
                 </span>
-                <span>{isSyncing ? '同步中...' : isSheetsConnected ? '同步' : '連線同步'}</span>
+                <span>{isDownloadingOfflinePack ? '正在打包 Excel...' : '下載離線版本 (.xlsx)'}</span>
               </button>
-            )}
-
-            {isSheetsConnected && spreadsheetUrl && (
-              <a
-                href={spreadsheetUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="p-1.5 text-[#434655] hover:text-[#004ac6] bg-white hover:bg-[#eceef0] border border-[#c3c6d7]/50 rounded-lg transition-colors flex items-center justify-center shrink-0"
-                title="在 Google 試算表開啟 (另開新分頁)"
-              >
-                <span className="material-symbols-outlined text-[16px]">open_in_new</span>
-              </a>
             )}
           </div>
         </div>

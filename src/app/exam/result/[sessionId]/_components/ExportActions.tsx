@@ -4,6 +4,20 @@ import { useState } from 'react';
 import type { ReviewQuestion } from '@/utils/examReport';
 import { downloadWrongQuestions, exportWrongQuestionsToGoogleSheet } from '@/services/resultExport';
 
+function getLoggedInUserSheetUrl(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem('exam_logged_in_user');
+    if (raw) {
+      const user = JSON.parse(raw);
+      if (user?.google_sheet_URL && typeof user.google_sheet_URL === 'string' && user.google_sheet_URL.trim() !== '') {
+        return user.google_sheet_URL.trim();
+      }
+    }
+  } catch {}
+  return null;
+}
+
 export function ExportActions({ items, title }: { items: ReviewQuestion[]; title: string }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -11,6 +25,15 @@ export function ExportActions({ items, title }: { items: ReviewQuestion[]; title
 
   async function handleExport(target: 'excel' | 'google') {
     if (busy || !items.length) return;
+
+    if (target === 'google') {
+      const boundSheet = getLoggedInUserSheetUrl();
+      if (!boundSheet) {
+        window.alert('尚未綁定個人 Google Sheet，無法匯出儲存至雲端試算表。請先至設定頁面進行綁定！');
+        return;
+      }
+    }
+
     setBusy(true);
     setMessage('');
     setSheetUrl('');

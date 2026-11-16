@@ -39,7 +39,35 @@ describe("getAssignedExam", () => {
   });
 
   it("dynamically resolves an exam paper from published exam papers", async () => {
-    const mathExam = await getAssignedExam("EXAM-2024-MATH-081");
+    const mockPaper = {
+      id: "EXAM-2024-MATH-081",
+      title: "2024年高二數學期末統一測驗",
+      description: "高二數學下學期期末考試",
+      subject: "數學",
+      subjectId: "math" as const,
+      difficultyLv: 3,
+      questionCount: 1,
+      totalScore: 10,
+      durationMinutes: 30,
+      createdAt: "2024-06-20",
+      status: "published" as const,
+      questionIds: ["Q-MATH-001"],
+    };
+    const mockQuestions = [
+      {
+        id: "Q-MATH-001",
+        subjectId: "math" as const,
+        type: "single" as const,
+        content: "1 + 1 = ?",
+        difficulty: "easy" as const,
+        points: 10,
+        tags: ["基本運算"],
+        updatedAt: "2024-06-20",
+        options: ["1", "2", "3", "4"],
+        correctAnswer: "2",
+      },
+    ];
+    const mathExam = await getAssignedExam("EXAM-2024-MATH-081", [mockPaper], mockQuestions);
     expect(mathExam).not.toBeNull();
     expect(mathExam?.title).toContain("2024年高二數學期末統一測驗");
     expect(mathExam?.questions.length).toBeGreaterThan(0);

@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import type { ExamPaper, SubjectId } from '@/types';
+import type { ExamPaper, SubjectId, UserProfile } from '@/types';
 import { clearSession } from '@/contexts/examStorage';
+import { SheetBindGuardModal } from '@/components/common/SheetBindGuardModal';
 
 const SUBJECT_LABELS: Record<SubjectId, string> = {
   chinese: '國文',
@@ -34,10 +35,22 @@ const DIFFICULTY_LABELS: Record<Exclude<Difficulty, 'all'>, string> = {
 export function ExamPaperSelection({
   papers,
   onStartExam,
+  currentUser,
+  onNavigate,
 }: {
   papers: ExamPaper[];
   onStartExam?: (paper: ExamPaper) => void;
+  currentUser?: UserProfile | null;
+  onNavigate?: (page: string) => void;
 }) {
+  const [paperTab, setPaperTab] = useState<'public' | 'private'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('exam_paper_tab');
+      if (saved === 'private' || saved === 'public') return saved;
+    }
+    return 'public';
+  });
+  const [isGuardModalOpen, setIsGuardModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [subject, setSubject] = useState<SubjectId | 'all'>('all');
   const [difficulty, setDifficulty] = useState<Difficulty>('all');
@@ -62,6 +75,22 @@ export function ExamPaperSelection({
     setAllPapers(unique);
   }, [papers]);
 
+  const handleTabChange = (newTab: 'public' | 'private') => {
+    if (newTab === 'private') {
+      const hasBoundSheet = Boolean(
+        currentUser?.google_sheet_URL && currentUser.google_sheet_URL.trim() !== ''
+      );
+      if (!hasBoundSheet) {
+        setIsGuardModalOpen(true);
+        return;
+      }
+    }
+    setPaperTab(newTab);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('exam_paper_tab', newTab);
+    }
+  };
+
   const subjects = useMemo(
     () => [...new Set(allPapers.map((paper) => paper.subjectId))],
     [allPapers],
@@ -69,6 +98,10 @@ export function ExamPaperSelection({
   const filteredPapers = useMemo(() => {
     const keyword = search.trim().toLocaleLowerCase();
     return allPapers.filter((paper) => {
+      const isPrivate = paper.id.startsWith('CUSTOM-') || paper.sourceScope === 'private';
+      if (paperTab === 'public' && isPrivate) return false;
+      if (paperTab === 'private' && !isPrivate) return false;
+
       const matchesSearch = !keyword
         || paper.title.toLocaleLowerCase().includes(keyword)
         || paper.description.toLocaleLowerCase().includes(keyword);
@@ -77,7 +110,7 @@ export function ExamPaperSelection({
         && (subject === 'all' || paper.subjectId === subject)
         && matchesDifficulty;
     });
-  }, [allPapers, search, subject, difficulty]);
+  }, [allPapers, search, subject, difficulty, paperTab]);
   const selectedPaper = allPapers.find((paper) => paper.id === selectedPaperId) ?? null;
 
   function selectPaper(paper: ExamPaper) {
@@ -87,12 +120,66 @@ export function ExamPaperSelection({
 
   return (
     <main className="selection-page min-h-screen bg-surface px-4 py-6 sm:px-6 sm:py-10">
+      {/* 防護彈窗：自組考卷需存放於個人 Google Sheet */}
+      <SheetBindGuardModal
+        isOpen={isGuardModalOpen}
+        onClose={() => setIsGuardModalOpen(false)}
+        onGoToPublicExams={() => {
+          setIsGuardModalOpen(false);
+          setPaperTab('public');
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('exam_paper_tab', 'public');
+          }
+        }}
+        onGoToSettings={() => {
+          setIsGuardModalOpen(false);
+          if (onNavigate) {
+            onNavigate('user-settings');
+          } else if (typeof window !== 'undefined') {
+            window.location.href = '/profile';
+          }
+        }}
+      />
+
       <div className="selection-container mx-auto max-w-6xl">
         <header className="selection-header mb-6">
           <p className="text-xs font-bold tracking-[0.18em] text-primary">EXAM AND LEARN</p>
           <h1 className="mt-2 text-2xl font-bold text-on-surface sm:text-3xl">選擇試卷</h1>
           <p className="mt-2 text-sm leading-6 text-on-surface-variant">挑選一份已發布的試卷，查看題數、配分和作答時間。</p>
         </header>
+
+        {/* 頁籤切換：公用試卷 / 私人試卷 */}
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-outline-variant/60 pb-3">
+          <div className="inline-flex rounded-xl bg-[#f2f4f6] p-1 border border-[#c3c6d7]/30">
+            <button
+              type="button"
+              onClick={() => handleTabChange('public')}
+              className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${
+                paperTab === 'public'
+                  ? 'bg-white text-[#004ac6] shadow-sm'
+                  : 'text-[#434655] hover:text-[#191c1d]'
+              }`}
+            >
+              公用試卷
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTabChange('private')}
+              className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${
+                paperTab === 'private'
+                  ? 'bg-white text-[#004ac6] shadow-sm'
+                  : 'text-[#434655] hover:text-[#191c1d]'
+              }`}
+            >
+              私人試卷
+            </button>
+          </div>
+          <div className="text-xs text-[#565e74]">
+            {paperTab === 'public'
+              ? '提供公用標準模考與各科歷屆考卷，隨選即測。'
+              : '展示由您挑選題目組成的自選考卷或綁定 Google Sheet 的專屬試卷。'}
+          </div>
+        </div>
 
         <section className="selection-filters mb-5 rounded-2xl border border-outline-variant bg-white p-4 sm:p-5" aria-label="試卷篩選">
           <div className="selection-filters-grid grid gap-3 md:grid-cols-[minmax(220px,1fr)_180px_160px]">
@@ -141,7 +228,9 @@ export function ExamPaperSelection({
             </div>
             {filteredPapers.length === 0 ? (
               <div className="selection-empty rounded-2xl border border-dashed border-outline-variant bg-white p-10 text-center text-sm text-on-surface-variant">
-                找不到符合條件的試卷，請調整搜尋或篩選條件。
+                {paperTab === 'private'
+                  ? '目前尚無符合條件的私人試卷。您可以前往「題目選擇頁面」挑選題目組卷，或在個人 Google Sheet 中新增試卷。'
+                  : '找不到符合條件的公用試卷，請調整搜尋或篩選條件。'}
               </div>
             ) : filteredPapers.map((paper) => {
               const selected = paper.id === selectedPaperId;

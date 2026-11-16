@@ -14,12 +14,14 @@ const REMEMBERED_IDENTIFIER_KEY = 'exam_remembered_identifier';
 
 interface LoginPageProps {
   onLoginSuccess: (user: UserProfile, roleInfo?: RoleItem) => void;
+  onNavigateToRegister?: () => void;
   spreadsheetId?: string | null;
   accessToken?: string | null;
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({
   onLoginSuccess,
+  onNavigateToRegister,
   spreadsheetId,
   accessToken,
 }) => {
@@ -402,6 +404,24 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   </>
                 )}
               </button>
+
+              {/* 註冊帳號連結 */}
+              <div className="pt-2 text-center text-[13px] text-[#434655]">
+                還沒有帳號嗎？{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onNavigateToRegister) {
+                      onNavigateToRegister();
+                    } else if (typeof window !== 'undefined') {
+                      window.location.href = '/register';
+                    }
+                  }}
+                  className="text-[#004ac6] font-bold hover:underline cursor-pointer"
+                >
+                  立即註冊新帳號
+                </button>
+              </div>
             </form>
           )}
         </div>

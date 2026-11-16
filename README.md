@@ -14,7 +14,7 @@
    - 採用 React + TypeScript (`.tsx`)，為支援 6 人團隊協同開發，各功能頁面高度解耦獨立，將專屬子元件收斂在各自頁面目錄 (`src/pages/<PageName>/components/`) 內，避免 Git 合併衝突。
    - 統一使用 `@/` 路徑別名（指向 `src/`）進行跨模組引用。
 2. **雙層 Google Sheet 資料庫架構**：
-   - **公用 Sheet**：由 `.env.local`（或 `.env`）中的 `VITE_PUBLIC_GOOGLE_SHEET_URL`（相容 `VITE_GOOGLE_SHEET_URL`）綁定，存放公用題庫 (`test_bank`)、公用試卷 (`quiz_bank_publish` / `quiz_bank_unpublish`)、學科分類 (`categories`)、角色 (`roles`) 與使用者帳號列表 (`users`)。
+   - **公用 Sheet**：由 `.env.local`（或 `.env`）中的 `NEXT_PUBLIC_GOOGLE_SHEET_URL` 綁定，存放公用題庫 (`test_bank`)、公用試卷 (`quiz_bank_publish` / `quiz_bank_unpublish`)、學科分類 (`categories`)、角色 (`roles`) 與使用者帳號列表 (`users`)。
    - **私人 Sheet**：登入後從公用 `users` 表中的 `google_sheet_URL` 欄位動態讀取，存放個人自訂題庫、個人考卷與作答紀錄。
    - **資料格式特性**：題目選項欄位 (`option`) 為 JSON 字串（如 `{"A": "...", "B": "..."}`），答案欄位 (`answer`) 支援單選或逗號分隔之多選（如 `"A, C"`）。
 
@@ -110,7 +110,8 @@ QuizCMS/                                     # 專案根目錄
 2. 設定環境變數：
    於 `.env.local` 或 `.env` 設定公用試算表網址：
    ```env
-   VITE_PUBLIC_GOOGLE_SHEET_URL="https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit"
+   NEXT_PUBLIC_GOOGLE_SHEET_URL="https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit"
+   NEXT_PUBLIC_GOOGLE_SCRIPT_URL="https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec"
    ```
 3. 啟動開發伺服器：
    ```bash
