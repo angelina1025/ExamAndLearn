@@ -1,1 +1,0 @@
-self.__SSG_MANIFEST=new Set(["\u002Fexam\u002F[examId]","\u002Fexam\u002Fresult\u002F[sessionId]"]);self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()
