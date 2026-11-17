@@ -34,7 +34,7 @@ export function ResultReport({ exam, answers, autoSubmitted, onReset, initiallyE
       <header className="border-b border-slate-200 bg-white">
         <div className="exam-shell flex flex-wrap items-center justify-between gap-3 py-5">
           <div><p className="text-xs font-semibold tracking-widest text-[#2f5597]">考試結果詳情</p><h1 className="mt-1 text-xl font-bold">{exam.title}</h1></div>
-          <Link href="/lobby" className="exam-btn rounded-lg">返回測驗大廳</Link>
+          <Link href="/" className="exam-btn rounded-lg">返回測驗大廳</Link>
         </div>
       </header>
       <div className="exam-shell space-y-6 pt-7">

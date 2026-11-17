@@ -46,9 +46,18 @@ import {
 import { getAccessToken, googleSignIn, initAuth } from '@/services/googleAuth';
 import { downloadFullOfflinePack } from '@/services/excelDatabaseExport';
 import { SyncConflictModal, ConflictDetails } from '@/components/common/SyncConflictModal';
-import { readUserPrivateSheet, syncPersonalDataToUserSheet } from '@/services/userSheet';
+import {
+  readUserPrivateSheet,
+  syncPersonalDataToUserSheet,
+  ensurePersonalSpreadsheetTablesExist,
+} from '@/services/userSheet';
 
 export default function App() {
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
     if (typeof window === 'undefined') return null;
     try {
@@ -126,6 +135,8 @@ export default function App() {
 
   const [examPapers, setExamPapers] = useState<ExamPaper[]>([]);
   const [selectedExamIds, setSelectedExamIds] = useState<string[]>([]);
+  const [personalQuestions, setPersonalQuestions] = useState<Question[]>([]);
+  const [personalExams, setPersonalExams] = useState<ExamPaper[]>([]);
 
   const handleUpdateSpreadsheetConnection = (id: string | null, url: string | null) => {
     setConnectedSpreadsheetId(id);
@@ -219,7 +230,7 @@ export default function App() {
 
     setIsLoadingSheetData(true);
     try {
-      // 1. 個人題庫比對 (若有綁定個人 Google Sheet)
+      // 1. 個人題庫比對與載入 (若有綁定個人 Google Sheet)
       if (currentUser?.google_sheet_URL) {
         if (!token && !silent) {
           try {
@@ -228,32 +239,46 @@ export default function App() {
           } catch {}
         }
 
-        if (token) {
-          try {
-            const remotePersonal = await readUserPrivateSheet(token, currentUser.google_sheet_URL);
-            const remoteQuestions = remotePersonal.questions || [];
-            const remoteExams = remotePersonal.publishedExams || [];
-
-            let localQuestions: Question[] = [];
-            let localExams: ExamPaper[] = [];
-            if (typeof window !== 'undefined') {
-              try {
-                localQuestions = JSON.parse(localStorage.getItem('quiz_custom_questions') || '[]');
-                localExams = JSON.parse(localStorage.getItem('quiz_custom_exams') || '[]');
-              } catch {}
+        try {
+          // 若有 token，自動檢查個人試算表分頁與標題列格式，缺表自動建立
+          if (token) {
+            try {
+              const initRes = await ensurePersonalSpreadsheetTablesExist(token, currentUser.google_sheet_URL);
+              if (initRes.createdSheets.length > 0) {
+                showToast(`已為您的個人試算表建立分頁：${initRes.createdSheets.join(', ')}`, 'info');
+              }
+            } catch (initErr) {
+              console.warn('Personal sheet auto-init warning:', initErr);
             }
+          }
 
-            const isQuestionsMatch =
-              localQuestions.length === remoteQuestions.length &&
-              JSON.stringify(localQuestions.map((q) => q.id).sort()) ===
-                JSON.stringify(remoteQuestions.map((q) => q.id).sort());
+          const remotePersonal = await readUserPrivateSheet(token, currentUser.google_sheet_URL);
+          const remoteQuestions = remotePersonal.questions || [];
+          const remoteExams = remotePersonal.publishedExams || [];
+          setPersonalQuestions(remoteQuestions);
+          setPersonalExams(remoteExams);
 
-            const isExamsMatch =
-              localExams.length === remoteExams.length &&
-              JSON.stringify(localExams.map((e) => e.id).sort()) ===
-                JSON.stringify(remoteExams.map((e) => e.id).sort());
+          let localQuestions: Question[] = [];
+          let localExams: ExamPaper[] = [];
+          if (typeof window !== 'undefined') {
+            try {
+              localQuestions = JSON.parse(localStorage.getItem('quiz_custom_questions') || '[]');
+              localExams = JSON.parse(localStorage.getItem('quiz_custom_exams') || '[]');
+            } catch {}
+          }
 
-            if (!isQuestionsMatch || !isExamsMatch) {
+          const isQuestionsMatch =
+            localQuestions.length === remoteQuestions.length &&
+            JSON.stringify(localQuestions.map((q) => q.id).sort()) ===
+              JSON.stringify(remoteQuestions.map((q) => q.id).sort());
+
+          const isExamsMatch =
+            localExams.length === remoteExams.length &&
+            JSON.stringify(localExams.map((e) => e.id).sort()) ===
+              JSON.stringify(remoteExams.map((e) => e.id).sort());
+
+          if (!isQuestionsMatch || !isExamsMatch) {
+            if (!silent && (localQuestions.length > 0 || localExams.length > 0)) {
               // 發現差異！彈出個人題庫衝突對話框
               setPendingRemoteData((prev) => ({
                 ...prev,
@@ -273,10 +298,13 @@ export default function App() {
               });
               setConflictModalOpen(true);
               return;
+            } else if (remoteQuestions.length > 0 || remoteExams.length > 0) {
+              localStorage.setItem('quiz_custom_questions', JSON.stringify(remoteQuestions));
+              localStorage.setItem('quiz_custom_exams', JSON.stringify(remoteExams));
             }
-          } catch (pErr) {
-            console.warn('Compare personal sheet error:', pErr);
           }
+        } catch (pErr) {
+          console.warn('Compare personal sheet error:', pErr);
         }
       }
 
@@ -1089,6 +1117,14 @@ export default function App() {
     showToast('已成功登出系統，請重新驗證身分。', 'info');
   };
 
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-[#f7f9fb] flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-[#004ac6] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   if (!currentUser) {
     if (authMode === 'register') {
       return (
@@ -1253,6 +1289,7 @@ export default function App() {
             <div className="flex flex-col gap-5 max-w-6xl mx-auto">
               <ExamPaperSelection
                 papers={examPapers}
+                personalPapers={personalExams}
                 currentUser={currentUser}
                 onNavigate={(page) => setActivePage(page as AppPageId)}
                 onStartExam={(paper) => {
@@ -1270,6 +1307,7 @@ export default function App() {
             <div className="flex flex-col gap-5 max-w-6xl mx-auto">
               <QuestionSelectorPage
                 questions={questions}
+                personalQuestions={personalQuestions}
                 currentUser={currentUser}
                 onNavigate={(page) => setActivePage(page as AppPageId)}
               />

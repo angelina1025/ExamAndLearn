@@ -280,38 +280,25 @@ export const INITIAL_ROLES_DATA: RoleItem[] = [
  * Supports NEXT_PUBLIC_GOOGLE_SHEET_URL and fallback GOOGLE_SHEET_URL
  */
 export function getEnvConfiguredSpreadsheetUrl(): string {
-  const metaEnv = typeof import.meta !== 'undefined' ? (import.meta as any).env : undefined;
-  const procEnv = typeof process !== 'undefined' ? process.env : undefined;
-  return (
-    procEnv?.NEXT_PUBLIC_GOOGLE_SHEET_URL ||
-    procEnv?.VITE_GOOGLE_SHEET_URL ||
-    procEnv?.GOOGLE_SHEET_URL ||
-    metaEnv?.NEXT_PUBLIC_GOOGLE_SHEET_URL ||
-    metaEnv?.VITE_PUBLIC_GOOGLE_SHEET_URL ||
-    metaEnv?.VITE_GOOGLE_SHEET_URL ||
-    ''
-  ).trim();
+  const url =
+    process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL ||
+    process.env.GOOGLE_SHEET_URL ||
+    (typeof import.meta !== 'undefined' ? (import.meta as any).env?.NEXT_PUBLIC_GOOGLE_SHEET_URL || (import.meta as any).env?.VITE_GOOGLE_SHEET_URL : '') ||
+    '';
+  return url.trim();
 }
 
 export function getEnvConfiguredScriptUrl(): string {
-  const metaEnv = typeof import.meta !== 'undefined' ? (import.meta as any).env : undefined;
-  const procEnv = typeof process !== 'undefined' ? process.env : undefined;
-  return (
-    procEnv?.NEXT_PUBLIC_GOOGLE_SCRIPT_URL ||
-    procEnv?.VITE_GOOGLE_SCRIPT_URL ||
-    procEnv?.GOOGLE_SCRIPT_URL ||
-    metaEnv?.NEXT_PUBLIC_GOOGLE_SCRIPT_URL ||
-    metaEnv?.VITE_GOOGLE_SCRIPT_URL ||
-    metaEnv?.GOOGLE_SCRIPT_URL ||
-    ''
-  ).trim();
+  const url =
+    process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL ||
+    process.env.GOOGLE_SCRIPT_URL ||
+    (typeof import.meta !== 'undefined' ? (import.meta as any).env?.NEXT_PUBLIC_GOOGLE_SCRIPT_URL || (import.meta as any).env?.VITE_GOOGLE_SCRIPT_URL : '') ||
+    '';
+  return url.trim();
 }
 
 export async function postToGasScript(payload: Record<string, any>): Promise<any> {
   const scriptUrl = getEnvConfiguredScriptUrl();
-  if (!scriptUrl) {
-    throw new Error('尚未設定 NEXT_PUBLIC_GOOGLE_SCRIPT_URL，請在 .env 中填入 Google Apps Script 部署網址');
-  }
 
   // 1. 在瀏覽器端優先透過 Next.js BFF API (/api/sheet) 轉發，解決跨網域 CORS 與 302 重新導向問題
   if (typeof window !== 'undefined') {
@@ -321,7 +308,7 @@ export async function postToGasScript(payload: Record<string, any>): Promise<any
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ payload, scriptUrl }),
+        body: JSON.stringify({ payload, scriptUrl: scriptUrl || undefined }),
       });
       if (bffRes.ok) {
         const bffData = await bffRes.json();
@@ -331,10 +318,20 @@ export async function postToGasScript(payload: Record<string, any>): Promise<any
         if (bffData.error) {
           throw new Error(bffData.error);
         }
+      } else {
+        const errJson = await bffRes.json().catch(() => ({}));
+        throw new Error(errJson.error || `BFF 轉發錯誤 (${bffRes.status})`);
       }
     } catch (bffErr: any) {
+      if (!scriptUrl) {
+        throw bffErr;
+      }
       console.warn('BFF /api/sheet proxy failed, attempting direct fetch:', bffErr);
     }
+  }
+
+  if (!scriptUrl) {
+    throw new Error('尚未設定 NEXT_PUBLIC_GOOGLE_SCRIPT_URL，請在 .env 中填入 Google Apps Script 部署網址');
   }
 
   // 2. 伺服器端或直接 fetch GAS 端點
@@ -1505,7 +1502,7 @@ export async function readPublicSpreadsheetViaGviz(
 
   const hasData = Object.values(tableValuesMap).some((rows) => rows && rows.length > 0);
   if (!hasData) {
-    throw new Error('無法讀取試算表內容，請確認 NEXT_PUBLIC_GOOGLE_SHEET_URL 正確且已開啟「知道連結的任何人皆可檢視」權限，或先完成 Google 帳號授權。');
+    return parseTableValuesToResult(tableValuesMap, 'Google 試算表');
   }
 
   return parseTableValuesToResult(tableValuesMap, 'Google 試算表 (.env)');
@@ -1551,9 +1548,7 @@ export async function readAllTablesFromSpreadsheet(
     .map((table) => `${table}!A1:Z`);
 
   if (validRanges.length === 0) {
-    throw new Error(
-      `試算表「${spreadsheetTitle}」中尚未包含題庫資料表 (test_bank、quiz_bank 等)。請先執行「立即同步至試算表」建立並寫入初始架構。`
-    );
+    return parseTableValuesToResult({}, spreadsheetTitle);
   }
 
   const queryParams = validRanges.map((r) => `ranges=${encodeURIComponent(r)}`).join('&');
@@ -1630,7 +1625,8 @@ export async function appendUserToSpreadsheet(
   ];
 
   const scriptUrl = getEnvConfiguredScriptUrl();
-  if (scriptUrl) {
+  const canUseGas = Boolean(scriptUrl) || typeof window !== 'undefined';
+  if (canUseGas) {
     try {
       await postToGasScript({
         action: 'appendRow',
@@ -1641,6 +1637,9 @@ export async function appendUserToSpreadsheet(
       });
       return { success: true, message: `成功透過 GAS 將帳號「${user.identifier}」寫入 users 資料表！` };
     } catch (gasErr: any) {
+      if (!accessToken) {
+        throw new Error(`GAS 寫入失敗: ${gasErr.message || gasErr}，無法寫入 users 資料表`);
+      }
       console.warn('GAS appendUser error, fallback to REST API:', gasErr);
     }
   }
@@ -1700,7 +1699,8 @@ export async function appendQuestionToSpreadsheet(
   ];
 
   const scriptUrl = getEnvConfiguredScriptUrl();
-  if (scriptUrl) {
+  const canUseGas = Boolean(scriptUrl) || typeof window !== 'undefined';
+  if (canUseGas) {
     await postToGasScript({
       action: 'upsertRow',
       sheetName: 'test_bank',
@@ -1769,7 +1769,8 @@ export async function appendExamToSpreadsheet(
   ];
 
   const scriptUrl = getEnvConfiguredScriptUrl();
-  if (scriptUrl) {
+  const canUseGas = Boolean(scriptUrl) || typeof window !== 'undefined';
+  if (canUseGas) {
     await postToGasScript({
       action: 'appendRow',
       sheetName: targetSheet,
@@ -1855,7 +1856,8 @@ export async function syncExamsOnlyToSpreadsheet(
   ];
 
   const scriptUrl = getEnvConfiguredScriptUrl();
-  if (scriptUrl) {
+  const canUseGas = Boolean(scriptUrl) || typeof window !== 'undefined';
+  if (canUseGas) {
     await postToGasScript({
       action: 'replaceSheets',
       sheets: [
@@ -1907,7 +1909,7 @@ export async function deleteRowsFromSpreadsheetViaGas(
   idsToDelete: string[]
 ): Promise<void> {
   const scriptUrl = getEnvConfiguredScriptUrl();
-  if (!scriptUrl) return;
+  if (!scriptUrl && typeof window === 'undefined') return;
 
   await postToGasScript({
     action: 'deleteRows',
@@ -1934,7 +1936,8 @@ export async function appendLogToSpreadsheet(
   ];
 
   const scriptUrl = getEnvConfiguredScriptUrl();
-  if (scriptUrl) {
+  const canUseGas = Boolean(scriptUrl) || typeof window !== 'undefined';
+  if (canUseGas) {
     await postToGasScript({
       action: 'appendRow',
       sheetName: 'log',

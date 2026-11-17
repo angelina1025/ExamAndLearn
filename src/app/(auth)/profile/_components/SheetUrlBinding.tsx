@@ -18,6 +18,7 @@ import {
   getEnvConfiguredSpreadsheetUrl,
   SheetTableSchema,
 } from '@/services/publicSheet';
+import { ensurePersonalSpreadsheetTablesExist, createPersonalDatabaseSpreadsheet } from '@/services/userSheet';
 import { Question, ExamPaper } from '@/types';
 
 interface GoogleSheetsViewProps {
@@ -46,6 +47,7 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({
   const [isSyncing, setIsSyncing] = useState(false);
   const [isReading, setIsReading] = useState(false);
   const [isTestingApi, setIsTestingApi] = useState(false);
+  const [isInitializingTables, setIsInitializingTables] = useState(false);
   const [apiStats, setApiStats] = useState<{ title: string; sheets: { name: string; rowCount: number; columnCount: number }[] } | null>(null);
   const [manualInput, setManualInput] = useState('');
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
@@ -114,9 +116,9 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({
   const promptCreateSpreadsheet = () => {
     setConfirmModal({
       isOpen: true,
-      title: '確認在您的 Google 雲端硬碟建立資料庫？',
+      title: '確認在您的 Google 雲端硬碟建立專屬題庫？',
       description:
-        '系統將於您的 Google Drive 建立一份名為「線上測驗系統資料庫 (Quiz & Test Bank DB)」的試算表，並自動設定 6 張工作表 (users、roles、test_bank、categories、quiz_bank_publish、quiz_bank_unpublish) 與完整欄位，並匯入現有資料。此操作需要您的確認。',
+        '系統將於您的 Google Drive 建立一份名為「個人專屬題庫 (Personal Test Bank)」的試算表，自動設定 test_bank、quiz_bank_publish、quiz_bank_unpublish、log 4 張核心工作表與標準欄位標題，並自動綁定至您的個人帳號。',
       actionType: 'create',
       onConfirm: async () => {
         setConfirmModal((prev) => ({ ...prev, isOpen: false }));
@@ -144,16 +146,25 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({
 
     setIsCreatingSheet(true);
     try {
-      const result = await createFullDatabaseSpreadsheet(
+      const result = await createPersonalDatabaseSpreadsheet(
         token,
-        '線上測驗系統資料庫 (Quiz & Test Bank DB)',
-        questions,
-        examPapers
+        '個人專屬題庫 (Personal Test Bank)'
       );
       onUpdateSpreadsheetConnection(result.spreadsheetId, result.spreadsheetUrl);
+
+      // 同步更新本地使用者 sessionStorage
+      try {
+        const raw = sessionStorage.getItem('exam_logged_in_user');
+        if (raw) {
+          const userObj = JSON.parse(raw);
+          userObj.google_sheet_URL = result.spreadsheetUrl;
+          sessionStorage.setItem('exam_logged_in_user', JSON.stringify(userObj));
+        }
+      } catch {}
+
       const now = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       setLastSyncTime(now);
-      onShowToast('成功建立 Google 試算表資料庫與 6 張資料表！', 'success');
+      onShowToast('🎉 成功在您的 Google 雲端硬碟建立專屬題庫並完成綁定！包含 4 張標準資料表。', 'success');
     } catch (err: any) {
       console.error('Create spreadsheet error:', err);
       onShowToast(`建立試算表失敗: ${err.message}`, 'error');
@@ -312,6 +323,45 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({
       onShowToast(`API 測試失敗: ${err.message}`, 'error');
     } finally {
       setIsTestingApi(false);
+    }
+  };
+
+  const handleInitPersonalTables = async () => {
+    if (!connectedSpreadsheetId && !connectedSpreadsheetUrl) {
+      onShowToast('尚未連結 Google 試算表', 'error');
+      return;
+    }
+    const targetUrl = connectedSpreadsheetUrl || `https://docs.google.com/spreadsheets/d/${connectedSpreadsheetId}/edit`;
+
+    let token = await getAccessToken();
+    if (!token) {
+      try {
+        const signResult = await googleSignIn();
+        token = signResult?.accessToken || null;
+      } catch (e) {
+        onShowToast('初始化失敗: 需先完成 Google 授權', 'error');
+        return;
+      }
+    }
+
+    if (!token) return;
+
+    setIsInitializingTables(true);
+    try {
+      const res = await ensurePersonalSpreadsheetTablesExist(token, targetUrl);
+      const msg = res.createdSheets.length > 0
+        ? `🎉 成功為試算表建立分頁：${res.createdSheets.join(', ')}，並填入標準欄位標題！`
+        : `✅ 試算表分頁格式檢查完成，標準分頁與標題皆符合規範！`;
+      onShowToast(msg, 'success');
+      if (connectedSpreadsheetId) {
+        const stats = await fetchSpreadsheetStats(token, connectedSpreadsheetId);
+        setApiStats(stats);
+      }
+    } catch (err: any) {
+      console.error('Init tables error:', err);
+      onShowToast(`初始化分頁失敗: ${err.message}`, 'error');
+    } finally {
+      setIsInitializingTables(false);
     }
   };
 
@@ -482,6 +532,20 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({
                 <span>{isSyncing ? '寫入中...' : '寫入同步至試算表'}</span>
               </button>
 
+              {/* Auto Init Standard Tables Button */}
+              <button
+                onClick={handleInitPersonalTables}
+                disabled={isInitializingTables || isSyncing || isReading}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#fef7ee] hover:bg-[#faedd8] text-[#9a4200] border border-[#f5b773] text-xs font-semibold rounded-lg transition-colors shadow-2xs disabled:opacity-50 cursor-pointer"
+                type="button"
+                title="自動檢查並建立 test_bank, quiz_bank_publish 等標準分頁與欄位標題"
+              >
+                <span className={`material-symbols-outlined text-[16px] ${isInitializingTables ? 'animate-spin' : ''}`}>
+                  {isInitializingTables ? 'refresh' : 'playlist_add'}
+                </span>
+                <span>{isInitializingTables ? '建立中...' : '建立標準分頁與標題'}</span>
+              </button>
+
               {/* Test API Connection Button */}
               <button
                 onClick={handleTestApiConnection}
@@ -526,7 +590,7 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({
                 <span className={`material-symbols-outlined text-[18px] ${isCreatingSheet ? 'animate-spin' : ''}`}>
                   add_chart
                 </span>
-                <span>{isCreatingSheet ? '正在建立試算表及資料表中...' : '一鍵建立 Google Sheets 資料庫及 6 張資料表'}</span>
+                <span>{isCreatingSheet ? '正在建立專屬題庫中...' : '在我的 Google Sheet 建立專屬題庫'}</span>
               </button>
             </div>
           )}
@@ -579,7 +643,7 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({
             <div>
               <span className="text-[#434655] block mb-1">資料庫工作表 (Tables)</span>
               <span className="font-semibold text-[#004ac6]">
-                6 張資料表 (users, roles, test_bank, categories, quiz_bank_publish, quiz_bank_unpublish)
+                4 張核心資料表 (test_bank, quiz_bank_publish, quiz_bank_unpublish, log)
               </span>
             </div>
             <div>
@@ -590,22 +654,48 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({
             </div>
           </div>
         ) : (
-          <div className="pt-2 border-t border-[#c3c6d7]/30 flex flex-col md:flex-row md:items-center gap-3">
-            <span className="text-xs text-[#434655] whitespace-nowrap">或者手動連結其他 Google 試算表：</span>
-            <div className="flex-1 flex gap-2">
+          <div className="pt-4 border-t border-[#c3c6d7]/30 flex flex-col items-center justify-center text-center gap-4 py-6 bg-[#f8f9fa] rounded-xl border border-dashed border-[#c3c6d7]">
+            <div className="w-12 h-12 rounded-full bg-blue-50 text-[#004ac6] flex items-center justify-center">
+              <span className="material-symbols-outlined text-[28px]">add_chart</span>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-[#191c1e]">個人專屬題庫試算表連線設定</p>
+              <p className="text-xs text-[#565e74] max-w-lg mt-1">
+                您可以點擊專屬按鈕由系統透過 Google REST API 自動在您的雲端硬碟建立標準題庫試算表，或手動綁定現有試算表網址。
+              </p>
+            </div>
+
+            {/* 專屬按鈕：在我的 Google Sheet 建立專屬題庫 */}
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <button
+                onClick={promptCreateSpreadsheet}
+                disabled={isCreatingSheet}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#004ac6] hover:bg-[#003da6] text-white text-xs font-bold rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer disabled:opacity-50"
+                type="button"
+              >
+                <span className={`material-symbols-outlined text-[18px] ${isCreatingSheet ? 'animate-spin' : ''}`}>
+                  add_chart
+                </span>
+                <span>{isCreatingSheet ? '正在建立專屬題庫中...' : '在我的 Google Sheet 建立專屬題庫'}</span>
+              </button>
+            </div>
+
+            {/* 或綁定既有試算表網址 */}
+            <div className="w-full max-w-xl flex flex-col sm:flex-row items-center gap-2 px-4 pt-3 border-t border-[#c3c6d7]/30">
               <input
                 type="text"
+                placeholder="或貼上既有 Google 試算表網址 (https://docs.google.com/spreadsheets/d/.../edit)"
                 value={manualInput}
                 onChange={(e) => setManualInput(e.target.value)}
-                placeholder="貼上 Google 試算表網址或 ID (例如: https://docs.google.com/spreadsheets/d/...)"
-                className="flex-1 px-3 py-1.5 text-xs bg-[#f2f4f6] rounded-lg border border-[#c3c6d7]/50 focus:outline-none focus:ring-2 focus:ring-[#004ac6]/30 text-[#191c1e]"
+                className="w-full px-3.5 py-2 text-xs border border-[#c3c6d7] rounded-xl bg-white focus:outline-none focus:border-[#004ac6] focus:ring-1 focus:ring-[#004ac6]"
               />
               <button
                 onClick={handleManualLink}
-                className="px-3 py-1.5 bg-[#f2f4f6] hover:bg-[#e6e8ea] text-[#191c1e] text-xs font-semibold rounded-lg transition-colors border border-[#c3c6d7]/50 cursor-pointer"
+                disabled={!manualInput.trim()}
+                className="w-full sm:w-auto shrink-0 px-4 py-2 bg-[#434655] hover:bg-[#191c1e] text-white text-xs font-semibold rounded-xl transition-all shadow-xs disabled:opacity-50 cursor-pointer"
                 type="button"
               >
-                連結
+                綁定此試算表
               </button>
             </div>
           </div>

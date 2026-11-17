@@ -1,6 +1,22 @@
 import type { ReviewQuestion } from '@/utils/examReport';
 import type { SheetData } from 'write-excel-file/browser';
 import { difficultyName, statusLabels, subjectName } from '@/utils/examReport';
+import { extractSpreadsheetId } from '@/utils/sheetParser';
+import { formatSheetTimestamp } from '@/utils/formatters';
+
+export const REVIEW_NOTEBOOK_HEADERS = [
+  'timestamp',
+  'exam_title',
+  'test_id',
+  'question',
+  'options',
+  'user_answer',
+  'correct_answer',
+  'status',
+  'difficulty',
+  'subject',
+  'explanation',
+];
 
 export function resultExportRows(items: ReviewQuestion[]): (string | number)[][] {
   return [
@@ -45,11 +61,105 @@ export async function downloadWrongQuestions(items: ReviewQuestion[], title: str
 }
 
 export async function exportWrongQuestionsToGoogleSheet(
-  items: ReviewQuestion[], title: string, accessToken: string
+  items: ReviewQuestion[],
+  title: string,
+  accessToken: string,
+  options?: {
+    userSheetUrl?: string | null;
+    submittedAt?: string;
+  }
 ): Promise<string> {
   if (!accessToken) throw new Error('請先登入 Google 並授權存取試算表。');
   if (!items.length) throw new Error('目前沒有可匯出的錯題。');
-  // Create and populate atomically; stringValue never interprets question text as a formula.
+
+  const spreadsheetId = options?.userSheetUrl ? extractSpreadsheetId(options.userSheetUrl) : null;
+
+  // 若使用者已綁定個人 Google Sheet，將錯題匯入個人試算表的【Review notebook】分頁
+  if (spreadsheetId) {
+    // 1. 查詢是否已有 Review notebook 分頁
+    const metaRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?includeGridData=false`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!metaRes.ok) {
+      if (metaRes.status === 401) throw new Error('Google 授權已過期，請重新登入後再匯出。');
+      if (metaRes.status === 403) throw new Error('Google 拒絕存取，請確認試算表權限或重新授權。');
+      const err = await metaRes.json().catch(() => ({}));
+      throw new Error(err.error?.message || '無法存取個人 Google 試算表。');
+    }
+
+    const meta = await metaRes.json();
+    const hasReviewNotebook = (meta.sheets || []).some(
+      (s: any) => s.properties?.title === 'Review notebook'
+    );
+
+    // 2. 若無 Review notebook 分頁，新增分頁並建立標題列
+    if (!hasReviewNotebook) {
+      const addSheetRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requests: [
+            {
+              addSheet: {
+                properties: {
+                  title: 'Review notebook',
+                  gridProperties: { rowCount: 500, columnCount: 15, frozenRowCount: 1 },
+                },
+              },
+            },
+          ],
+        }),
+      });
+      if (!addSheetRes.ok) {
+        const err = await addSheetRes.json().catch(() => ({}));
+        throw new Error(err.error?.message || '在個人試算表建立 Review notebook 分頁失敗。');
+      }
+
+      // 寫入標準標題列 (按照公用題庫格式)
+      await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/'Review notebook'!A1:K1?valueInputOption=USER_ENTERED`,
+        {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ values: [REVIEW_NOTEBOOK_HEADERS] }),
+        }
+      );
+    }
+
+    // 3. 準備錯題資料，壓上交卷時間與試卷分類
+    const submitTime = options?.submittedAt || formatSheetTimestamp(new Date());
+    const rows = items.map((item) => [
+      submitTime,
+      title,
+      item.question.id,
+      item.question.prompt,
+      item.question.options.map((option) => `${option.id}. ${option.text}`).join('\n'),
+      item.actual.join(', ') || '未作答',
+      item.expected.join(', ') || '未提供',
+      statusLabels[item.status],
+      difficultyName(item.question),
+      subjectName(item.question),
+      item.question.explanation || '尚未提供解析',
+    ]);
+
+    // 4. 接續往下寫入 (append)
+    const appendRes = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/'Review notebook'!A1:append?valueInputOption=USER_ENTERED`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ values: rows }),
+      }
+    );
+    if (!appendRes.ok) {
+      const err = await appendRes.json().catch(() => ({}));
+      throw new Error(err.error?.message || '接續寫入錯題至 Review notebook 失敗。');
+    }
+
+    return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`;
+  }
+
+  // Fallback: 若未綁定個人試算表，維持在 Google 雲端建立新試算表儲存
   const response = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },

@@ -71,6 +71,6 @@ describe('result report UI', () => {
   it('shows an honest empty state for unknown result IDs', async () => {
     render(<SavedResultClient sessionId="unknown" />);
     expect(await screen.findByText('找不到考試結果')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '返回測驗大廳' })).toHaveAttribute('href', '/lobby');
+    expect(screen.getByRole('link', { name: '返回測驗大廳' })).toHaveAttribute('href', '/');
   });
 });

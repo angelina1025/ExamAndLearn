@@ -17,7 +17,7 @@ export function SavedResultClient({ sessionId }: { sessionId: string }) {
     <main className="exam-shell space-y-4 py-12">
       <h1 className="text-2xl font-bold">找不到考試結果</h1>
       <p>結果僅儲存在完成測驗的瀏覽器。此紀錄可能不存在、已被清除，或格式已損壞。</p>
-      <Link href="/lobby" className="exam-btn inline-block">返回測驗大廳</Link>
+      <Link href="/" className="exam-btn inline-block">返回測驗大廳</Link>
     </main>
   );
   return <ResultReport key={sessionId} exam={result.exam} answers={result.answers} autoSubmitted={result.autoSubmitted} />;

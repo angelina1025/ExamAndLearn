@@ -45,8 +45,13 @@ export function ExportActions({ items, title }: { items: ReviewQuestion[]; title
         const { getAccessToken, googleSignIn } = await import('@/services/googleAuth');
         const token = await getAccessToken() || (await googleSignIn())?.accessToken;
         if (!token) throw new Error('尚未取得 Google 授權，未匯出任何資料。');
-        setSheetUrl(await exportWrongQuestionsToGoogleSheet(items, title, token));
-        setMessage(`已成功寫入 ${items.length} 題錯題至新的 Google 試算表。`);
+        const boundSheet = getLoggedInUserSheetUrl();
+        setSheetUrl(await exportWrongQuestionsToGoogleSheet(items, title, token, { userSheetUrl: boundSheet }));
+        setMessage(
+          boundSheet
+            ? `已成功將 ${items.length} 題錯題寫入個人試算表【Review notebook】分頁（已壓上交卷時間標籤）！`
+            : `已成功寫入 ${items.length} 題錯題至 Google 試算表。`
+        );
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : '匯出失敗，請稍後再試。');

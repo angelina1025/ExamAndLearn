@@ -27,7 +27,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   const [identifier, setIdentifier] = useState('');
   const [credential, setCredential] = useState('');
   const [confirmCredential, setConfirmCredential] = useState('');
-  const [googleSheetUrl, setGoogleSheetUrl] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,7 +42,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     const cleanId = identifier.trim();
     const cleanCred = credential.trim();
     const cleanConfirm = confirmCredential.trim();
-    const cleanSheetUrl = googleSheetUrl.trim();
 
     if (!cleanName) {
       setErrorMessage('請輸入您的姓名或暱稱');
@@ -73,10 +71,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
       setErrorMessage('兩次輸入的密碼不相符，請重新確認');
       return;
     }
-    if (cleanSheetUrl && !cleanSheetUrl.includes('spreadsheets')) {
-      setErrorMessage('Google Sheet 網址格式不正確，應包含 docs.google.com/spreadsheets');
-      return;
-    }
 
     setIsSubmitting(true);
 
@@ -89,8 +83,11 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
 
       // 2. 帳號唯一性檢查與計算 nextRowIndex
       let nextRowIndex = 2; // 預設第 2 行 (第 1 行是標題)
+      let checkedOnline = false;
+
       try {
         const { users } = await fetchUsersAndRolesFromSheet(targetId, accessToken);
+        checkedOnline = true;
         nextRowIndex = users.length + 2;
         const existsInSheet = users.some(
           (u) => (u.identifier || '').toLowerCase() === cleanId.toLowerCase()
@@ -100,11 +97,26 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           setIsSubmitting(false);
           return;
         }
+
+        // 若線上 Google Sheet 確認無此帳號，自動清理 localStorage 中過去殘留的幽靈暫存
+        if (typeof window !== 'undefined') {
+          try {
+            const raw = localStorage.getItem('quiz_registered_users');
+            if (raw) {
+              const localUsers: UserProfile[] = JSON.parse(raw);
+              const cleaned = localUsers.filter(
+                (u) => (u.identifier || '').toLowerCase() !== cleanId.toLowerCase()
+              );
+              localStorage.setItem('quiz_registered_users', JSON.stringify(cleaned));
+            }
+          } catch {}
+        }
       } catch {
-        // 若遠端暫時無法讀取，檢查本機已註冊帳號
+        // 若遠端完全斷線/無法讀取，才檢查本地離線快照
       }
 
-      if (typeof window !== 'undefined') {
+      // 只有在完全無法連線 Google Sheet 時，才檢查本地離線快照
+      if (!checkedOnline && typeof window !== 'undefined') {
         try {
           const localUsers: UserProfile[] = JSON.parse(
             localStorage.getItem('quiz_registered_users') || '[]'
@@ -129,7 +141,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
         nickname: cleanName,
         identifier: cleanId,
         credential: cleanCred,
-        google_sheet_URL: cleanSheetUrl || undefined,
         created_at: nowStr,
         updated_at: nowStr,
       };
@@ -138,7 +149,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
       let writeSuccess = false;
       let writeErrorDetail = '';
 
-      if (targetId || getEnvConfiguredScriptUrl()) {
+      if (targetId || getEnvConfiguredScriptUrl() || typeof window !== 'undefined') {
         try {
           const writeRes = await appendUserToSpreadsheet(
             accessToken || null,
@@ -366,32 +377,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
             className="w-full pl-10 pr-3.5 py-2.5 bg-[#f8f9fa] border border-[#c3c6d7] rounded-xl text-[14px] text-[#191c1e] placeholder:text-[#737686] focus:outline-none focus:border-[#004ac6] focus:bg-white transition-all"
           />
         </div>
-      </div>
-
-      {/* 個人 Google Sheet 連結 (選填) */}
-      <div>
-        <div className="flex items-center justify-between mb-1.5">
-          <label htmlFor="reg-sheet" className="text-[13px] font-bold text-[#191c1e]">
-            個人 Google 試算表連結 <span className="text-[11px] font-normal text-[#737686]">(選填)</span>
-          </label>
-        </div>
-        <div className="relative">
-          <span className="material-symbols-outlined text-[19px] text-[#737686] absolute left-3.5 top-1/2 -translate-y-1/2">
-            table_chart
-          </span>
-          <input
-            id="reg-sheet"
-            type="url"
-            value={googleSheetUrl}
-            onChange={(e) => setGoogleSheetUrl(e.target.value)}
-            placeholder="https://docs.google.com/spreadsheets/d/..."
-            disabled={isSubmitting}
-            className="w-full pl-10 pr-3.5 py-2.5 bg-[#f8f9fa] border border-[#c3c6d7] rounded-xl text-[14px] text-[#191c1e] placeholder:text-[#737686] focus:outline-none focus:border-[#004ac6] focus:bg-white transition-all"
-          />
-        </div>
-        <p className="mt-1 text-[11px] text-[#737686]">
-          自選考卷或組卷題目需存放於個人的 Google 試算表中，亦可在登入後至設定頁綁定。
-        </p>
       </div>
 
       {/* 送出註冊按鈕 */}

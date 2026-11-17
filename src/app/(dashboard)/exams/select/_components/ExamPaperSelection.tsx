@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import type { ExamPaper, SubjectId, UserProfile } from '@/types';
 import { clearSession } from '@/contexts/examStorage';
 import { SheetBindGuardModal } from '@/components/common/SheetBindGuardModal';
+import { ensurePersonalSpreadsheetTablesExist } from '@/services/userSheet';
+import { getAccessToken, googleSignIn } from '@/services/googleAuth';
 
 const SUBJECT_LABELS: Record<SubjectId, string> = {
   chinese: '國文',
@@ -34,11 +36,13 @@ const DIFFICULTY_LABELS: Record<Exclude<Difficulty, 'all'>, string> = {
 
 export function ExamPaperSelection({
   papers,
+  personalPapers,
   onStartExam,
   currentUser,
   onNavigate,
 }: {
   papers: ExamPaper[];
+  personalPapers?: ExamPaper[];
   onStartExam?: (paper: ExamPaper) => void;
   currentUser?: UserProfile | null;
   onNavigate?: (page: string) => void;
@@ -57,15 +61,54 @@ export function ExamPaperSelection({
   const [selectedPaperId, setSelectedPaperId] = useState<string | null>(null);
   const [notice, setNotice] = useState('');
   const [allPapers, setAllPapers] = useState<ExamPaper[]>(papers);
+  const [isInitializingSheet, setIsInitializingSheet] = useState(false);
+  const [initSheetMessage, setInitSheetMessage] = useState('');
+
+  const hasBoundSheet = Boolean(
+    currentUser?.google_sheet_URL && currentUser.google_sheet_URL.trim() !== ''
+  );
+
+  const handleInitPersonalSheet = async () => {
+    if (!currentUser?.google_sheet_URL) return;
+    setIsInitializingSheet(true);
+    setInitSheetMessage('');
+    try {
+      let token = await getAccessToken();
+      if (!token) {
+        const signRes = await googleSignIn();
+        token = signRes?.accessToken || null;
+      }
+      if (!token) {
+        throw new Error('需先完成 Google 登入授權，才能在您的雲端硬碟試算表建立分頁。');
+      }
+      const res = await ensurePersonalSpreadsheetTablesExist(token, currentUser.google_sheet_URL);
+      const msg = res.createdSheets.length > 0
+        ? `🎉 成功為試算表建立標準分頁：${res.createdSheets.join(', ')}，並填入公用格式標題！`
+        : `✅ 試算表格式已符合規範（test_bank, quiz_bank_publish, quiz_bank_unpublish, log）！`;
+      setInitSheetMessage(msg);
+    } catch (err: any) {
+      if (err?.code === 'auth/unauthorized-domain' || err?.message?.includes('auth/unauthorized-domain')) {
+        setInitSheetMessage('⚠️ 本地開發環境 (localhost) 尚未列入 Firebase 授權網域。建議直接點擊「一鍵複製標準範本」，在您的 Google 雲端秒速建立完整標準試算表！');
+      } else {
+        setInitSheetMessage(`建立失敗: ${err.message || '未知錯誤'}`);
+      }
+    } finally {
+      setIsInitializingSheet(false);
+    }
+  };
 
   useEffect(() => {
     let custom: ExamPaper[] = [];
-    if (typeof window !== 'undefined') {
+    if (personalPapers !== undefined) {
+      custom = personalPapers;
+    } else if (!hasBoundSheet && typeof window !== 'undefined') {
       try {
         custom = JSON.parse(localStorage.getItem('quiz_custom_exams') || '[]');
       } catch {}
     }
-    const merged = [...custom, ...papers];
+    const markedCustom = custom.map((p) => ({ ...p, sourceScope: 'private' as const }));
+    const markedPublic = papers.map((p) => ({ ...p, sourceScope: 'public' as const }));
+    const merged = [...markedCustom, ...markedPublic];
     const seen = new Set<string>();
     const unique = merged.filter((p) => {
       if (seen.has(p.id)) return false;
@@ -73,7 +116,7 @@ export function ExamPaperSelection({
       return true;
     });
     setAllPapers(unique);
-  }, [papers]);
+  }, [papers, personalPapers, hasBoundSheet]);
 
   const handleTabChange = (newTab: 'public' | 'private') => {
     if (newTab === 'private') {
@@ -227,10 +270,45 @@ export function ExamPaperSelection({
               <span>{filteredPapers.length} 份</span>
             </div>
             {filteredPapers.length === 0 ? (
-              <div className="selection-empty rounded-2xl border border-dashed border-outline-variant bg-white p-10 text-center text-sm text-on-surface-variant">
-                {paperTab === 'private'
-                  ? '目前尚無符合條件的私人試卷。您可以前往「題目選擇頁面」挑選題目組卷，或在個人 Google Sheet 中新增試卷。'
-                  : '找不到符合條件的公用試卷，請調整搜尋或篩選條件。'}
+              <div className="selection-empty rounded-2xl border border-dashed border-outline-variant bg-white p-8 text-center text-sm text-on-surface-variant">
+                {paperTab === 'private' ? (
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-blue-50 text-[#004ac6] flex items-center justify-center font-bold text-xl">
+                      0
+                    </div>
+                    <p className="font-semibold text-slate-800 text-base">目前您的個人 Google 試算表中尚無已發布的試卷（0 份）</p>
+                    <p className="text-xs text-slate-500 max-w-md leading-relaxed">
+                      若您的 Google 試算表剛建立且只有空白「工作表1」，請點擊下方按鈕進行 Google 授權並一鍵建立 4 張標準分頁（test_bank、quiz_bank_publish、quiz_bank_unpublish、log）。
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-3 mt-2">
+                      <button
+                        type="button"
+                        onClick={handleInitPersonalSheet}
+                        disabled={isInitializingSheet}
+                        className="px-4 py-2 bg-[#004ac6] hover:bg-[#003ea8] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">playlist_add</span>
+                        <span>{isInitializingSheet ? '正在建立標準分頁與標題…' : '🛠️ 在我的 Google Sheet 建立標準分頁'}</span>
+                      </button>
+                      {onNavigate && (
+                        <button
+                          type="button"
+                          onClick={() => onNavigate('user-selector')}
+                          className="px-4 py-2 border border-[#004ac6] text-[#004ac6] hover:bg-[#eef3ff] text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                        >
+                          前往「題目選擇頁面」挑選組卷
+                        </button>
+                      )}
+                    </div>
+                    {initSheetMessage && (
+                      <p className={`text-xs mt-2 font-medium ${initSheetMessage.includes('成功') || initSheetMessage.includes('✅') ? 'text-green-600' : 'text-red-500'}`}>
+                        {initSheetMessage}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  '找不到符合條件的公用試卷，請調整搜尋或篩選條件。'
+                )}
               </div>
             ) : filteredPapers.map((paper) => {
               const selected = paper.id === selectedPaperId;
